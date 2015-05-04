@@ -1,0 +1,8 @@
+Package: [[name]]
+Version: [[version]]
+Section: misc
+Priority: low
+Architecture: all
+Description: OrangeDB
+Maintainer: Todd Fredrich <tfredrich@gmail.com>
+Distribution: development
