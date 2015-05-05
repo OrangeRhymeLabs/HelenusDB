@@ -1,12 +1,11 @@
-[![Stories in Ready](https://badge.waffle.io/tfredrich/docussandra.png?label=ready&title=Ready)](https://waffle.io/tfredrich/docussandra)
-[![Build Status](https://buildhive.cloudbees.com/job/tfredrich/job/docussandra/badge/icon)](https://buildhive.cloudbees.com/job/tfredrich/job/docussandra/)
+[![Stories in Ready](https://badge.waffle.io/orangerhymelabs/orangedb.svg?label=ready&title=Ready)](http://waffle.io/orangerhymelabs/orangedb)
 
-#Docussandra: A REST-based, Document-Oriented Cassandra
+#OrangeDB: A REST-based, Document-Oriented Cassandra
 ---
 
-**Docussandra** marries MongoDB's simple data storage model with the horizontal scaling of Cassandra. It enables developers to store arbitrary payloads as
+**OrangeDB** marries MongoDB's simple data storage model with the horizontal scaling of Cassandra. It enables developers to store arbitrary payloads as
 BSON, as they would with MongoDB, in a Cassandra cluster. It supports indexing, filtering, sorting, querying and pagination
-(via familiar limit and offset semantics). Simple json document storage with effortless scaling exposed as a service - **that's Docussandra**!
+(via familiar limit and offset semantics). Simple json document storage with effortless scaling exposed as a service - **that's OrangeDB**!
 
 ## Five Minute Quick Start
 Let's begin by starting a server and beginning to store data. 
@@ -19,7 +18,7 @@ Before we can start the Docussandra API server that talks to Cassandra we have t
 
 > cqlsh -f src/main/resources/docussandra.cql
 
-### Starting the Docussandra API
+### Starting the OrangeDB API
 
 Next we need to build and run the API server. First, if using a command line, navigate to the **api** project folder in the root project. Once there, type:
 > mvn exec:java -Dexec.mainClass="com.strategicgains.docussandra.Main"
