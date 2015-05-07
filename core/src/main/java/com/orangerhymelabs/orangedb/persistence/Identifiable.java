@@ -22,5 +22,4 @@ package com.orangerhymelabs.orangedb.persistence;
 public interface Identifiable
 {
 	public Identifier getId();
-	public void setId(Identifier id);
 }

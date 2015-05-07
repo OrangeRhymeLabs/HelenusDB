@@ -8,6 +8,8 @@ import static io.netty.handler.codec.http.HttpMethod.PUT;
 
 import org.restexpress.RestExpress;
 
+import com.orangerhymelabs.orangedb.cassandra.Constants;
+
 public abstract class Routes
 {
     public static void define(Configuration config, RestExpress server)

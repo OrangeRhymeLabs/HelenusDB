@@ -13,9 +13,9 @@ import java.util.List;
  * @since Aug 29, 2013
  */
 public class Identifier
-implements Comparable<Identifier>
+//implements Comparable<Identifier>
 {
-	private static final String SEPARATOR = ", ";
+//	private static final String SEPARATOR = ", ";
 
 	private List<Object> components = new ArrayList<Object>();
 
@@ -115,11 +115,11 @@ implements Comparable<Identifier>
 	 * 
 	 * @return true if the identifiers are equivalent.
 	 */
-	@Override
-	public boolean equals(Object that)
-	{
-		return (compareTo((Identifier) that) == 0);
-	}
+//	@Override
+//	public boolean equals(Object that)
+//	{
+//		return (compareTo((Identifier) that) == 0);
+//	}
 
 	/**
 	 * Returns a hash code for this identifier.
@@ -139,51 +139,51 @@ implements Comparable<Identifier>
 	 * 
 	 * @return -1, 0, 1 to indicate less-than, equal-to, or greater-than, respectively.
 	 */
-    @SuppressWarnings({
-        "unchecked", "rawtypes"
-    })
-    @Override
-    public int compareTo(Identifier that)
-    {
-		if (that == null) return 1;
-		if (this.size() < that.size()) return -1;
-		if (this.size() > that.size()) return 1;
-
-		int i = 0;
-		int result = 0;
-
-		while (result == 0 && i < size())
-		{
-			Object cThis = this.components.get(i);
-			Object cThat = that.components.get(i);
-
-			if (ObjectUtils.areComparable(cThis, cThat))
-			{
-				result = ((Comparable) cThis).compareTo(((Comparable) cThat));
-			}
-			else
-			{
-				result = (cThis.toString().compareTo(cThat.toString()));
-			}
-			
-			++i;
-		}
-
-	    return result;
-    }
+//    @SuppressWarnings({
+//        "unchecked", "rawtypes"
+//    })
+//    @Override
+//    public int compareTo(Identifier that)
+//    {
+//		if (that == null) return 1;
+//		if (this.size() < that.size()) return -1;
+//		if (this.size() > that.size()) return 1;
+//
+//		int i = 0;
+//		int result = 0;
+//
+//		while (result == 0 && i < size())
+//		{
+//			Object cThis = this.components.get(i);
+//			Object cThat = that.components.get(i);
+//
+//			if (ObjectUtils.areComparable(cThis, cThat))
+//			{
+//				result = ((Comparable) cThis).compareTo(((Comparable) cThat));
+//			}
+//			else
+//			{
+//				result = (cThis.toString().compareTo(cThat.toString()));
+//			}
+//			
+//			++i;
+//		}
+//
+//	    return result;
+//    }
 
     /**
      * Returns a string representation of this identifier.
      * 
      * @return a string representation of the identifier.
      */
-	@Override
-	public String toString()
-	{
-		if (components.isEmpty()) return "";
-
-		return (components.size() == 1 ? primaryKey().toString() : "(" + StringUtils.join(SEPARATOR, components) + ")");
-	}
+//	@Override
+//	public String toString()
+//	{
+//		if (components.isEmpty()) return "";
+//
+//		return (components.size() == 1 ? primaryKey().toString() : "(" + StringUtils.join(SEPARATOR, components) + ")");
+//	}
 
 	/**
 	 * Returns the first component of the identifier. Return null if the identifier is empty.

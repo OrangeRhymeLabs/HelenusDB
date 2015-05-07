@@ -1,7 +1,7 @@
 package com.orangerhymelabs.orangedb.database;
 
-import static com.orangerhymelabs.orangedb.Constants.Routes.DATABASE;
-import static com.orangerhymelabs.orangedb.Constants.Routes.DATABASES;
+import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.DATABASE;
+import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.DATABASES;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 
@@ -10,9 +10,9 @@ import java.util.List;
 import org.restexpress.Request;
 import org.restexpress.Response;
 
-import com.orangerhymelabs.orangedb.Constants;
-import com.orangerhymelabs.orangedb.database.Database;
-import com.orangerhymelabs.orangedb.database.DatabaseService;
+import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.orangerhymelabs.orangedb.cassandra.database.Database;
+import com.orangerhymelabs.orangedb.cassandra.database.DatabaseService;
 import com.strategicgains.hyperexpress.HyperExpress;
 import com.strategicgains.hyperexpress.builder.TokenBinder;
 import com.strategicgains.hyperexpress.builder.TokenResolver;

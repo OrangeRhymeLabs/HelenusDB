@@ -13,42 +13,14 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.persistence;
-
-import java.util.Date;
+package com.orangerhymelabs.orangedb.cassandra.persistence;
 
 /**
  * @author toddf
- * @since May 5, 2015
+ * @since May 7, 2015
  */
-public abstract class AbstractEntity
-implements Identifiable, Timestamped
+public interface Schemaable
 {
-	private Date createdAt;
-	private Date updatedAt;
-
-	@Override
-	public Date createdAt()
-	{
-		return createdAt;
-	}
-
-	@Override
-    public void createdAt(Date date)
-    {
-		this.createdAt = date;
-    }
-
-	@Override
-	public Date updatedAt()
-	{
-		return updatedAt;
-	}
-
-	@Override
-    public void updatedAt(Date date)
-    {
-		this.updatedAt = date;
-    }
-
+	public boolean dropSchema();
+	public boolean createSchema();
 }

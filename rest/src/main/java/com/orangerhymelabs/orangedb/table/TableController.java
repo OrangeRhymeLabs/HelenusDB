@@ -7,9 +7,9 @@ import java.util.List;
 import org.restexpress.Request;
 import org.restexpress.Response;
 
-import com.orangerhymelabs.orangedb.Constants;
-import com.orangerhymelabs.orangedb.table.Table;
-import com.orangerhymelabs.orangedb.table.TableService;
+import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.orangedb.cassandra.table.TableService;
 import com.strategicgains.hyperexpress.HyperExpress;
 import com.strategicgains.hyperexpress.builder.TokenBinder;
 import com.strategicgains.hyperexpress.builder.TokenResolver;

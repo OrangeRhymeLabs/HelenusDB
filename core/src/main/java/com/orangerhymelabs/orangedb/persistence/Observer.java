@@ -21,5 +21,5 @@ package com.orangerhymelabs.orangedb.persistence;
  */
 public interface Observer<T>
 {
-	public void observe(T object);
+	public void observe(ObservableState state, T object);
 }

@@ -12,43 +12,19 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-*/
-package com.orangerhymelabs.orangedb.persistence;
-
-import java.util.Date;
+ */
+package com.orangerhymelabs.orangedb.cassandra.event;
 
 /**
  * @author toddf
- * @since May 5, 2015
+ * @since May 7, 2015
  */
-public abstract class AbstractEntity
-implements Identifiable, Timestamped
+public class StateChangeEvent<T>
 {
-	private Date createdAt;
-	private Date updatedAt;
+	public T data;
 
-	@Override
-	public Date createdAt()
+	public StateChangeEvent(T data)
 	{
-		return createdAt;
+		this.data = data;
 	}
-
-	@Override
-    public void createdAt(Date date)
-    {
-		this.createdAt = date;
-    }
-
-	@Override
-	public Date updatedAt()
-	{
-		return updatedAt;
-	}
-
-	@Override
-    public void updatedAt(Date date)
-    {
-		this.updatedAt = date;
-    }
-
 }

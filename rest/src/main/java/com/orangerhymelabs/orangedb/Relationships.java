@@ -15,10 +15,10 @@
 */
 package com.orangerhymelabs.orangedb;
 
-import static com.orangerhymelabs.orangedb.Constants.Routes.DATABASE;
-import static com.orangerhymelabs.orangedb.Constants.Routes.DATABASES;
-import static com.orangerhymelabs.orangedb.Constants.Routes.TABLE;
-import static com.orangerhymelabs.orangedb.Constants.Routes.TABLES;
+import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.DATABASE;
+import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.DATABASES;
+import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.TABLE;
+import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.TABLES;
 import static com.strategicgains.hyperexpress.RelTypes.SELF;
 import static com.strategicgains.hyperexpress.RelTypes.UP;
 
@@ -26,8 +26,8 @@ import java.util.Map;
 
 import org.restexpress.RestExpress;
 
-import com.orangerhymelabs.orangedb.database.Database;
-import com.orangerhymelabs.orangedb.table.Table;
+import com.orangerhymelabs.orangedb.cassandra.database.Database;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.strategicgains.hyperexpress.HyperExpress;
 
 /**

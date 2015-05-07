@@ -15,40 +15,12 @@
 */
 package com.orangerhymelabs.orangedb.persistence;
 
-import java.util.Date;
-
 /**
  * @author toddf
- * @since May 5, 2015
+ * @since May 7, 2015
  */
-public abstract class AbstractEntity
-implements Identifiable, Timestamped
+public interface ResultCallback<T>
 {
-	private Date createdAt;
-	private Date updatedAt;
-
-	@Override
-	public Date createdAt()
-	{
-		return createdAt;
-	}
-
-	@Override
-    public void createdAt(Date date)
-    {
-		this.createdAt = date;
-    }
-
-	@Override
-	public Date updatedAt()
-	{
-		return updatedAt;
-	}
-
-	@Override
-    public void updatedAt(Date date)
-    {
-		this.updatedAt = date;
-    }
-
+	public void onSuccess(T result);
+	public void onFailure(Throwable t);
 }

@@ -24,10 +24,10 @@ import static com.jayway.restassured.RestAssured.given;
 
 import com.jayway.restassured.response.Response;
 import com.mongodb.util.JSON;
-import com.orangerhymelabs.orangedb.database.Database;
-import com.orangerhymelabs.orangedb.document.Document;
-import com.orangerhymelabs.orangedb.table.Table;
-import com.orangerhymelabs.orangedb.testhelper.Fixtures;
+import com.orangerhymelabs.orangedb.cassandra.database.Database;
+import com.orangerhymelabs.orangedb.cassandra.document.Document;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.orangedb.cassandra.testhelper.Fixtures;
 import com.orangerhymelabs.orangedb.testhelper.RestExpressManager;
 
 import org.junit.BeforeClass;

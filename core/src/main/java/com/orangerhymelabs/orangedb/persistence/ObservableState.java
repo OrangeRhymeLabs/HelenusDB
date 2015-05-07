@@ -15,40 +15,18 @@
 */
 package com.orangerhymelabs.orangedb.persistence;
 
-import java.util.Date;
-
 /**
  * @author toddf
- * @since May 5, 2015
+ * @since May 7, 2015
  */
-public abstract class AbstractEntity
-implements Identifiable, Timestamped
+public enum ObservableState
 {
-	private Date createdAt;
-	private Date updatedAt;
-
-	@Override
-	public Date createdAt()
-	{
-		return createdAt;
-	}
-
-	@Override
-    public void createdAt(Date date)
-    {
-		this.createdAt = date;
-    }
-
-	@Override
-	public Date updatedAt()
-	{
-		return updatedAt;
-	}
-
-	@Override
-    public void updatedAt(Date date)
-    {
-		this.updatedAt = date;
-    }
-
+	BEFORE_CREATE,
+	AFTER_CREATE,
+	BEFORE_READ,
+	AFTER_READ,
+	BEFORE_UPDATE,
+	AFTER_UPDATE,
+	BEFORE_DELETE,
+	AFTER_DELETE
 }

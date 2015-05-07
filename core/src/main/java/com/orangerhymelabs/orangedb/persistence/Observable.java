@@ -55,5 +55,5 @@ public interface Observable<T>
 	 * 
 	 * @param object
 	 */
-	public void notify(T object);
+	public void notify(ObservableState state, T object);
 }

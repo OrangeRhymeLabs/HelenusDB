@@ -13,42 +13,37 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.persistence;
+package com.orangerhymelabs.orangedb.cassandra.database;
 
-import java.util.Date;
+import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.strategicgains.syntaxe.annotation.RegexValidation;
 
 /**
  * @author toddf
- * @since May 5, 2015
+ * @since Jan 25, 2015
  */
-public abstract class AbstractEntity
-implements Identifiable, Timestamped
+public class DatabaseReference
 {
-	private Date createdAt;
-	private Date updatedAt;
+	@RegexValidation(name = "Database Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
+	private String name;
 
-	@Override
-	public Date createdAt()
+	public DatabaseReference(String name)
 	{
-		return createdAt;
+		this.name = name;
 	}
 
-	@Override
-    public void createdAt(Date date)
+	public DatabaseReference(Database database)
     {
-		this.createdAt = date;
+		this(database.name());
     }
 
-	@Override
-	public Date updatedAt()
+	public String name()
 	{
-		return updatedAt;
+		return name;
 	}
 
-	@Override
-    public void updatedAt(Date date)
+	public Database asObject()
     {
-		this.updatedAt = date;
+		return new Database(name);
     }
-
 }

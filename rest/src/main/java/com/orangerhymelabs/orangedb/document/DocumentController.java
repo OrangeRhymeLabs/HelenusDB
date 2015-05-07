@@ -7,9 +7,9 @@ import org.restexpress.Request;
 import org.restexpress.Response;
 import org.restexpress.exception.BadRequestException;
 
-import com.orangerhymelabs.orangedb.Constants;
-import com.orangerhymelabs.orangedb.document.Document;
-import com.orangerhymelabs.orangedb.document.DocumentService;
+import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.orangerhymelabs.orangedb.cassandra.document.Document;
+import com.orangerhymelabs.orangedb.cassandra.document.DocumentService;
 import com.strategicgains.hyperexpress.HyperExpress;
 import com.strategicgains.hyperexpress.builder.TokenResolver;
 import com.strategicgains.hyperexpress.builder.UrlBuilder;
