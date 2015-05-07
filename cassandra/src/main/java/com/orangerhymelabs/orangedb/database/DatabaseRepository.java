@@ -7,164 +7,195 @@ import java.util.List;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.event.EventFactory;
-import com.orangerhymelabs.orangedb.event.StateChangeEventingObserver;
+import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
 import com.orangerhymelabs.orangedb.persistence.PreparedStatementFactory;
-import com.strategicgains.repoexpress.cassandra.CassandraTimestampedEntityRepository;
 
 public class DatabaseRepository
-extends CassandraTimestampedEntityRepository<Database>
+extends AbstractObservable<Database>
 {
+	private Session session;
 
-    private class Tables
-    {
+	private class Tables
+	{
 
-        static final String BY_ID = "sys_db";
-    }
+		static final String BY_ID = "sys_db";
+	}
 
-    private class Columns
-    {
-        static final String NAME = "db_name";
-        static final String DESCRIPTION = "description";
-        static final String CREATED_AT = "created_at";
-        static final String UPDATED_AT = "updated_at";
-    }
+	private class Schema
+	{
+		static final String DROP_TABLE = "drop table if exists " + Tables.BY_ID;
+		static final String CREATE_TABLE = "create table " + Tables.BY_ID +
+			"(" +
+				"db_name text," +
+				"description text," +
+				"created_at timestamp," +
+				"updated_at timestamp," +
+				"primary key ((db_name), updated_at)" +
+			")" +
+			"with clustering order by (updated_at DESC)";
+	}
 
-    private static final String CREATE_CQL = "insert into %s (%s, description, created_at, updated_at) values (?, ?, ?, ?)";
-    private static final String UPDATE_CQL = "update %s set description = ?, updated_at = ? where %s = ?";
-    private static final String READ_ALL_CQL = "select * from %s";
-    //private static final String READ_ALL_CQL_WITH_LIMIT = "select * from %s LIMIT %s";
+	private class Columns
+	{
+		static final String NAME = "db_name";
+		static final String DESCRIPTION = "description";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
 
-    private PreparedStatement createStmt;
-    private PreparedStatement updateStmt;
-    private PreparedStatement readAllStmt;
+	private static final String CREATE_CQL = "insert into %s (db_name, description, created_at, updated_at) values (?, ?, ?, ?)";
+	private static final String UPDATE_CQL = "update %s set description = ?, updated_at = ? where db_name = ?";
+	private static final String READ_CQL = "select * from %s where db_name = ?";
+	private static final String READ_ALL_CQL = "select * from %s";
+	private static final String DELETE_CQL = "delete from %s where db_name = ?";
 
-    public DatabaseRepository(Session session)
-    {
-        super(session, Tables.BY_ID, Columns.NAME);
-        initializeStatements();
-    }
+	private PreparedStatement createStmt;
+	private PreparedStatement updateStmt;
+	private PreparedStatement readAllStmt;
+	private PreparedStatement readStmt;
 
-    @Override
-    protected void initializeObservers()
-    {
-        super.initializeObservers();
-        addObserver(new StateChangeEventingObserver<Database>(new NamespaceEventFactory()));
-    }
+	public DatabaseRepository(Session session)
+	{
+		this.session = session;
+		initializeStatements();
+	}
 
-    protected void initializeStatements()
-    {
-        createStmt = PreparedStatementFactory.getPreparedStatement(String.format(CREATE_CQL, getTable(), getIdentifierColumn()), getSession());
-        updateStmt = PreparedStatementFactory.getPreparedStatement(String.format(UPDATE_CQL, getTable(), getIdentifierColumn()), getSession());
-        readAllStmt = PreparedStatementFactory.getPreparedStatement(String.format(READ_ALL_CQL, getTable()), getSession());
-    }
+	protected void initializeStatements()
+	{
+		createStmt = session.prepare(String.format(CREATE_CQL, Tables.BY_ID));
+		updateStmt = session.prepare(String.format(UPDATE_CQL, Tables.BY_ID));
+		readAllStmt = session.prepare(String.format(READ_ALL_CQL, Tables.BY_ID));
+		readStmt = session.prepare(String.format(READ_CQL, Tables.BY_ID));
+		
+	}
 
-    @Override
-    protected Database createEntity(Database entity)
-    {
-        BoundStatement bs = new BoundStatement(createStmt);
-        bindCreate(bs, entity);
-        getSession().execute(bs);
-        return entity;
-    }
+	public void initializeTable()
+	{
+		dropTable();
+		createTable();
+	}
 
-    @Override
-    protected Database updateEntity(Database entity)
-    {
-        BoundStatement bs = new BoundStatement(updateStmt);
-        bindUpdate(bs, entity);
-        getSession().execute(bs);
-        return entity;
-    }
+	public void dropTable()
+	{
+		session.execute(Schema.DROP_TABLE);
+	}
 
-    @Override
-    protected void deleteEntity(Database entity)
-    {
-        BoundStatement bs = new BoundStatement(deleteStmt);
-        bindIdentifier(bs, entity.getId());
-        getSession().execute(bs);
-    }
+	public void createTable()
+	{
+		session.execute(Schema.CREATE_TABLE);
+	}
 
-    public List<Database> readAll()
-    {
-        BoundStatement bs = new BoundStatement(readAllStmt);
-        return marshalAll(getSession().execute(bs));
-    }
+	public void create(Database entity, FutureCallback<Database> callback)
+	{
+		BoundStatement bs = new BoundStatement(createStmt);
+		bindCreate(bs, entity);
+		ResultSetFuture future = session.executeAsync(bs);
+		Futures.addCallback(future,
+			new FutureCallback<ResultSet>()
+			{
+				@Override
+				public void onSuccess(ResultSet result)
+				{
+					callback.onSuccess(marshalRow(result.one()));
+				}
+	
+				@Override
+				public void onFailure(Throwable t)
+				{
+					callback.onFailure(t);
+				}
+			},
+			MoreExecutors.sameThreadExecutor()
+		);
+	}
 
-//    public List<Database> readAll(int limit, int offset)
-//    {
-//        PreparedStatement readAllStmtWithLimit = getSession().prepare(String.format(READ_ALL_CQL_WITH_LIMIT, getTable(), limit));    
-//        //^^TODO: EhCache this!
-//        BoundStatement bs = new BoundStatement(readAllStmtWithLimit);
-//        return marshalAll(getSession().execute(bs));
-//    }
+	public ResultSetFuture update(Database entity)
+	{
+		BoundStatement bs = new BoundStatement(updateStmt);
+		bindUpdate(bs, entity);
+		ResultSetFuture future = session.executeAsync(bs);
+		Futures.addCallback(future, callback);
+	}
 
-    private void bindCreate(BoundStatement bs, Database entity)
-    {
-        bs.bind(entity.name(),
-                entity.description(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt());
-    }
+	protected ResultSetFuture delete(String name)
+	{
+		BoundStatement bs = new BoundStatement(deleteStmt);
+		bs.bind(bs, name);
+		return session.executeAsync(bs);
+	}
 
-    private void bindUpdate(BoundStatement bs, Database entity)
-    {
-        bs.bind(entity.description(),
-                entity.getUpdatedAt(),
-                entity.name());
-    }
+	public ResultSetFuture readAll()
+	{
+		BoundStatement bs = new BoundStatement(readAllStmt);
+		return marshalAll(session.execute(bs));
+	}
 
-    private List<Database> marshalAll(ResultSet rs)
-    {
-        List<Database> namespaces = new ArrayList<Database>();
-        Iterator<Row> i = rs.iterator();
+	private void bindCreate(BoundStatement bs, Database entity)
+	{
+		bs.bind(entity.name(), entity.description(), entity.createdAt(),
+		    entity.updatedAt());
+	}
 
-        while (i.hasNext())
-        {
-            namespaces.add(marshalRow(i.next()));
-        }
+	private void bindUpdate(BoundStatement bs, Database entity)
+	{
+		bs.bind(entity.description(), entity.updatedAt(), entity.name());
+	}
 
-        return namespaces;
-    }
+	private List<Database> marshalAll(ResultSet rs)
+	{
+		List<Database> dbs = new ArrayList<Database>();
+		Iterator<Row> i = rs.iterator();
 
-    @Override
-    protected Database marshalRow(Row row)
-    {
-        if (row == null)
-        {
-            return null;
-        }
+		while (i.hasNext())
+		{
+			dbs.add(marshalRow(i.next()));
+		}
 
-        Database n = new Database();
-        n.name(row.getString(Columns.NAME));
-        n.description(row.getString(Columns.DESCRIPTION));
-        n.setCreatedAt(row.getDate(Columns.CREATED_AT));
-        n.setUpdatedAt(row.getDate(Columns.UPDATED_AT));
-        return n;
-    }
+		return dbs;
+	}
 
-    private class NamespaceEventFactory
-            implements EventFactory<Database>
-    {
+	protected Database marshalRow(Row row)
+	{
+		if (row == null)
+		{
+			return null;
+		}
 
-        @Override
-        public Object newCreatedEvent(Database object)
-        {
-            return new DatabaseCreatedEvent(object);
-        }
+		Database n = new Database();
+		n.name(row.getString(Columns.NAME));
+		n.description(row.getString(Columns.DESCRIPTION));
+		n.createdAt(row.getDate(Columns.CREATED_AT));
+		n.updatedAt(row.getDate(Columns.UPDATED_AT));
+		return n;
+	}
 
-        @Override
-        public Object newUpdatedEvent(Database object)
-        {
-            return new DatabaseUpdatedEvent(object);
-        }
+	private class DatabaseEventFactory
+	implements EventFactory<Database>
+	{
 
-        @Override
-        public Object newDeletedEvent(Database object)
-        {
-            return new DatabaseDeletedEvent(object);
-        }
-    }
+		@Override
+		public Object newCreatedEvent(Database object)
+		{
+			return new DatabaseCreatedEvent(object);
+		}
+
+		@Override
+		public Object newUpdatedEvent(Database object)
+		{
+			return new DatabaseUpdatedEvent(object);
+		}
+
+		@Override
+		public Object newDeletedEvent(Database object)
+		{
+			return new DatabaseDeletedEvent(object);
+		}
+	}
 }

@@ -3,11 +3,11 @@ package com.orangerhymelabs.orangedb.database;
 import java.util.Objects;
 
 import com.orangerhymelabs.orangedb.Constants;
-import com.orangerhymelabs.orangedb.persistence.Identifier;
+import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.strategicgains.syntaxe.annotation.RegexValidation;
 
 public class Database
-extends AbstractTimestampedIdentifiable
+extends AbstractEntity
 {
 
     @RegexValidation(name = "Database Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
@@ -33,18 +33,6 @@ extends AbstractTimestampedIdentifiable
     public void name(String name)
     {
         this.name = name;
-    }
-
-    @Override
-    public Identifier getId()
-    {
-        return new Identifier(name);
-    }
-
-    @Override
-    public void setId(Identifier id)
-    {
-        // do nothing.
     }
 
     public boolean hasDescription()
@@ -107,5 +95,4 @@ extends AbstractTimestampedIdentifiable
         }
         return true;
     }
-
 }

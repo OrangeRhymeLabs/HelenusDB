@@ -1,15 +1,14 @@
 package com.orangerhymelabs.orangedb.event;
 
+import com.orangerhymelabs.orangedb.persistence.Identifiable;
 import com.strategicgains.eventing.DomainEvents;
-import com.strategicgains.repoexpress.domain.Identifiable;
-import com.strategicgains.repoexpress.event.AbstractRepositoryObserver;
 
 /**
  * @author toddf
  * @since Aug 1, 2014
  */
 public class StateChangeEventingObserver<T extends Identifiable>
-extends AbstractRepositoryObserver<T>
+extends Observer<T>
 {
 	private EventFactory<T> factory;
 
