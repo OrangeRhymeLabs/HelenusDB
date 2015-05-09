@@ -11,12 +11,10 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
+import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
-import com.orangerhymelabs.orangedb.cassandra.persistence.PreparedStatementFactory;
-import com.strategicgains.repoexpress.cassandra.AbstractCassandraRepository;
-import com.strategicgains.repoexpress.domain.Identifier;
-import com.strategicgains.repoexpress.event.DefaultTimestampedIdentifiableRepositoryObserver;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class TableRepository
 extends AbstractCassandraRepository<Table>
@@ -26,153 +24,96 @@ extends AbstractCassandraRepository<Table>
 		static final String BY_ID = "sys_tbl";
 	}
 
+	private class Schema
+	{
+		static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
+		static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
+			"(" +
+				"db_name text," +
+				"tbl_name text," +
+				"description text," +
+				"tbl_schema text," +
+				"tbl_type int," +
+				"tbl_ttl bigint," +
+				"hist_ttl bigint," +
+				"created_at timestamp," +
+				"updated_at timestamp," +
+				"primary key ((db_name, tbl_name), updated_at)" +
+			")" +
+			"with clustering order by (updated_at DESC)";
+	}
+
 	private class Columns
 	{
 		static final String NAME = "tbl_name";
 		static final String DATABASE = "db_name";
 		static final String DESCRIPTION = "description";
+		static final String SCHEMA = "tbl_schema";
+		static final String TYPE = "tbl_type";
+		static final String TTL = "tbl_ttl";
+		static final String HISTORY_TTL = "history_ttl";
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
 
 	private static final String IDENTITY_CQL = " where db_name = ? and tbl_name = ?";
-	private static final String EXISTENCE_CQL = "select count(*) from %s" + IDENTITY_CQL;
-	private static final String CREATE_CQL = "insert into %s (%s, db_name, description, created_at, updated_at) values (?, ?, ?, ?, ?)";
-	private static final String READ_CQL = "select * from %s" + IDENTITY_CQL;
-	private static final String DELETE_CQL = "delete from %s" + IDENTITY_CQL;
-	private static final String UPDATE_CQL = "update %s set description = ?, updated_at = ?" + IDENTITY_CQL;
-	private static final String READ_ALL_CQL = "select * from %s where db_name = ?";
-	private static final String READ_ALL_COUNT_CQL = "select count(*) from %s where db_name = ?";
-
-	private static final String CREATE_DOC_TABLE_CQL = "create table %s"
-		+ " (id uuid, object blob, created_at timestamp, updated_at timestamp,"
-		+ " primary key (id))";//+ " primary key ((id), updated_at))"                
-		//+ " with clustering order by (updated_at DESC);";
-	private static final String DROP_DOC_TABLE_CQL = "drop table if exists %s;";
+	private static final String EXISTENCE_CQL = "select count(*) from %s.%s" + IDENTITY_CQL;
+	private static final String CREATE_CQL = "insert into %s.%s (tbl_name, db_name, description, tbl_schema, tbl_type, tbl_ttl, history_ttl, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL + " limit 1";
+	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
+	private static final String UPDATE_CQL = "update %s.%s set description = ?, tbl_schema = ?, tbl_ttl = ?, hist_ttl = ?, updated_at = ?" + IDENTITY_CQL;
+	private static final String READ_ALL_CQL = "select * from %s.%s where db_name = ?";
+	private static final String READ_ALL_COUNT_CQL = "select count(*) from %s.%s where db_name = ?";
 
 	private PreparedStatement existStmt;
-	private PreparedStatement readStmt;
-	private PreparedStatement createStmt;
-	private PreparedStatement deleteStmt;
-	private PreparedStatement updateStmt;
-	private PreparedStatement readAllStmt;
 	private PreparedStatement readAllCountStmt;
 
-	public TableRepository(Session session)
+	public TableRepository(Session session, String keyspace)
 	{
-		super(session, Tables.BY_ID);
-		addObserver(new DefaultTimestampedIdentifiableRepositoryObserver<Table>());
+		super(session, keyspace);
 		addObserver(new StateChangeEventingObserver<Table>(new CollectionEventFactory()));
 		initialize();
 	}
 
 	protected void initialize()
 	{
-		existStmt = PreparedStatementFactory.getPreparedStatement(String.format(EXISTENCE_CQL, getTable()), getSession());
-		readStmt = PreparedStatementFactory.getPreparedStatement(String.format(READ_CQL, getTable()), getSession());
-		createStmt = PreparedStatementFactory.getPreparedStatement(String.format(CREATE_CQL, getTable(), Columns.NAME), getSession());
-		deleteStmt = PreparedStatementFactory.getPreparedStatement(String.format(DELETE_CQL, getTable()), getSession());
-		updateStmt = PreparedStatementFactory.getPreparedStatement(String.format(UPDATE_CQL, getTable()), getSession());
-		readAllStmt = PreparedStatementFactory.getPreparedStatement(String.format(READ_ALL_CQL, getTable()), getSession());
-		readAllCountStmt = PreparedStatementFactory.getPreparedStatement(String.format(READ_ALL_COUNT_CQL, getTable()), getSession());
+		existStmt = session().prepare(String.format(EXISTENCE_CQL, keyspace(), Tables.BY_ID));
+		readAllCountStmt = session().prepare(String.format(READ_ALL_COUNT_CQL, keyspace(), Tables.BY_ID));
 	}
 
-	@Override
 	public boolean exists(Identifier identifier)
 	{
 		if (identifier == null || identifier.isEmpty()) return false;
 
 		BoundStatement bs = new BoundStatement(existStmt);
-		bindIdentifier(bs, identifier);
-		return (getSession().execute(bs).one().getLong(0) > 0);
-	}
-
-	protected Table readEntityById(Identifier identifier)
-	{
-		if (identifier == null || identifier.isEmpty()) return null;
-
-		BoundStatement bs = new BoundStatement(readStmt);
-		bindIdentifier(bs, identifier);
-		return marshalRow(getSession().execute(bs).one());
-	}
-
-	@Override
-	protected Table createEntity(Table entity)
-	{
-		// Create the actual table for the documents.
-		Statement s = new SimpleStatement(String.format(CREATE_DOC_TABLE_CQL, entity.toDbTable()));
-		getSession().execute(s);
-
-		// Create the metadata for the table.
-		BoundStatement bs = new BoundStatement(createStmt);
-		bindCreate(bs, entity);
-		getSession().execute(bs);
-		return entity;
-	}
-
-	@Override
-	protected Table updateEntity(Table entity)
-	{
-		BoundStatement bs = new BoundStatement(updateStmt);
-		bindUpdate(bs, entity);
-		getSession().execute(bs);
-		return entity;
-	}
-
-	@Override
-	protected void deleteEntity(Table entity)
-	{
-		// Delete the actual table for the documents.
-		Statement s = new SimpleStatement(String.format(DROP_DOC_TABLE_CQL, entity.toDbTable()));
-		getSession().execute(s);
-
-		BoundStatement bs = new BoundStatement(deleteStmt);
-		bindIdentifier(bs, entity.getId());
-		getSession().execute(bs);
-	}
-
-	public List<Table> readAll(String namespace)
-	{
-		BoundStatement bs = new BoundStatement(readAllStmt);
-		bs.bind(namespace);
-		return (marshalAll(getSession().execute(bs)));
+		bindIdentity(bs, identifier);
+		return (session().execute(bs).one().getLong(0) > 0);
 	}
 
 	public long countAll(String namespace)
 	{
 		BoundStatement bs = new BoundStatement(readAllCountStmt);
 		bs.bind(namespace);
-		return (getSession().execute(bs).one().getLong(0));
+		return (session().execute(bs).one().getLong(0));
 	}
 
-	private void bindCreate(BoundStatement bs, Table entity)
+	@Override
+	protected void bindCreate(BoundStatement bs, Table entity)
 	{
 		bs.bind(entity.name(),
 			entity.database().name(),
 			entity.description(),
-		    entity.getCreatedAt(),
-		    entity.getUpdatedAt());
+		    entity.createdAt(),
+		    entity.updatedAt());
 	}
 
-	private void bindUpdate(BoundStatement bs, Table entity)
+	@Override
+	protected void bindUpdate(BoundStatement bs, Table entity)
 	{
 		bs.bind(entity.description(),
-			entity.getUpdatedAt(),
+			entity.updatedAt(),
 			entity.database().name(),
 			entity.name());
-	}
-
-	private List<Table> marshalAll(ResultSet rs)
-	{
-		List<Table> collections = new ArrayList<Table>();
-		Iterator<Row> i = rs.iterator();
-
-		while (i.hasNext())
-		{
-			collections.add(marshalRow(i.next()));
-		}
-
-		return collections;
 	}
 
 	protected Table marshalRow(Row row)
@@ -183,8 +124,8 @@ extends AbstractCassandraRepository<Table>
 		c.name(row.getString(Columns.NAME));
 		c.database(row.getString(Columns.DATABASE));
 		c.description(row.getString(Columns.DESCRIPTION));
-		c.setCreatedAt(row.getDate(Columns.CREATED_AT));
-		c.setUpdatedAt(row.getDate(Columns.UPDATED_AT));
+		c.createdAt(row.getDate(Columns.CREATED_AT));
+		c.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return c;
 	}
 
@@ -209,4 +150,48 @@ extends AbstractCassandraRepository<Table>
 			return new TableDeletedEvent(object);
 		}
 	}
+
+	@Override
+    public boolean dropSchema()
+    {
+	    // TODO Auto-generated method stub
+	    return false;
+    }
+
+	@Override
+    public boolean createSchema()
+    {
+	    // TODO Auto-generated method stub
+	    return false;
+    }
+
+	@Override
+    protected String buildCreateStatement()
+    {
+	    return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
+    }
+
+	@Override
+    protected String buildUpdateStatement()
+    {
+	    return String.format(UPDATE_CQL, keyspace(), Tables.BY_ID);
+    }
+
+	@Override
+    protected String buildReadStatement()
+    {
+	    return String.format(READ_CQL, keyspace(), Tables.BY_ID);
+    }
+
+	@Override
+    protected String buildReadAllStatement()
+    {
+	    return String.format(READ_ALL_CQL, keyspace(), Tables.BY_ID);
+    }
+
+	@Override
+    protected String buildDeleteStatement()
+    {
+	    return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
+    }
 }

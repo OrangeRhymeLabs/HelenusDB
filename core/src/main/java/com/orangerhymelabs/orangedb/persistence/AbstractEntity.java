@@ -16,6 +16,7 @@
 package com.orangerhymelabs.orangedb.persistence;
 
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author toddf
@@ -51,4 +52,21 @@ implements Identifiable, Timestamped
 		this.updatedAt = date;
     }
 
+	@Override
+	public boolean equals(Object object)
+	{
+		AbstractEntity that = (AbstractEntity) object;
+
+		if (!Objects.equals(this.createdAt, that.createdAt))
+		{
+			return false;
+		}
+
+		if (!Objects.equals(this.updatedAt, that.updatedAt))
+		{
+			return false;
+		}
+
+		return true;
+	}
 }

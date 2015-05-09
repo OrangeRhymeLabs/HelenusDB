@@ -5,14 +5,14 @@ import java.util.Iterator;
 import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseReference;
-import com.strategicgains.repoexpress.domain.AbstractTimestampedIdentifiable;
-import com.strategicgains.repoexpress.domain.Identifier;
+import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
 import com.strategicgains.syntaxe.annotation.RegexValidation;
 import com.strategicgains.syntaxe.annotation.Required;
 
 public class Table
-extends AbstractTimestampedIdentifiable
+extends AbstractEntity
 {
 	@Required("Database")
 	@ChildValidation
@@ -104,12 +104,6 @@ extends AbstractTimestampedIdentifiable
     public Identifier getId()
     {
 	    return (hasDatabase() & hasName() ? new Identifier(database.name(), name) : null);
-    }
-
-	@Override
-    public void setId(Identifier id)
-    {
-	    // do nothing.
     }
 
 	public String toDbTable()

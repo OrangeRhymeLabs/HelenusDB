@@ -1,41 +1,30 @@
 package com.orangerhymelabs.orangedb.cassandra.database;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Date;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
+import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
-import com.orangerhymelabs.orangedb.cassandra.persistence.Schemaable;
-import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
-import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepository
-extends AbstractObservable<Database>
-implements Schemaable
+extends AbstractCassandraRepository<Database>
 {
-	private Session session;
-
 	private class Tables
 	{
 
 		static final String BY_ID = "sys_db";
 	}
 
-	private class Schema
+	public static class Schema
+	implements Schemaable
 	{
-		static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
-		static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
+		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
+		private static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
 			"(" +
 				"db_name text," +
 				"description text," +
@@ -44,6 +33,20 @@ implements Schemaable
 				"primary key ((db_name), updated_at)" +
 			")" +
 			"with clustering order by (updated_at DESC)";
+
+		@Override
+		public boolean drop(Session session, String keyspace)
+		{
+			ResultSet rs = session.execute(String.format(Schema.DROP_TABLE, keyspace));
+			return rs.wasApplied();
+		}
+
+		@Override
+		public boolean create(Session session, String keyspace)
+		{
+			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
+			return rs.wasApplied();
+		}
 	}
 
 	private class Columns
@@ -56,159 +59,67 @@ implements Schemaable
 
 	private static final String IDENTITY_CQL = " where db_name = ?";
 	private static final String CREATE_CQL = "insert into %s.%s (db_name, description, created_at, updated_at) values (?, ?, ?, ?)";
-	private static final String UPDATE_CQL = "update %s.%s set description = ?, updated_at = ?" + IDENTITY_CQL;
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL + " limit 1";
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 
-	private PreparedStatement createStmt;
-	private PreparedStatement updateStmt;
-	private PreparedStatement readAllStmt;
-	private PreparedStatement readStmt;
-	private PreparedStatement deleteStmt;
-	private String keyspace;
-
 	public DatabaseRepository(Session session, String keyspace)
 	{
-		this.session = session;
-		this.keyspace = keyspace;
+		super(session, keyspace);
 		addObserver(new StateChangeEventingObserver<Database>(new DatabaseEventFactory()));
-		initializeStatements();
-	}
-
-	protected void initializeStatements()
-	{
-		createStmt = session.prepare(String.format(CREATE_CQL, keyspace, Tables.BY_ID));
-		updateStmt = session.prepare(String.format(UPDATE_CQL, keyspace, Tables.BY_ID));
-		readAllStmt = session.prepare(String.format(READ_ALL_CQL, keyspace, Tables.BY_ID));
-		readStmt = session.prepare(String.format(READ_CQL, keyspace, Tables.BY_ID));
-		deleteStmt = session.prepare(String.format(DELETE_CQL, keyspace, Tables.BY_ID));		
 	}
 
 	@Override
-	public boolean dropSchema()
+	protected String buildCreateStatement()
 	{
-		ResultSet rs = session.execute(String.format(Schema.DROP_TABLE, keyspace));
-		return rs.wasApplied();
+		return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
 	}
 
 	@Override
-	public boolean createSchema()
+	protected String buildUpdateStatement()
 	{
-		ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
-		return rs.wasApplied();
+		return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
 	}
 
-	public void create(Database db, ResultCallback<Database> callback)
+	@Override
+	protected String buildReadStatement()
 	{
-		BoundStatement bs = new BoundStatement(createStmt);
-		bindCreate(bs, db);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return String.format(READ_CQL, keyspace(), Tables.BY_ID);
 	}
 
-	public void update(Database entity, ResultCallback<Database> callback)
+	protected String buildReadAllStatement()
 	{
-		BoundStatement bs = new BoundStatement(updateStmt);
-		bindUpdate(bs, entity);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return String.format(READ_ALL_CQL, keyspace(), Tables.BY_ID);
 	}
 
-	public void delete(Identifier id, ResultCallback<Database> callback)
+	protected String buildDeleteStatement()
 	{
-		BoundStatement bs = new BoundStatement(deleteStmt);
-		bindIdentity(bs, id);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
 	}
 
-	public void read(Identifier id, ResultCallback<Database> callback)
+	@Override
+	protected void bindCreate(BoundStatement bs, Database entity)
 	{
-		BoundStatement bs = new BoundStatement(readStmt);
-		bindIdentity(bs, id);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
-	}
-
-	public void readAll(ResultCallback<List<Database>> callback)
-	{
-		BoundStatement bs = new BoundStatement(readAllStmt);
-		ResultSetFuture future = session.executeAsync(bs);
-		Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
-			{
-				@Override
-				public void onSuccess(ResultSet result)
-				{
-					callback.onSuccess(marshalAll(result));
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
-	}
-
-	private void handleFuture(ResultSetFuture future, ResultCallback<Database> callback)
-    {
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
-			{
-				@Override
-				public void onSuccess(ResultSet result)
-				{
-					callback.onSuccess(marshalRow(result.one()));
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
-    }
-
-	private void bindIdentity(BoundStatement bs, Identifier id)
-	{
-		bs.bind(id.components().toArray());
-	}
-
-	private void bindCreate(BoundStatement bs, Database entity)
-	{
+		Date now = new Date();
+		entity.createdAt(now);
+		entity.updatedAt(now);
 		bs.bind(entity.name(),
 			entity.description(),
 			entity.createdAt(),
 		    entity.updatedAt());
 	}
 
-	private void bindUpdate(BoundStatement bs, Database entity)
+	@Override
+	protected void bindUpdate(BoundStatement bs, Database entity)
 	{
-		bs.bind(entity.description(),
-			entity.updatedAt(),
-			entity.name());
+		entity.updatedAt(new Date());
+		bs.bind(entity.name(),
+			entity.description(),
+			entity.createdAt(),
+		    entity.updatedAt());
 	}
 
-	private List<Database> marshalAll(ResultSet rs)
-	{
-		List<Database> dbs = new ArrayList<Database>();
-		Iterator<Row> i = rs.iterator();
-
-		while (i.hasNext())
-		{
-			dbs.add(marshalRow(i.next()));
-		}
-
-		return dbs;
-	}
-
-	private Database marshalRow(Row row)
+	protected Database marshalRow(Row row)
 	{
 		if (row == null)
 		{

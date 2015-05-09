@@ -13,7 +13,9 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.persistence;
+package com.orangerhymelabs.orangedb.cassandra;
+
+import com.datastax.driver.core.Session;
 
 /**
  * @author toddf
@@ -21,6 +23,6 @@ package com.orangerhymelabs.orangedb.cassandra.persistence;
  */
 public interface Schemaable
 {
-	public boolean dropSchema();
-	public boolean createSchema();
+	public boolean drop(Session session, String keyspace);
+	public boolean create(Session session, String keyspace);
 }

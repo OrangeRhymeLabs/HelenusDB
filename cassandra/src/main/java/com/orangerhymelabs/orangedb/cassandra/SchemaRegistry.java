@@ -13,10 +13,13 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.persistence;
+package com.orangerhymelabs.orangedb.cassandra;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.datastax.driver.core.Session;
+import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
 
 /**
  * A Singleton object to drop and/or (re)create the database schema in Cassandra.
@@ -40,6 +43,18 @@ public class SchemaRegistry
 		return INSTANCE;
 	}
 
+	public static void config(Session session, String keyspace)
+	{
+		INSTANCE.register(new KeyspaceSchema());
+		INSTANCE.register(new DatabaseRepository.Schema());
+	}
+
+	/**
+	 * Order matters!
+	 * 
+	 * @param schema
+	 * @return
+	 */
 	public SchemaRegistry register(Schemaable schema)
 	{
 		if (schema != null)
@@ -50,28 +65,28 @@ public class SchemaRegistry
 		return this;
 	}
 
-	public void initializeAll()
+	public void initializeAll(Session session, String keyspace)
 	{
 		for (Schemaable schema : schemas)
 		{
-			schema.dropSchema();
-			schema.createSchema();
+			schema.drop(session, keyspace);
+			schema.create(session, keyspace);
 		}
 	}
 
-	public void createAll()
+	public void createAll(Session session, String keyspace)
 	{
 		for (Schemaable schema : schemas)
 		{
-			schema.createSchema();
+			schema.create(session, keyspace);
 		}
 	}
 
-	public void dropAll()
+	public void dropAll(Session session, String keyspace)
 	{
 		for (Schemaable schema : schemas)
 		{
-			schema.dropSchema();
+			schema.drop(session, keyspace);
 		}
 	}
 }

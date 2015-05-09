@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.persistence;
+package com.orangerhymelabs.orangedb.cassandra;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -34,15 +34,11 @@ implements Schemaable
 		static final String NETWORK_REPLICATION = " with replication = { 'class' : 'NetworkTopologyStrategy', 'use1' : 2, 'usw2' : 2}";
 	}
 
-	private Session session;
-	private String name;
 	private boolean isNetworkReplication = true;
 
-	public KeyspaceSchema(Session session, String name)
+	public KeyspaceSchema()
     {
 		super();
-		this.name = name;
-		this.session = session;
     }
 
 	public void useLocalReplication()
@@ -50,23 +46,18 @@ implements Schemaable
 		isNetworkReplication = false;
 	}
 
-	public String name()
-	{
-		return name;
-	}
-
 	@Override
-	public boolean dropSchema()
+	public boolean drop(Session session, String keyspace)
 	{
-		ResultSet rs = session.execute(String.format(Schema.DROP, name()));
+		ResultSet rs = session.execute(String.format(Schema.DROP, keyspace));
 		return rs.wasApplied();
 
 	}
 
 	@Override
-	public boolean createSchema()
+	public boolean create(Session session, String keyspace)
 	{
-		String create = String.format(Schema.CREATE, name());
+		String create = String.format(Schema.CREATE, keyspace);
 		ResultSet rs;
 
 		if (isNetworkReplication)

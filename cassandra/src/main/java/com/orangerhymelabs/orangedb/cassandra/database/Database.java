@@ -79,25 +79,29 @@ extends AbstractEntity
 	}
 
 	@Override
-	public boolean equals(Object obj)
+	public boolean equals(Object object)
 	{
-		if (obj == null)
+		if (object == null)
 		{
 			return false;
 		}
-		if (getClass() != obj.getClass())
+
+		if (getClass() != object.getClass())
 		{
 			return false;
 		}
-		final Database other = (Database) obj;
-		if (!Objects.equals(this.name, other.name))
+
+		final Database that = (Database) object;
+		if (!Objects.equals(this.name, that.name))
 		{
 			return false;
 		}
-		if (!Objects.equals(this.description, other.description))
+
+		if (!Objects.equals(this.description, that.description))
 		{
 			return false;
 		}
-		return true;
+
+		return super.equals(object);
 	}
 }
