@@ -102,7 +102,10 @@ public class CassandraManager
 		if (isStarted) return;
 
 		EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-		cluster = Cluster.builder().addContactPoints(LOCALHOST).withPort(9142).build();
+		cluster = Cluster.builder()
+			.addContactPoints(LOCALHOST)
+			.withPort(9142)
+			.build();
 		session = cluster.connect();
 		metadata = cluster.getMetadata();
 		isStarted = true;

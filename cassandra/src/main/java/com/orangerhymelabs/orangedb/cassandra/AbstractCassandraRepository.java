@@ -56,40 +56,59 @@ extends AbstractObservable<T>
 
 	public void create(T entity, ResultCallback<T> callback)
 	{
+		ResultSetFuture future = create(entity);
+		handleFuture(future, callback);
+	}
+
+	public ResultSetFuture create(T entity)
+	{
 		BoundStatement bs = new BoundStatement(createStmt);
 		bindCreate(bs, entity);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return session.executeAsync(bs);
 	}
 
 	public void update(T entity, ResultCallback<T> callback)
 	{
+		ResultSetFuture future = update(entity);
+		handleFuture(future, callback);
+	}
+
+	public ResultSetFuture update(T entity)
+	{
 		BoundStatement bs = new BoundStatement(updateStmt);
 		bindUpdate(bs, entity);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return session.executeAsync(bs);
 	}
 
 	public void delete(Identifier id, ResultCallback<T> callback)
 	{
+		ResultSetFuture future = delete(id);
+		handleFuture(future, callback);
+	}
+
+	public ResultSetFuture delete(Identifier id)
+	{
 		BoundStatement bs = new BoundStatement(deleteStmt);
 		bindIdentity(bs, id);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return session.executeAsync(bs);
 	}
 
 	public void read(Identifier id, ResultCallback<T> callback)
 	{
+		ResultSetFuture future = read(id);
+		handleFuture(future, callback);
+	}
+
+	public ResultSetFuture read(Identifier id)
+	{
 		BoundStatement bs = new BoundStatement(readStmt);
 		bindIdentity(bs, id);
-		ResultSetFuture future = session.executeAsync(bs);
-		handleFuture(future, callback);
+		return session.executeAsync(bs);
 	}
 
 	public void readAll(ResultCallback<List<T>> callback)
 	{
-		BoundStatement bs = new BoundStatement(readAllStmt);
-		ResultSetFuture future = session.executeAsync(bs);
+		ResultSetFuture future = readAll();
 		Futures.addCallback(future,
 			new FutureCallback<ResultSet>()
 			{
@@ -107,6 +126,12 @@ extends AbstractObservable<T>
 			},
 			MoreExecutors.sameThreadExecutor()
 		);
+	}
+
+	public ResultSetFuture readAll()
+	{
+		BoundStatement bs = new BoundStatement(readAllStmt);
+		return session.executeAsync(bs);
 	}
 
 	public Session session()

@@ -3,6 +3,7 @@ package com.orangerhymelabs.orangedb.cassandra.database;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -10,13 +11,15 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepositoryTest
 {
 	private static KeyspaceSchema keyspace;
+	private static DatabaseRepository databases;
 
 	@BeforeClass
 	public static void beforeClass()
@@ -26,8 +29,7 @@ public class DatabaseRepositoryTest
 		keyspace = new KeyspaceSchema();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 		new DatabaseRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
-//		databases = new DatabaseRepository(CassandraManager.session(), CassandraManager.keyspace());
-//		databases.createSchema();
+		databases = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
 	}
 
 	@AfterClass
@@ -38,51 +40,16 @@ public class DatabaseRepositoryTest
 
 	@Test
 	public void shouldCreateReadAndDeleteDatabase()
+	throws Exception
 	{
-		DatabaseRepository databases = new DatabaseRepository(CassandraManager.session(), CassandraManager.keyspace());
 		Database entity = new Database();
 		entity.name("db1");
 		entity.description("a test database");
-		databases.create(entity, new ResultCallback<Database>()
-		{
-			@Override
-			public void onSuccess(Database result)
-			{
-				databases.read(result.getId(), new ResultCallback<Database>()
-				{
-					@Override
-                    public void onSuccess(Database result)
-                    {
-						assertEquals(entity, result);
-						databases.delete(result.getId(), new ResultCallback<Database>()
-						{
-							@Override
-                            public void onSuccess(Database result)
-                            {
-								System.out.println("deleted: " + result.name());
-                            }
-
-							@Override
-                            public void onFailure(Throwable t)
-                            {
-								fail(t.getMessage());
-                            }
-						});
-                    }
-
-					@Override
-                    public void onFailure(Throwable t)
-                    {
-						fail(t.getMessage());
-                    }
-				});
-			}
-			
-			@Override
-			public void onFailure(Throwable t)
-			{
-				fail(t.getMessage());
-			}
-		});
+		ResultSetFuture future = databases.create(entity);
+        ResultSet rs = future.get();
+		Database result = databases.marshalRow(rs.one());
+		assertEquals(entity, result);
+		assertNotNull(result.createdAt());
+		assertNotNull(result.updatedAt());
 	}
 }
