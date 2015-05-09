@@ -43,7 +43,13 @@ public class CassandraManager
 	public static void start()
 	throws ConfigurationException, TTransportException, IOException, InterruptedException
 	{
-		INSTANCE._start();
+		start(true);
+	}
+
+	public static void start(boolean isEmbedded)
+	throws ConfigurationException, TTransportException, IOException, InterruptedException
+	{
+		INSTANCE._start(isEmbedded);
 	}
 
 	public static Cluster cluster()
@@ -96,16 +102,26 @@ public class CassandraManager
 		throw new IllegalStateException("Call CassandraManager.start() before accessing metadata");
 	}
 
-	private void _start()
+	private void _start(boolean isEmbedded)
 	throws ConfigurationException, TTransportException, IOException, InterruptedException
 	{
 		if (isStarted) return;
 
-		EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-		cluster = Cluster.builder()
-			.addContactPoints(LOCALHOST)
-			.withPort(9142)
-			.build();
+		if (isEmbedded)
+		{
+			EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+			cluster = Cluster.builder()
+				.addContactPoints(LOCALHOST)
+				.withPort(9142)
+				.build();
+		}
+		else
+		{
+			cluster = Cluster.builder()
+				.addContactPoints(LOCALHOST)
+				.build();
+		}
+
 		session = cluster.connect();
 		metadata = cluster.getMetadata();
 		isStarted = true;
