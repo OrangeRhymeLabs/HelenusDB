@@ -27,6 +27,7 @@ public class DatabaseRepositoryTest
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
+		keyspace.useLocalReplication();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 		new DatabaseRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		databases = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
@@ -39,17 +40,39 @@ public class DatabaseRepositoryTest
 	}
 
 	@Test
-	public void shouldCreateReadAndDeleteDatabase()
+	public void shouldCRUDDatabase()
 	throws Exception
 	{
+		// Create
 		Database entity = new Database();
 		entity.name("db1");
 		entity.description("a test database");
-		ResultSetFuture future = databases.create(entity);
-        ResultSet rs = future.get();
+		databases.create(entity).get();
+
+		// Read
+		ResultSet rs = databases.read(entity.getId()).get();
 		Database result = databases.marshalRow(rs.one());
 		assertEquals(entity, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
+
+		// Update
+		entity.description("an updated test database");
+		databases.update(entity).get();
+
+		// Re-Read
+		ResultSet rs2 = databases.read(entity.getId()).get();
+		Database result2 = databases.marshalRow(rs2.one());
+		assertEquals(entity, result2);
+		assertNotEquals(result2.createdAt(), result2.updatedAt());
+		assertNotNull(result2.createdAt());
+		assertNotNull(result2.updatedAt());
+
+		// Delete
+		databases.delete(entity.getId()).get();
+
+		// Re-Read
+		ResultSet rs3 = databases.read(entity.getId()).get();
+		assertTrue(rs3.all().isEmpty());
 	}
 }
