@@ -62,6 +62,7 @@ extends AbstractCassandraRepository<Database>
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL + " limit 1";
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
+	private static final String FULL_IDENTITY_CQL = "select * from %s.%s where db_name = ? and updated_at = ?";
 
 	public DatabaseRepository(Session session, String keyspace)
 	{
