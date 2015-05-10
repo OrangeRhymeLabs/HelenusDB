@@ -40,39 +40,39 @@ public class DatabaseRepositoryTest
 	}
 
 	@Test
-	public void shouldCRUDDatabase()
+	public void shouldCRUDDatabaseSyncronously()
 	throws Exception
 	{
 		// Create
 		Database entity = new Database();
 		entity.name("db1");
 		entity.description("a test database");
-		databases.create(entity).get();
+		Database createResult = databases.create(entity);
+		assertEquals(entity, createResult);
 
 		// Read
-		ResultSet rs = databases.read(entity.getId()).get();
-		Database result = databases.marshalRow(rs.one());
+		Database result = databases.read(entity.getId());
 		assertEquals(entity, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		entity.description("an updated test database");
-		databases.update(entity).get();
+		Database updateResult = databases.update(entity);
+		assertEquals(entity, updateResult);
 
 		// Re-Read
-		ResultSet rs2 = databases.read(entity.getId()).get();
-		Database result2 = databases.marshalRow(rs2.one());
+		Database result2 = databases.read(entity.getId());
 		assertEquals(entity, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		databases.delete(entity.getId()).get();
+		databases.delete(entity.getId());
 
 		// Re-Read
-		ResultSet rs3 = databases.read(entity.getId()).get();
-		assertTrue(rs3.all().isEmpty());
+		Database result3 = databases.read(entity.getId());
+		assertNull(result3);
 	}
 }

@@ -3,6 +3,7 @@ package com.orangerhymelabs.orangedb.cassandra;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -13,6 +14,7 @@ import com.datastax.driver.core.Session;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
@@ -54,61 +56,112 @@ extends AbstractObservable<T>
 //		return (getSession().execute(bs).one().getLong(0) > 0);
 //	}
 
-	public void create(T entity, ResultCallback<T> callback)
+	public void createAsync(T entity, ResultCallback<T> callback)
 	{
-		ResultSetFuture future = create(entity);
+		ResultSetFuture future = _create(entity);
 		handleFuture(future, callback);
 	}
 
-	public ResultSetFuture create(T entity)
+	public T create(T entity)
+	{
+		try
+        {
+	        _create(entity).get();
+	        return entity;
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }		
+	}
+
+	private ResultSetFuture _create(T entity)
 	{
 		BoundStatement bs = new BoundStatement(createStmt);
 		bindCreate(bs, entity);
 		return session.executeAsync(bs);
 	}
 
-	public void update(T entity, ResultCallback<T> callback)
+	public void updateAsync(T entity, ResultCallback<T> callback)
 	{
-		ResultSetFuture future = update(entity);
+		ResultSetFuture future = _update(entity);
 		handleFuture(future, callback);
 	}
 
-	public ResultSetFuture update(T entity)
+	public T update(T entity)
+	{
+		try
+        {
+	        _update(entity).get();
+	        return entity;
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }		
+	}
+
+	private ResultSetFuture _update(T entity)
 	{
 		BoundStatement bs = new BoundStatement(updateStmt);
 		bindUpdate(bs, entity);
 		return session.executeAsync(bs);
 	}
 
-	public void delete(Identifier id, ResultCallback<T> callback)
+	public void deleteAsync(Identifier id, ResultCallback<T> callback)
 	{
-		ResultSetFuture future = delete(id);
+		ResultSetFuture future = _delete(id);
 		handleFuture(future, callback);
 	}
 
-	public ResultSetFuture delete(Identifier id)
+	public void delete(Identifier id)
+	{
+		try
+        {
+	        _delete(id).get();
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }
+	}
+
+	private ResultSetFuture _delete(Identifier id)
 	{
 		BoundStatement bs = new BoundStatement(deleteStmt);
 		bindIdentity(bs, id);
 		return session.executeAsync(bs);
 	}
 
-	public void read(Identifier id, ResultCallback<T> callback)
+	public void readAsync(Identifier id, ResultCallback<T> callback)
 	{
-		ResultSetFuture future = read(id);
+		ResultSetFuture future = _read(id);
 		handleFuture(future, callback);
 	}
 
-	public ResultSetFuture read(Identifier id)
+	public T read(Identifier id)
+	{
+        try
+        {
+        	ResultSet rs = _read(id).get();
+	        return marshalRow(rs.one());
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }
+	}
+
+	private ResultSetFuture _read(Identifier id)
 	{
 		BoundStatement bs = new BoundStatement(readStmt);
 		bindIdentity(bs, id);
 		return session.executeAsync(bs);
 	}
 
-	public void readAll(ResultCallback<List<T>> callback)
+	public void readAllAsync(ResultCallback<List<T>> callback)
 	{
-		ResultSetFuture future = readAll();
+		ResultSetFuture future = _readAll();
 		Futures.addCallback(future,
 			new FutureCallback<ResultSet>()
 			{
@@ -128,7 +181,20 @@ extends AbstractObservable<T>
 		);
 	}
 
-	public ResultSetFuture readAll()
+	public List<T> readAll()
+	{
+		try
+        {
+	        ResultSet rs = _readAll().get();
+	        return marshalAll(rs);
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }
+	}
+
+	private ResultSetFuture _readAll()
 	{
 		BoundStatement bs = new BoundStatement(readAllStmt);
 		return session.executeAsync(bs);
