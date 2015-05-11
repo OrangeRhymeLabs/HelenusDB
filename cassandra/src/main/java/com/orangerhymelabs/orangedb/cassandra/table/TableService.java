@@ -5,6 +5,7 @@ import java.util.List;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
+import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 import com.strategicgains.syntaxe.ValidationEngine;
 
 public class TableService
@@ -19,42 +20,37 @@ public class TableService
 		this.tables = tableRepository;
 	}
 
-//	public Table create(Table entity)
-//	{
-//		if (!databases.exists(entity.database().getId()))
-//		{
-//			throw new ItemNotFoundException("Database not found: " + entity.database());
-//		}
-//
-//		ValidationEngine.validateAndThrow(entity);
-//		return tables.create(entity);
-//	}
-//
-//	public Table read(String database, String table)
-//	{
-//		Identifier id = new Identifier(database, table);
-//		Table t = tables.read(id);
-//
-//		if (t == null) throw new ItemNotFoundException("Table not found: " + id.toString());
-//
-//		return t;
-//	}
-//
-//	public List<Table> readAll(String database)
-//	{
-//		if (!databases.exists(new Identifier(database))) throw new ItemNotFoundException("Database not found: " + database);
-//
-//		return tables.readAll(database);
-//	}
-//
-//	public void update(Table entity)
-//    {
-//		ValidationEngine.validateAndThrow(entity);
-//		tables.update(entity);
-//    }
-//
-//	public void delete(Identifier id)
-//    {
-//		tables.delete(id);
-//    }
+	public void create(Table entity, ResultCallback<Table> callback)
+	{
+		if (!databases.exists(entity.database().getId()))
+		{
+			throw new ItemNotFoundException("Database not found: " + entity.database());
+		}
+
+		ValidationEngine.validateAndThrow(entity);
+		tables.createAsync(entity, callback);
+	}
+
+	public void read(String database, String table, ResultCallback<Table> callback)
+	{
+		tables.readAsync(new Identifier(database, table), callback);
+	}
+
+	public void readAll(String database, ResultCallback<List<Table>> callback)
+	{
+		if (!databases.exists(new Identifier(database))) throw new ItemNotFoundException("Database not found: " + database);
+
+		tables.readAllAsync(callback, database);
+	}
+
+	public void update(Table entity, ResultCallback<Table> callback)
+    {
+		ValidationEngine.validateAndThrow(entity);
+		tables.updateAsync(entity, callback);
+    }
+
+	public void delete(Identifier id, ResultCallback<Table> callback)
+    {
+		tables.deleteAsync(id, callback);
+    }
 }
