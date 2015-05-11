@@ -1,23 +1,18 @@
 package com.orangerhymelabs.orangedb.cassandra.document;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.bson.BSON;
 import org.bson.BSONObject;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
-import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class DocumentRepository
 extends AbstractCassandraRepository<Document>
@@ -57,35 +52,19 @@ extends AbstractCassandraRepository<Document>
 		static final String UPDATED_AT = "updated_at";
 	}
 
-	private static final String EXISTENCE_CQL = "select count(*) from %s where %s = ?";
-	private static final String READ_CQL = "select * from %s where %s = ?";
-	private static final String DELETE_CQL = "delete from %s where %s = ?";
-	private static final String UPDATE_CQL = "update %s set object = ?, updated_at = ? where %s = ?";
-	private static final String CREATE_CQL = "insert into %s (%s, object, created_at, updated_at) values (?, ?, ?, ?)";
+	private static final String READ_CQL = "select * from %s.%s where id = ?";
+	private static final String DELETE_CQL = "delete from %s.%s where id = ?";
+	private static final String UPDATE_CQL = "update %s set object = ?, updated_at = ? where id = ? if exists";
+	private static final String CREATE_CQL = "insert into %s.%s (id, object, created_at, updated_at) values (?, ?, ?, ?) if not exists";
 
-	public DocumentRepository(Session session, String keyspace)
+	private String table;
+
+	public DocumentRepository(Session session, String keyspace, String table)
 	{
 		super(session, keyspace);
+		this.table = table;
 		addObserver(new DocumentObserver());
-		addObserver(new StateChangeEventingObserver<Document>(
-		    new DocumentEventFactory()));
-	}
-
-	public boolean exists(Identifier identifier)
-	{
-		if (identifier == null || identifier.isEmpty())
-		{
-			return false;
-		}
-
-		Table table = extractTable(identifier);
-		Identifier id = extractId(identifier);
-		PreparedStatement existStmt = session().prepare(
-		        String.format(EXISTENCE_CQL, table.toDbTable(), Columns.ID));
-
-		BoundStatement bs = new BoundStatement(existStmt);
-		bindIdentity(bs, id);
-		return (session().execute(bs).one().getLong(0) > 0);
+		addObserver(new StateChangeEventingObserver<Document>(new DocumentEventFactory()));
 	}
 
 	@Override
@@ -103,28 +82,6 @@ extends AbstractCassandraRepository<Document>
 
 		bs.bind(ByteBuffer.wrap(BSON.encode(bson)), entity.updatedAt(),
 		    entity.getUuid());
-	}
-
-	private Identifier extractId(Identifier identifier)
-	{
-		// This includes the date/version on the end...
-		// List<Object> l = identifier.components().subList(2, 4);
-
-		// TODO: determine what to do with version here.
-		List<Object> l = identifier.components().subList(2, 3);
-		return new Identifier(l.toArray());
-	}
-
-	private Table extractTable(Identifier identifier)
-	{
-		Table t = new Table();
-		List<Object> l = identifier.components().subList(0, 2);// NOTE/TODO:
-															   // frequent
-															   // IndexOutOfBounds
-															   // here
-		t.database((String) l.get(0));
-		t.name((String) l.get(1));
-		return t;
 	}
 
 	@Override
@@ -178,35 +135,30 @@ extends AbstractCassandraRepository<Document>
 	@Override
     protected String buildCreateStatement()
     {
-	    // TODO Auto-generated method stub
-	    return null;
+	    return String.format(CREATE_CQL, keyspace(), table);
     }
 
 	@Override
     protected String buildUpdateStatement()
     {
-	    // TODO Auto-generated method stub
-	    return null;
+	    return String.format(UPDATE_CQL, keyspace(), table);
     }
 
 	@Override
     protected String buildReadStatement()
     {
-	    // TODO Auto-generated method stub
-	    return null;
+	    return String.format(READ_CQL, keyspace(), table);
     }
 
 	@Override
     protected String buildReadAllStatement()
     {
-	    // TODO Auto-generated method stub
 	    return null;
     }
 
 	@Override
     protected String buildDeleteStatement()
     {
-	    // TODO Auto-generated method stub
-	    return null;
+	    return String.format(DELETE_CQL, keyspace(), table);
     }
 }

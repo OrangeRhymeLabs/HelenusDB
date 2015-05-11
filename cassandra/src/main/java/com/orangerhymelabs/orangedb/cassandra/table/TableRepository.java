@@ -6,10 +6,15 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
+import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
+import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
+import com.orangerhymelabs.orangedb.exception.StorageException;
+import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class TableRepository
 extends AbstractCassandraRepository<Table>
@@ -70,10 +75,44 @@ extends AbstractCassandraRepository<Table>
 	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.SCHEMA + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
 
+	private static final  DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
+
 	public TableRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
 		addObserver(new StateChangeEventingObserver<Table>(new CollectionEventFactory()));
+	}
+
+	@Override
+	public void createAsync(Table table, ResultCallback<Table> callback)
+	{
+		try
+		{
+			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable());
+			super.createAsync(table, callback);
+		}
+		catch(AlreadyExistsException e)
+		{
+			callback.onFailure(new DuplicateItemException(e));
+		}
+		catch(Exception e)
+		{
+			callback.onFailure(new StorageException(e));
+		}
+	}
+
+	@Override
+	public Table create(Table table)
+	{
+		try
+		{
+			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable());
+			return super.create(table);
+		}
+		catch(AlreadyExistsException e)
+		{
+			throw new DuplicateItemException(e);
+		}
 	}
 
 	@Override

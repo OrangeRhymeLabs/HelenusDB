@@ -92,7 +92,7 @@ extends AbstractObservable<T>
 		}
 	}
 
-	private ResultSetFuture _create(T entity)
+	protected ResultSetFuture _create(T entity)
 	{
 		BoundStatement bs = new BoundStatement(createStmt);
 		bindCreate(bs, entity);

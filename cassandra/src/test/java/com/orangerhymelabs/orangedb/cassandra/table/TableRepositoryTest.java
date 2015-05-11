@@ -98,8 +98,8 @@ public class TableRepositoryTest
 	throws InterruptedException
 	{
 		Table entity = new Table();
-		entity.name("table2");
 		entity.database("db2");
+		entity.name("table2");
 		entity.description("another test table");
 		TestCallback<Table> callback = new TestCallback<Table>();
 
