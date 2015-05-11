@@ -30,9 +30,9 @@ extends AbstractCassandraRepository<Database>
 				"description text," +
 				"created_at timestamp," +
 				"updated_at timestamp," +
-				"primary key ((db_name), updated_at)" +
-			")" +
-			"with clustering order by (updated_at DESC)";
+				"primary key (db_name)" +
+			")";
+//			"with clustering order by (updated_at DESC)";
 
 		@Override
 		public boolean drop(Session session, String keyspace)
@@ -58,11 +58,11 @@ extends AbstractCassandraRepository<Database>
 	}
 
 	private static final String IDENTITY_CQL = " where db_name = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (db_name, description, created_at, updated_at) values (?, ?, ?, ?)";
-	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL + " limit 1";
+	private static final String CREATE_CQL = "insert into %s.%s (db_name, description, created_at, updated_at) values (?, ?, ?, ?) if not exists";
+	private static final String UPDATE_CQL = "update %s.%s set description = ?, updated_at = ?" + IDENTITY_CQL + " if exists";
+	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
-	private static final String FULL_IDENTITY_CQL = "select * from %s.%s where db_name = ? and updated_at = ?";
 
 	public DatabaseRepository(Session session, String keyspace)
 	{
@@ -79,7 +79,7 @@ extends AbstractCassandraRepository<Database>
 	@Override
 	protected String buildUpdateStatement()
 	{
-		return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
+		return String.format(UPDATE_CQL, keyspace(), Tables.BY_ID);
 	}
 
 	@Override
@@ -114,10 +114,9 @@ extends AbstractCassandraRepository<Database>
 	protected void bindUpdate(BoundStatement bs, Database entity)
 	{
 		entity.updatedAt(new Date());
-		bs.bind(entity.name(),
-			entity.description(),
-			entity.createdAt(),
-		    entity.updatedAt());
+		bs.bind(entity.description(),
+		    entity.updatedAt(),
+		    entity.name());
 	}
 
 	protected Database marshalRow(Row row)

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -16,6 +17,7 @@ import org.junit.Test;
 
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
+import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepositoryTest
@@ -76,8 +78,16 @@ public class DatabaseRepositoryTest
 		databases.delete(entity.getId());
 
 		// Re-Read
-		Database result3 = databases.read(entity.getId());
-		assertNull(result3);
+		try
+		{
+			databases.read(entity.getId());
+		}
+		catch (ItemNotFoundException e)
+		{
+			return;
+		}
+
+		fail("Database not deleted: " + entity.getId().toString());
 	}
 
 	@Test
@@ -91,15 +101,14 @@ public class DatabaseRepositoryTest
 
 		// Create
 		databases.createAsync(entity, callback);
-		waitOn(callback);
+		waitFor(callback);
 
 		assertNull(callback.throwable());
-//		assertEquals(entity, callback.database());
 
 		// Read
 		callback.clear();
 		databases.readAsync(entity.getId(), callback);
-		waitOn(callback);
+		waitFor(callback);
 
 		assertEquals(entity, callback.database());
 
@@ -107,15 +116,14 @@ public class DatabaseRepositoryTest
 		callback.clear();
 		entity.description("an updated test database");
 		databases.updateAsync(entity, callback);
-		waitOn(callback);
+		waitFor(callback);
 
 		assertNull(callback.throwable());
-//		assertEquals(entity, callback.database());
 
 		// Re-Read
 		callback.clear();
 		databases.readAsync(entity.getId(), callback);
-		waitOn(callback);
+		waitFor(callback);
 
 		Database result2 = callback.database();
 		assertEquals(entity, result2);
@@ -126,19 +134,20 @@ public class DatabaseRepositoryTest
 		// Delete
 		callback.clear();
 		databases.deleteAsync(entity.getId(), callback);
-		waitOn(callback);
+		waitFor(callback);
 
-		assertNull(callback.throwable());
+		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
 		databases.readAsync(entity.getId(), callback);
-		waitOn(callback);
+		waitFor(callback);
 		
-		assertTrue(callback.isEmpty());
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitOn(DatabaseCallback callback)
+	private void waitFor(DatabaseCallback callback)
 	throws InterruptedException
     {
 		synchronized(callback)

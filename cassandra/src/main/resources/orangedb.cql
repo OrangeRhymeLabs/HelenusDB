@@ -1,8 +1,8 @@
-drop keyspace if exists megadoc;
-create keyspace megadoc
+drop keyspace if exists orangedb;
+create keyspace orangedb
 with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 // with replication = { 'class' : 'NetworkTopologyStrategy', 'dc1' : 1 };
-use megadoc;
+use orangedb;
 
 drop table if exists sys_meta;
 create table sys_meta (
@@ -16,11 +16,13 @@ with clustering order by (updated_at DESC);
 
 drop table if exists sys_db;
 create table sys_db (
-	db_name text primary key,
+	db_name text,
 	description text,
 	created_at timestamp,
-	updated_at timestamp
-);
+	updated_at timestamp,
+	primary key ((db_name), updated_at)
+)
+with clustering order by (updated_at DESC);
 
 drop table if exists sys_tbl;
 create table sys_tbl (

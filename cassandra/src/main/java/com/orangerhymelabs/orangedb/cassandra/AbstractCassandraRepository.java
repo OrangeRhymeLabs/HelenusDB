@@ -14,6 +14,8 @@ import com.datastax.driver.core.Session;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
+import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
@@ -59,7 +61,28 @@ extends AbstractObservable<T>
 	public void createAsync(T entity, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _create(entity);
-		handleFuture(future, callback);
+	    Futures.addCallback(future,
+			new FutureCallback<ResultSet>()
+			{
+				@Override
+				public void onSuccess(ResultSet result)
+				{
+					if (!result.wasApplied())
+					{
+						callback.onFailure(new DuplicateItemException(entity.toString()));
+					}
+
+					callback.onSuccess(null);
+				}
+	
+				@Override
+				public void onFailure(Throwable t)
+				{
+					callback.onFailure(t);
+				}
+			},
+			MoreExecutors.sameThreadExecutor()
+		);
 	}
 
 	public T create(T entity)
@@ -85,7 +108,28 @@ extends AbstractObservable<T>
 	public void updateAsync(T entity, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _update(entity);
-		handleFuture(future, callback);
+	    Futures.addCallback(future,
+			new FutureCallback<ResultSet>()
+			{
+				@Override
+				public void onSuccess(ResultSet result)
+				{
+					if (!result.wasApplied())
+					{
+						callback.onFailure(new ItemNotFoundException(entity.toString()));
+					}
+
+					callback.onSuccess(null);
+				}
+	
+				@Override
+				public void onFailure(Throwable t)
+				{
+					callback.onFailure(t);
+				}
+			},
+			MoreExecutors.sameThreadExecutor()
+		);
 	}
 
 	public T update(T entity)
@@ -111,7 +155,28 @@ extends AbstractObservable<T>
 	public void deleteAsync(Identifier id, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _delete(id);
-		handleFuture(future, callback);
+	    Futures.addCallback(future,
+			new FutureCallback<ResultSet>()
+			{
+				@Override
+				public void onSuccess(ResultSet result)
+				{
+					if (!result.wasApplied())
+					{
+						callback.onFailure(new ItemNotFoundException(id.toString()));
+					}
+
+					callback.onSuccess(null);
+				}
+	
+				@Override
+				public void onFailure(Throwable t)
+				{
+					callback.onFailure(t);
+				}
+			},
+			MoreExecutors.sameThreadExecutor()
+		);
 	}
 
 	public void delete(Identifier id)
@@ -136,20 +201,47 @@ extends AbstractObservable<T>
 	public void readAsync(Identifier id, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _read(id);
-		handleFuture(future, callback);
+	    Futures.addCallback(future,
+			new FutureCallback<ResultSet>()
+			{
+				@Override
+				public void onSuccess(ResultSet result)
+				{
+					if (result.isExhausted())
+					{
+						callback.onFailure(new ItemNotFoundException(id.toString()));
+					}
+
+					callback.onSuccess(marshalRow(result.one()));
+				}
+	
+				@Override
+				public void onFailure(Throwable t)
+				{
+					callback.onFailure(t);
+				}
+			},
+			MoreExecutors.sameThreadExecutor()
+		);
 	}
 
 	public T read(Identifier id)
 	{
-        try
-        {
-        	ResultSet rs = _read(id).get();
-	        return marshalRow(rs.one());
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-        	throw new StorageException(e);
-        }
+		try
+		{
+			ResultSet rs = _read(id).get();
+
+			if (rs.isExhausted())
+			{
+				throw new ItemNotFoundException(id.toString());
+			}
+
+			return marshalRow(rs.one());
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
 	private ResultSetFuture _read(Identifier id)
@@ -210,7 +302,7 @@ extends AbstractObservable<T>
 		return keyspace;
 	}
 
-	protected void handleFuture(ResultSetFuture future, ResultCallback<T> callback)
+	protected void handleReadFuture(ResultSetFuture future, ResultCallback<T> callback)
     {
 	    Futures.addCallback(future,
 			new FutureCallback<ResultSet>()
@@ -219,6 +311,30 @@ extends AbstractObservable<T>
 				public void onSuccess(ResultSet result)
 				{
 					callback.onSuccess(marshalRow(result.one()));
+				}
+	
+				@Override
+				public void onFailure(Throwable t)
+				{
+					callback.onFailure(t);
+				}
+			},
+			MoreExecutors.sameThreadExecutor()
+		);
+    }
+
+	protected void handleWriteFuture(ResultSetFuture future, ResultCallback<T> callback)
+    {
+	    Futures.addCallback(future,
+			new FutureCallback<ResultSet>()
+			{
+				@Override
+				public void onSuccess(ResultSet result)
+				{
+					if (!result.wasApplied())
+					{
+						
+					}
 				}
 	
 				@Override
