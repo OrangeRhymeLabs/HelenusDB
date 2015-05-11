@@ -324,7 +324,7 @@ extends AbstractObservable<T>
 	protected abstract String buildReadAllStatement();
 	protected abstract String buildDeleteStatement();
 
-	private PreparedStatement prepare(String statement)
+	protected PreparedStatement prepare(String statement)
 	{
 		if (statement == null || statement.trim().isEmpty())
 		{
