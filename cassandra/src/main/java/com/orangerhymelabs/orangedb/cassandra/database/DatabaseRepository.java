@@ -3,6 +3,7 @@ package com.orangerhymelabs.orangedb.cassandra.database;
 import java.util.Date;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -10,6 +11,7 @@ import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class DatabaseRepository
 extends AbstractCassandraRepository<Database>
@@ -62,12 +64,23 @@ extends AbstractCassandraRepository<Database>
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
+	private static final String EXISTS_CQL = "select count(*) from %s.%s" + IDENTITY_CQL + " limit 1";
+
+	private PreparedStatement existsStmt;
 
 	public DatabaseRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
 		addObserver(new StateChangeEventingObserver<Database>(new DatabaseEventFactory()));
+		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
+
+	public boolean exists(Identifier id)
+    {
+		BoundStatement bs = new BoundStatement(existsStmt);
+		bindIdentity(bs, id);
+		return (session().execute(bs).one().getLong(0) > 0);
+    }
 
 	@Override
 	protected String buildCreateStatement()
