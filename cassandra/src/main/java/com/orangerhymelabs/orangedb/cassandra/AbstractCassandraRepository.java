@@ -49,53 +49,56 @@ extends AbstractObservable<T>
 		deleteStmt = prepare(buildDeleteStatement());
 	}
 
-//	public void exists(Identifier id, )
-//	{
-//		if (id == null || id.isEmpty()) return false;
-//
-//		BoundStatement bs = new BoundStatement(existStmt);
-//		bindIdentity(bs, id);
-//		return (getSession().execute(bs).one().getLong(0) > 0);
-//	}
+	// public void exists(Identifier id, )
+	// {
+	// if (id == null || id.isEmpty()) return false;
+	//
+	// BoundStatement bs = new BoundStatement(existStmt);
+	// bindIdentity(bs, id);
+	// return (getSession().execute(bs).one().getLong(0) > 0);
+	// }
 
 	public void createAsync(T entity, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _create(entity);
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
+				if (!result.wasApplied())
 				{
-					if (!result.wasApplied())
-					{
-						callback.onFailure(new DuplicateItemException(entity.toString()));
-					}
+					callback.onFailure(new DuplicateItemException(entity.toString()));
+				}
 
-					callback.onSuccess(null);
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
+				callback.onSuccess(null);
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
 	}
 
 	public T create(T entity)
 	{
 		try
-        {
-	        _create(entity).get();
-	        return entity;
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-        	throw new StorageException(e);
-        }		
+		{
+			ResultSet rs = _create(entity).get();
+
+			if (rs.wasApplied())
+			{
+				return entity;
+			}
+
+			throw new DuplicateItemException(entity.toString());
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
 	private ResultSetFuture _create(T entity)
@@ -108,41 +111,39 @@ extends AbstractObservable<T>
 	public void updateAsync(T entity, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _update(entity);
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
+				if (!result.wasApplied())
 				{
-					if (!result.wasApplied())
-					{
-						callback.onFailure(new ItemNotFoundException(entity.toString()));
-					}
+					callback.onFailure(new ItemNotFoundException(entity
+					    .toString()));
+				}
 
-					callback.onSuccess(null);
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
+				callback.onSuccess(null);
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
 	}
 
 	public T update(T entity)
 	{
 		try
-        {
-	        _update(entity).get();
-	        return entity;
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-        	throw new StorageException(e);
-        }		
+		{
+			_update(entity).get();
+			return entity;
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
 	private ResultSetFuture _update(T entity)
@@ -155,40 +156,37 @@ extends AbstractObservable<T>
 	public void deleteAsync(Identifier id, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _delete(id);
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
+				if (!result.wasApplied())
 				{
-					if (!result.wasApplied())
-					{
-						callback.onFailure(new ItemNotFoundException(id.toString()));
-					}
+					callback.onFailure(new ItemNotFoundException(id.toString()));
+				}
 
-					callback.onSuccess(null);
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
+				callback.onSuccess(null);
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
 	}
 
 	public void delete(Identifier id)
 	{
 		try
-        {
-	        _delete(id).get();
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-        	throw new StorageException(e);
-        }
+		{
+			_delete(id).get();
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
 	private ResultSetFuture _delete(Identifier id)
@@ -201,28 +199,25 @@ extends AbstractObservable<T>
 	public void readAsync(Identifier id, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _read(id);
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
+				if (result.isExhausted())
 				{
-					if (result.isExhausted())
-					{
-						callback.onFailure(new ItemNotFoundException(id.toString()));
-					}
+					callback.onFailure(new ItemNotFoundException(id.toString()));
+				}
 
-					callback.onSuccess(marshalRow(result.one()));
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
+				callback.onSuccess(marshalRow(result.one()));
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
 	}
 
 	public T read(Identifier id)
@@ -254,36 +249,33 @@ extends AbstractObservable<T>
 	public void readAllAsync(ResultCallback<List<T>> callback)
 	{
 		ResultSetFuture future = _readAll();
-		Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
-				{
-					callback.onSuccess(marshalAll(result));
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
+				callback.onSuccess(marshalAll(result));
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
 	}
 
 	public List<T> readAll()
 	{
 		try
-        {
-	        ResultSet rs = _readAll().get();
-	        return marshalAll(rs);
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-        	throw new StorageException(e);
-        }
+		{
+			ResultSet rs = _readAll().get();
+			return marshalAll(rs);
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
 	private ResultSetFuture _readAll()
@@ -302,50 +294,46 @@ extends AbstractObservable<T>
 		return keyspace;
 	}
 
-	protected void handleReadFuture(ResultSetFuture future, ResultCallback<T> callback)
-    {
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+	protected void handleReadFuture(ResultSetFuture future,
+	    ResultCallback<T> callback)
+	{
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
-				{
-					callback.onSuccess(marshalRow(result.one()));
-				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
-    }
+				callback.onSuccess(marshalRow(result.one()));
+			}
 
-	protected void handleWriteFuture(ResultSetFuture future, ResultCallback<T> callback)
-    {
-	    Futures.addCallback(future,
-			new FutureCallback<ResultSet>()
+			@Override
+			public void onFailure(Throwable t)
 			{
-				@Override
-				public void onSuccess(ResultSet result)
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
+	}
+
+	protected void handleWriteFuture(ResultSetFuture future,
+	    ResultCallback<T> callback)
+	{
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
+			{
+				if (!result.wasApplied())
 				{
-					if (!result.wasApplied())
-					{
-						
-					}
+
 				}
-	
-				@Override
-				public void onFailure(Throwable t)
-				{
-					callback.onFailure(t);
-				}
-			},
-			MoreExecutors.sameThreadExecutor()
-		);
-    }
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
+	}
 
 	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
@@ -370,14 +358,19 @@ extends AbstractObservable<T>
 	}
 
 	protected abstract T marshalRow(Row row);
+
 	protected abstract String buildCreateStatement();
+
 	protected abstract String buildUpdateStatement();
+
 	protected abstract String buildReadStatement();
+
 	protected abstract String buildReadAllStatement();
+
 	protected abstract String buildDeleteStatement();
 
 	private PreparedStatement prepare(String statement)
 	{
-		return session().prepare(statement);		
+		return session().prepare(statement);
 	}
 }

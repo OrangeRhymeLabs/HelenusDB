@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
+import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
@@ -46,7 +47,7 @@ public class DatabaseRepositoryTest
 	}
 
 	@Test
-	public void shouldCRUDDatabaseSyncronously()
+	public void shouldCRUDDatabaseSynchronously()
 	throws Exception
 	{
 		// Create
@@ -91,7 +92,7 @@ public class DatabaseRepositoryTest
 	}
 
 	@Test
-	public void shouldCreateDatabaseAsyncronously()
+	public void shouldCreateDatabaseAsynchronously()
 	throws InterruptedException
 	{
 		Database entity = new Database();
@@ -142,9 +143,43 @@ public class DatabaseRepositoryTest
 		callback.clear();
 		databases.readAsync(entity.getId(), callback);
 		waitFor(callback);
-		
+
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
+	}
+
+	@Test(expected=DuplicateItemException.class)
+	public void shouldThrowOnDuplicateDatabaseSynchronously()
+	{
+		// Create
+		Database entity = new Database();
+		entity.name("db3");
+		Database createResult = databases.create(entity);
+		assertEquals(entity, createResult);
+
+		databases.create(entity);
+	}
+
+	@Test
+	public void shouldThrowOnDuplicateDatabaseAynchronously()
+	throws InterruptedException
+	{
+		Database entity = new Database();
+		entity.name("db4");
+		DatabaseCallback callback = new DatabaseCallback();
+
+		// Create
+		databases.createAsync(entity, callback);
+		waitFor(callback);
+
+		assertTrue(callback.isEmpty());
+
+		// Create Duplicate
+		databases.createAsync(entity, callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof DuplicateItemException);
 	}
 
 	private void waitFor(DatabaseCallback callback)
