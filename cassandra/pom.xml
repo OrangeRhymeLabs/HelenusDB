@@ -71,13 +71,6 @@
 			<artifactId>cassandra-all</artifactId>
 			<version>2.1.5</version>
 			<scope>test</scope>
-			<!-- Exclude the old and problematic Snappy -->
-			<exclusions>
-				<exclusion>
-					<artifactId>snappy-java</artifactId>
-					<groupId>org.xerial.snappy</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.cassandraunit</groupId>
