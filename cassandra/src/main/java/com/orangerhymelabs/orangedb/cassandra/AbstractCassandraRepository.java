@@ -243,9 +243,9 @@ extends AbstractObservable<T>
 		return session.executeAsync(bs);
 	}
 
-	public void readAllAsync(ResultCallback<List<T>> callback)
+	public void readAllAsync(ResultCallback<List<T>> callback, Object... stuff)
 	{
-		ResultSetFuture future = _readAll();
+		ResultSetFuture future = _readAll(stuff);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
 		{
 			@Override
@@ -262,11 +262,11 @@ extends AbstractObservable<T>
 		}, MoreExecutors.sameThreadExecutor());
 	}
 
-	public List<T> readAll()
+	public List<T> readAll(Object... stuff)
 	{
 		try
 		{
-			ResultSet rs = _readAll().get();
+			ResultSet rs = _readAll(stuff).get();
 			return marshalAll(rs);
 		}
 		catch (InterruptedException | ExecutionException e)
@@ -275,9 +275,15 @@ extends AbstractObservable<T>
 		}
 	}
 
-	private ResultSetFuture _readAll()
+	private ResultSetFuture _readAll(Object... stuff)
 	{
 		BoundStatement bs = new BoundStatement(readAllStmt);
+
+		if (stuff != null)
+		{
+			bs.bind(stuff);
+		}
+
 		return session.executeAsync(bs);
 	}
 

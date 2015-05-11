@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
+import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 
 /**
  * A Singleton object to drop and/or (re)create the database schema in Cassandra.
@@ -47,6 +48,7 @@ public class SchemaRegistry
 	{
 		INSTANCE.register(new KeyspaceSchema());
 		INSTANCE.register(new DatabaseRepository.Schema());
+		INSTANCE.register(new TableRepository.Schema());
 	}
 
 	/**
