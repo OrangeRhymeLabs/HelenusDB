@@ -12,7 +12,7 @@ public class TableService
 {
 	private TableRepository tables;
 	private DatabaseRepository databases;
-	
+
 	public TableService(DatabaseRepository databaseRepository, TableRepository tableRepository)
 	{
 		super();
@@ -38,19 +38,22 @@ public class TableService
 
 	public void readAll(String database, ResultCallback<List<Table>> callback)
 	{
-		if (!databases.exists(new Identifier(database))) throw new ItemNotFoundException("Database not found: " + database);
+		if (!databases.exists(new Identifier(database)))
+		{
+			throw new ItemNotFoundException("Database not found: " + database);
+		}
 
 		tables.readAllAsync(callback, database);
 	}
 
 	public void update(Table entity, ResultCallback<Table> callback)
-    {
+	{
 		ValidationEngine.validateAndThrow(entity);
 		tables.updateAsync(entity, callback);
-    }
+	}
 
 	public void delete(Identifier id, ResultCallback<Table> callback)
-    {
+	{
 		tables.deleteAsync(id, callback);
-    }
+	}
 }
