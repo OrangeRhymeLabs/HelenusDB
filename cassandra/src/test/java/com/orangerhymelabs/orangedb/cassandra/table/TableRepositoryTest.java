@@ -17,10 +17,10 @@ import org.junit.Test;
 
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
+import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class TableRepositoryTest
 {
@@ -101,7 +101,7 @@ public class TableRepositoryTest
 		entity.name("table2");
 		entity.database("db2");
 		entity.description("another test table");
-		TableCallback callback = new TableCallback();
+		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
 		tables.createAsync(entity, callback);
@@ -114,7 +114,7 @@ public class TableRepositoryTest
 		tables.readAsync(entity.getId(), callback);
 		waitFor(callback);
 
-		assertEquals(entity, callback.table());
+		assertEquals(entity, callback.entity());
 
 		// Update
 		callback.clear();
@@ -129,7 +129,7 @@ public class TableRepositoryTest
 		tables.readAsync(entity.getId(), callback);
 		waitFor(callback);
 
-		Table result2 = callback.table();
+		Table result2 = callback.entity();
 		assertEquals(entity, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -171,7 +171,7 @@ public class TableRepositoryTest
 		Table entity = new Table();
 		entity.name("table4");
 		entity.database("db4");
-		TableCallback callback = new TableCallback();
+		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
 		tables.createAsync(entity, callback);
@@ -197,7 +197,7 @@ public class TableRepositoryTest
 	public void shouldThrowOnReadNonExistentAsynchronously()
 	throws InterruptedException
 	{
-		TableCallback callback = new TableCallback();
+		TestCallback<Table> callback = new TestCallback<Table>();
 		tables.readAsync(new Identifier("db6", "doesn't exist"), callback);
 		waitFor(callback);
 
@@ -218,7 +218,7 @@ public class TableRepositoryTest
 	public void shouldThrowOnUpdateNonExistentAsynchronously()
 	throws InterruptedException
 	{
-		TableCallback callback = new TableCallback();
+		TestCallback<Table> callback = new TestCallback<Table>();
 		Table entity = new Table();
 		entity.database("db8");
 		entity.name("doesn't exist");
@@ -229,7 +229,7 @@ public class TableRepositoryTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitFor(TableCallback callback)
+	private void waitFor(TestCallback<Table> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
@@ -237,51 +237,4 @@ public class TableRepositoryTest
 			callback.wait(CALLBACK_TIMEOUT);
 		}
     }
-
-	private class TableCallback
-	implements ResultCallback<Table>
-	{
-		private Table table;
-		private Throwable throwable;
-
-		@Override
-        public void onSuccess(Table result)
-        {
-			this.table = result;
-			alert();
-        }
-
-		@Override
-        public void onFailure(Throwable t)
-        {
-			this.throwable = t;
-			alert();
-        }
-
-		private synchronized void alert()
-		{
-			notifyAll();
-		}
-
-		public void clear()
-		{
-			this.table = null;
-			this.throwable = null;
-		}
-
-		public boolean isEmpty()
-		{
-			return (table == null && throwable == null);
-		}
-
-		public Table table()
-		{
-			return table;
-		}
-
-		public Throwable throwable()
-		{
-			return throwable;
-		}
-	}
 }

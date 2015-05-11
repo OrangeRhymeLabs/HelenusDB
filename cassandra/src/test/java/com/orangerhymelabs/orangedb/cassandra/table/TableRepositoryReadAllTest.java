@@ -1,6 +1,9 @@
 package com.orangerhymelabs.orangedb.cassandra.table;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,7 +16,7 @@ import org.junit.Test;
 
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
+import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 
 public class TableRepositoryReadAllTest
 {
@@ -61,12 +64,12 @@ public class TableRepositoryReadAllTest
 	private void shouldReturnEmptyListAsynchronously()
 	throws InterruptedException
     {
-		ReallAllCallback callback = new ReallAllCallback();
+		TestCallback<List<Table>> callback = new TestCallback<List<Table>>();
 		tables.readAllAsync(callback, "database1");
 		waitFor(callback);
 
 		assertFalse(callback.isEmpty());
-		assertTrue(callback.entities().isEmpty());
+		assertTrue(callback.entity().isEmpty());
     }
 
 	private void populateDatabase()
@@ -98,17 +101,17 @@ public class TableRepositoryReadAllTest
 	private void shouldReturnListAsynchronously()
 	throws InterruptedException
     {
-		ReallAllCallback callback = new ReallAllCallback();
+		TestCallback<List<Table>> callback = new TestCallback<List<Table>>();
 		tables.readAllAsync(callback, "database1");
 		waitFor(callback);
 
-		List<Table> entities = callback.entities();
+		List<Table> entities = callback.entity();
 		assertNotNull(entities);
 		assertFalse(entities.isEmpty());
 		assertEquals(4, entities.size());
     }
 
-	private void waitFor(ReallAllCallback callback)
+	private void waitFor(TestCallback<List<Table>> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
@@ -116,51 +119,4 @@ public class TableRepositoryReadAllTest
 			callback.wait(CALLBACK_TIMEOUT);
 		}
     }
-
-	private class ReallAllCallback
-	implements ResultCallback<List<Table>>
-	{
-		private List<Table> entities;
-		private Throwable throwable;
-
-		@Override
-        public void onSuccess(List<Table> result)
-        {
-			this.entities = result;
-			alert();
-        }
-
-		@Override
-        public void onFailure(Throwable t)
-        {
-			this.throwable = t;
-			alert();
-        }
-
-		private synchronized void alert()
-		{
-			notifyAll();
-		}
-
-		public void clear()
-		{
-			this.entities = null;
-			this.throwable = null;
-		}
-
-		public boolean isEmpty()
-		{
-			return (entities == null && throwable == null);
-		}
-
-		public List<Table> entities()
-		{
-			return entities;
-		}
-
-		public Throwable throwable()
-		{
-			return throwable;
-		}
-	}
 }

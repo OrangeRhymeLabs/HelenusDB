@@ -1,6 +1,9 @@
 package com.orangerhymelabs.orangedb.cassandra.database;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,7 +16,7 @@ import org.junit.Test;
 
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
+import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 
 public class DatabaseRepositoryReadAllTest
 {
@@ -61,12 +64,12 @@ public class DatabaseRepositoryReadAllTest
 	private void shouldReturnEmptyListAsynchronously()
 	throws InterruptedException
     {
-		DatabaseCallback callback = new DatabaseCallback();
+		TestCallback<List<Database>> callback = new TestCallback<List<Database>>();
 		databases.readAllAsync(callback);
 		waitFor(callback);
 
 		assertFalse(callback.isEmpty());
-		assertTrue(callback.databases().isEmpty());
+		assertTrue(callback.entity().isEmpty());
     }
 
 	private void populateDatabase()
@@ -93,17 +96,17 @@ public class DatabaseRepositoryReadAllTest
 	private void shouldReturnListAsynchronously()
 	throws InterruptedException
     {
-		DatabaseCallback callback = new DatabaseCallback();
+		TestCallback<List<Database>> callback = new TestCallback<List<Database>>();
 		databases.readAllAsync(callback);
 		waitFor(callback);
 
-		List<Database> dbs = callback.databases();
+		List<Database> dbs = callback.entity();
 		assertNotNull(dbs);
 		assertFalse(dbs.isEmpty());
 		assertEquals(4, dbs.size());
     }
 
-	private void waitFor(DatabaseCallback callback)
+	private void waitFor(TestCallback<List<Database>> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
@@ -111,51 +114,4 @@ public class DatabaseRepositoryReadAllTest
 			callback.wait(CALLBACK_TIMEOUT);
 		}
     }
-
-	private class DatabaseCallback
-	implements ResultCallback<List<Database>>
-	{
-		private List<Database> databases;
-		private Throwable throwable;
-
-		@Override
-        public void onSuccess(List<Database> result)
-        {
-			this.databases = result;
-			alert();
-        }
-
-		@Override
-        public void onFailure(Throwable t)
-        {
-			this.throwable = t;
-			alert();
-        }
-
-		private synchronized void alert()
-		{
-			notifyAll();
-		}
-
-		public void clear()
-		{
-			this.databases = null;
-			this.throwable = null;
-		}
-
-		public boolean isEmpty()
-		{
-			return (databases == null && throwable == null);
-		}
-
-		public List<Database> databases()
-		{
-			return databases;
-		}
-
-		public Throwable throwable()
-		{
-			return throwable;
-		}
-	}
 }

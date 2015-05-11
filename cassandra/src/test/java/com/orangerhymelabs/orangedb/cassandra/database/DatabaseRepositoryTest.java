@@ -17,10 +17,10 @@ import org.junit.Test;
 
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
+import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepositoryTest
 {
@@ -99,7 +99,7 @@ public class DatabaseRepositoryTest
 		Database entity = new Database();
 		entity.name("db2");
 		entity.description("another test database");
-		DatabaseCallback callback = new DatabaseCallback();
+		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
 		databases.createAsync(entity, callback);
@@ -112,7 +112,7 @@ public class DatabaseRepositoryTest
 		databases.readAsync(entity.getId(), callback);
 		waitFor(callback);
 
-		assertEquals(entity, callback.database());
+		assertEquals(entity, callback.entity());
 
 		// Update
 		callback.clear();
@@ -127,7 +127,7 @@ public class DatabaseRepositoryTest
 		databases.readAsync(entity.getId(), callback);
 		waitFor(callback);
 
-		Database result2 = callback.database();
+		Database result2 = callback.entity();
 		assertEquals(entity, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -167,7 +167,7 @@ public class DatabaseRepositoryTest
 	{
 		Database entity = new Database();
 		entity.name("db4");
-		DatabaseCallback callback = new DatabaseCallback();
+		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
 		databases.createAsync(entity, callback);
@@ -193,7 +193,7 @@ public class DatabaseRepositoryTest
 	public void shouldThrowOnReadNonExistentDatabaseAsynchronously()
 	throws InterruptedException
 	{
-		DatabaseCallback callback = new DatabaseCallback();
+		TestCallback<Database> callback = new TestCallback<Database>();
 		databases.readAsync(new Identifier("doesn't exist"), callback);
 		waitFor(callback);
 
@@ -213,7 +213,7 @@ public class DatabaseRepositoryTest
 	public void shouldThrowOnUpdateNonExistentDatabaseAsynchronously()
 	throws InterruptedException
 	{
-		DatabaseCallback callback = new DatabaseCallback();
+		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesn't exist");
 		databases.updateAsync(entity, callback);
@@ -223,7 +223,7 @@ public class DatabaseRepositoryTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitFor(DatabaseCallback callback)
+	private void waitFor(TestCallback<Database> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
@@ -231,51 +231,4 @@ public class DatabaseRepositoryTest
 			callback.wait(CALLBACK_TIMEOUT);
 		}
     }
-
-	private class DatabaseCallback
-	implements ResultCallback<Database>
-	{
-		private Database database;
-		private Throwable throwable;
-
-		@Override
-        public void onSuccess(Database result)
-        {
-			this.database = result;
-			alert();
-        }
-
-		@Override
-        public void onFailure(Throwable t)
-        {
-			this.throwable = t;
-			alert();
-        }
-
-		private synchronized void alert()
-		{
-			notifyAll();
-		}
-
-		public void clear()
-		{
-			this.database = null;
-			this.throwable = null;
-		}
-
-		public boolean isEmpty()
-		{
-			return (database == null && throwable == null);
-		}
-
-		public Database database()
-		{
-			return database;
-		}
-
-		public Throwable throwable()
-		{
-			return throwable;
-		}
-	}
 }
