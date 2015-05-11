@@ -32,7 +32,6 @@ extends AbstractCassandraRepository<Database>
 				"updated_at timestamp," +
 				"primary key (db_name)" +
 			")";
-//			"with clustering order by (updated_at DESC)";
 
 		@Override
 		public boolean drop(Session session, String keyspace)

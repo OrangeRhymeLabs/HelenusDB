@@ -137,8 +137,14 @@ extends AbstractObservable<T>
 	{
 		try
 		{
-			_update(entity).get();
-			return entity;
+			ResultSet rs = _update(entity).get();
+
+			if (rs.wasApplied())
+			{
+				return entity;
+			}
+
+			throw new ItemNotFoundException(entity.toString());
 		}
 		catch (InterruptedException | ExecutionException e)
 		{
@@ -371,6 +377,11 @@ extends AbstractObservable<T>
 
 	private PreparedStatement prepare(String statement)
 	{
+		if (statement == null || statement.trim().isEmpty())
+		{
+			return null;
+		}
+
 		return session().prepare(statement);
 	}
 }

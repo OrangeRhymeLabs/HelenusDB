@@ -184,17 +184,39 @@ public class DatabaseRepositoryTest
 	}
 
 	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnNonExistentDatabaseSynchronously()
+	public void shouldThrowOnReadNonExistentDatabaseSynchronously()
 	{
 		databases.read(new Identifier("doesn't exist"));
 	}
 
 	@Test
-	public void shouldThrowOnNonExistentDatabaseAsynchronously()
+	public void shouldThrowOnReadNonExistentDatabaseAsynchronously()
 	throws InterruptedException
 	{
 		DatabaseCallback callback = new DatabaseCallback();
 		databases.readAsync(new Identifier("doesn't exist"), callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof ItemNotFoundException);
+	}
+
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
+	{
+		Database entity = new Database();
+		entity.name("doesn't exist");
+		databases.update(entity);
+	}
+
+	@Test
+	public void shouldThrowOnUpdateNonExistentDatabaseAsynchronously()
+	throws InterruptedException
+	{
+		DatabaseCallback callback = new DatabaseCallback();
+		Database entity = new Database();
+		entity.name("doesn't exist");
+		databases.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
