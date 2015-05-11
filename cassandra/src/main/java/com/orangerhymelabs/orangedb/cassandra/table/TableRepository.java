@@ -22,8 +22,8 @@ extends AbstractCassandraRepository<Table>
 	public static class Schema
 	implements Schemaable
 	{
-		static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
-		static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
+		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
+		private static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
 			"(" +
 				"db_name text," +
 				"tbl_name text," +
@@ -63,12 +63,12 @@ extends AbstractCassandraRepository<Table>
 		static final String UPDATED_AT = "updated_at";
 	}
 
-	private static final String IDENTITY_CQL = " where db_name = ? and tbl_name = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (tbl_name, db_name, description, tbl_schema, tbl_type, tbl_ttl, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?) if not exists";
+	private static final String IDENTITY_CQL = " where " + Columns.DATABASE + " = ? and " + Columns.NAME + " = ?";
+	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.NAME + ", " + Columns.DATABASE + ", " + Columns.DESCRIPTION + ", " + Columns.SCHEMA + ", " + Columns.TYPE + ", " + Columns.TTL + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT +") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
-	private static final String UPDATE_CQL = "update %s.%s set description = ?, tbl_schema = ?, tbl_ttl = ?, updated_at = ?" + IDENTITY_CQL + " if exists";
-	private static final String READ_ALL_CQL = "select * from %s.%s where db_name = ?";
+	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.SCHEMA + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
+	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
 
 	public TableRepository(Session session, String keyspace)
 	{

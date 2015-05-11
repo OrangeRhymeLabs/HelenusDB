@@ -56,9 +56,9 @@ extends AbstractCassandraRepository<Database>
 		static final String UPDATED_AT = "updated_at";
 	}
 
-	private static final String IDENTITY_CQL = " where db_name = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (db_name, description, created_at, updated_at) values (?, ?, ?, ?) if not exists";
-	private static final String UPDATE_CQL = "update %s.%s set description = ?, updated_at = ?" + IDENTITY_CQL + " if exists";
+	private static final String IDENTITY_CQL = " where " + Columns.NAME + " = ?";
+	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists";
+	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;

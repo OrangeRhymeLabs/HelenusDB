@@ -8,28 +8,44 @@ import org.bson.BSONObject;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
+import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
-import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class DocumentRepository
 extends AbstractCassandraRepository<Document>
 {
-	private class Schema
+	public static class Schema
 	{
+		private static final String DROP_TABLE = "drop table if exists %s.%s;";
+		private static final String CREATE_TABLE = "create table %s.%s" +
+		"(" +
+			"id uuid," +
+		    "object blob," +
+			"created_at timestamp," +
+		    "updated_at timestamp," +
+			"primary key (id))";
+		// + "primary key ((id), updated_at))"
+		// + ") with clustering order by (updated_at DESC);";
 
-		static final String CREATE_TABLE = "create table %s"
-		    + " (id uuid, object blob, created_at timestamp, updated_at timestamp,"
-		    + " primary key (id))";// + " primary key ((id), updated_at))"
-		// + " with clustering order by (updated_at DESC);";
-		static final String DROP_TABLE = "drop table if exists %s;";
+        public boolean drop(Session session, String keyspace, String table)
+        {
+			ResultSet rs = session.execute(String.format(DROP_TABLE, keyspace, table));
+	        return rs.wasApplied();
+        }
+
+        public boolean create(Session session, String keyspace, String table)
+        {
+			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace, table));
+	        return rs.wasApplied();
+        }
 	}
 
 	private class Columns
@@ -53,20 +69,6 @@ extends AbstractCassandraRepository<Document>
 		addObserver(new DocumentObserver());
 		addObserver(new StateChangeEventingObserver<Document>(
 		    new DocumentEventFactory()));
-	}
-
-	@Override
-	public boolean dropSchema()
-	{
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean createSchema()
-	{
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	public boolean exists(Identifier identifier)
