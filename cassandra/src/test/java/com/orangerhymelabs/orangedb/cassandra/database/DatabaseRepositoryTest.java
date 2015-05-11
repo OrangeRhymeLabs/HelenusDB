@@ -19,6 +19,7 @@ import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepositoryTest
@@ -180,6 +181,24 @@ public class DatabaseRepositoryTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
+	}
+
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnNonExistentDatabaseSynchronously()
+	{
+		databases.read(new Identifier("doesn't exist"));
+	}
+
+	@Test
+	public void shouldThrowOnNonExistentDatabaseAsynchronously()
+	throws InterruptedException
+	{
+		DatabaseCallback callback = new DatabaseCallback();
+		databases.readAsync(new Identifier("doesn't exist"), callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
 	private void waitFor(DatabaseCallback callback)
