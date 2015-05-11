@@ -49,15 +49,6 @@ extends AbstractObservable<T>
 		deleteStmt = prepare(buildDeleteStatement());
 	}
 
-	// public void exists(Identifier id, )
-	// {
-	// if (id == null || id.isEmpty()) return false;
-	//
-	// BoundStatement bs = new BoundStatement(existStmt);
-	// bindIdentity(bs, id);
-	// return (getSession().execute(bs).one().getLong(0) > 0);
-	// }
-
 	public void createAsync(T entity, ResultCallback<T> callback)
 	{
 		ResultSetFuture future = _create(entity);
@@ -300,55 +291,10 @@ extends AbstractObservable<T>
 		return keyspace;
 	}
 
-	protected void handleReadFuture(ResultSetFuture future,
-	    ResultCallback<T> callback)
-	{
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
-		{
-			@Override
-			public void onSuccess(ResultSet result)
-			{
-				callback.onSuccess(marshalRow(result.one()));
-			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.sameThreadExecutor());
-	}
-
-	protected void handleWriteFuture(ResultSetFuture future,
-	    ResultCallback<T> callback)
-	{
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
-		{
-			@Override
-			public void onSuccess(ResultSet result)
-			{
-				if (!result.wasApplied())
-				{
-
-				}
-			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.sameThreadExecutor());
-	}
-
 	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
 		bs.bind(id.components().toArray());
 	}
-
-	protected abstract void bindCreate(BoundStatement bs, T entity);
-
-	protected abstract void bindUpdate(BoundStatement bs, T entity);
 
 	protected List<T> marshalAll(ResultSet rs)
 	{
@@ -363,16 +309,13 @@ extends AbstractObservable<T>
 		return dbs;
 	}
 
+	protected abstract void bindCreate(BoundStatement bs, T entity);
+	protected abstract void bindUpdate(BoundStatement bs, T entity);
 	protected abstract T marshalRow(Row row);
-
 	protected abstract String buildCreateStatement();
-
 	protected abstract String buildUpdateStatement();
-
 	protected abstract String buildReadStatement();
-
 	protected abstract String buildReadAllStatement();
-
 	protected abstract String buildDeleteStatement();
 
 	private PreparedStatement prepare(String statement)
