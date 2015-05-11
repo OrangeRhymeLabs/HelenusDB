@@ -7,6 +7,7 @@ import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 import com.strategicgains.syntaxe.ValidationEngine;
+import com.strategicgains.syntaxe.ValidationException;
 
 public class TableService
 {
@@ -22,13 +23,36 @@ public class TableService
 
 	public void create(Table entity, ResultCallback<Table> callback)
 	{
-		if (!databases.exists(entity.database().getId()))
-		{
-			throw new ItemNotFoundException("Database not found: " + entity.database());
-		}
+		databases.existsAsync(entity.database().getId(), new ResultCallback<Boolean>()
+			{
+				@Override
+                public void onSuccess(Boolean result)
+                {
+					if (result)
+					{
+						callback.onFailure(new ItemNotFoundException("Database not found: " + entity.database()));
+					}
+					else
+					{
+						try
+						{
+							ValidationEngine.validateAndThrow(entity);
+							tables.createAsync(entity, callback);
+						}
+						catch(ValidationException e)
+						{
+							callback.onFailure(e);
+						}
+					}
+                }
 
-		ValidationEngine.validateAndThrow(entity);
-		tables.createAsync(entity, callback);
+				@Override
+                public void onFailure(Throwable t)
+                {
+					callback.onFailure(t);
+                }
+			}
+		);
 	}
 
 	public void read(String database, String table, ResultCallback<Table> callback)
@@ -38,12 +62,28 @@ public class TableService
 
 	public void readAll(String database, ResultCallback<List<Table>> callback)
 	{
-		if (!databases.exists(new Identifier(database)))
-		{
-			throw new ItemNotFoundException("Database not found: " + database);
-		}
+		databases.existsAsync(new Identifier(database), new ResultCallback<Boolean>()
+			{
+				@Override
+                public void onSuccess(Boolean result)
+                {
+					if (!result)
+					{
+						callback.onFailure(new ItemNotFoundException("Database not found: " + database));
+					}
+					else
+					{
+						tables.readAllAsync(callback, database);
+					}
+                }
 
-		tables.readAllAsync(callback, database);
+				@Override
+                public void onFailure(Throwable t)
+                {
+					callback.onFailure(t);
+                }
+			}
+		);
 	}
 
 	public void update(Table entity, ResultCallback<Table> callback)
