@@ -1,6 +1,7 @@
 package com.orangerhymelabs.orangedb.cassandra.database;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -101,6 +102,13 @@ public class DatabaseRepositoryTest
 		entity.description("another test database");
 		TestCallback<Database> callback = new TestCallback<Database>();
 
+		// Shouldn't Exist
+		TestCallback<Boolean> existCallback = new TestCallback<Boolean>();
+		databases.existsAsync(entity.getId(), existCallback);
+		waitFor(existCallback);
+		assertNull(existCallback.throwable());
+		assertFalse(existCallback.entity());
+
 		// Create
 		databases.createAsync(entity, callback);
 		waitFor(callback);
@@ -113,6 +121,13 @@ public class DatabaseRepositoryTest
 		waitFor(callback);
 
 		assertEquals(entity, callback.entity());
+
+		// Should Also Exist
+		existCallback.clear();
+		databases.existsAsync(entity.getId(), existCallback);
+		waitFor(existCallback);
+		assertNull(existCallback.throwable());
+		assertTrue(existCallback.entity());
 
 		// Update
 		callback.clear();
@@ -223,7 +238,7 @@ public class DatabaseRepositoryTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitFor(TestCallback<Database> callback)
+	private void waitFor(TestCallback<?> callback)
 	throws InterruptedException
     {
 		synchronized(callback)

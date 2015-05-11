@@ -5,13 +5,18 @@ import java.util.Date;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
+import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepository
 extends AbstractCassandraRepository<Database>
@@ -75,11 +80,25 @@ extends AbstractCassandraRepository<Database>
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
 
-	public boolean exists(Identifier id)
+	public void existsAsync(Identifier id, ResultCallback<Boolean> callback)
     {
 		BoundStatement bs = new BoundStatement(existsStmt);
 		bindIdentity(bs, id);
-		return (session().execute(bs).one().getLong(0) > 0);
+		ResultSetFuture future = session().executeAsync(bs);
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
+			{
+				callback.onSuccess(result.one().getLong(0) > 0);
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
     }
 
 	@Override
