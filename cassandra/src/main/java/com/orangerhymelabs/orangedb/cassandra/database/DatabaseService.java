@@ -19,27 +19,27 @@ public class DatabaseService
 	public void create(Database entity, ResultCallback<Database> callback)
 	{
 		ValidationEngine.validateAndThrow(entity);
-		databases.create(entity, callback);
+		databases.createAsync(entity, callback);
 	}
 
 	public void read(String name, ResultCallback<Database> callback)
 	{
-		databases.read(new Identifier(name), callback);
+		databases.readAsync(new Identifier(name), callback);
 	}
 
 	public void readAll(ResultCallback<List<Database>> callback)
 	{
-		databases.readAll(callback);
+		databases.readAllAsync(callback);
 	}
 
 	public void update(Database entity, ResultCallback<Database> callback)
     {
 		ValidationEngine.validateAndThrow(entity);
-		databases.update(entity, callback);
+		databases.updateAsync(entity, callback);
     }
 
 	public void delete(String name, ResultCallback<Database> callback)
     {
-		databases.delete(new Identifier(name), callback);
+		databases.deleteAsync(new Identifier(name), callback);
     }
 }
