@@ -2,7 +2,6 @@ package com.orangerhymelabs.orangedb.cassandra.event;
 
 import com.orangerhymelabs.orangedb.persistence.ObservableState;
 import com.orangerhymelabs.orangedb.persistence.Observer;
-import com.strategicgains.eventing.DomainEvents;
 
 /**
  * @author toddf
@@ -45,6 +44,6 @@ implements Observer<T>
     {
 		if (event == null) return;
 
-		DomainEvents.publish(event);
+//		DomainEvents.publish(event);
     }
 }
