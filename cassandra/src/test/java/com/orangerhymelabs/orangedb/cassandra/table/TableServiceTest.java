@@ -26,6 +26,7 @@ import com.strategicgains.syntaxe.ValidationException;
 public class TableServiceTest
 {
 	private static final int CALLBACK_TIMEOUT = 2000;
+	private static final String DATABASE = "test_db";
 
 	private static KeyspaceSchema keyspace;
 	private static TableService tables;
@@ -45,7 +46,7 @@ public class TableServiceTest
 		tables = new TableService(databaseRepository, tableRepository);
 
 		Database db = new Database();
-		db.name("test_db");
+		db.name(DATABASE);
 		databaseRepository.create(db);
 	}
 
@@ -60,7 +61,7 @@ public class TableServiceTest
 	throws InterruptedException
 	{
 		Table entity = new Table();
-		entity.database("test_db");
+		entity.database(DATABASE);
 		entity.name("table2");
 		entity.description("another test table");
 		TestCallback<Table> callback = new TestCallback<Table>();
@@ -118,7 +119,7 @@ public class TableServiceTest
 	throws InterruptedException
 	{
 		Table entity = new Table();
-		entity.database("test_db");
+		entity.database(DATABASE);
 		entity.name("table4");
 		TestCallback<Table> callback = new TestCallback<Table>();
 
@@ -142,7 +143,7 @@ public class TableServiceTest
 	{
 		// Table doesn't exist
 		TestCallback<Table> callback = new TestCallback<Table>();
-		tables.read("test_db", "doesn't exist", callback);
+		tables.read(DATABASE, "doesn't exist", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -163,7 +164,7 @@ public class TableServiceTest
 	{
 		TestCallback<Table> callback = new TestCallback<Table>();
 		Table entity = new Table();
-		entity.database("test_db");
+		entity.database(DATABASE);
 		entity.name("doesnt_exist");
 		tables.update(entity, callback);
 		waitFor(callback);
