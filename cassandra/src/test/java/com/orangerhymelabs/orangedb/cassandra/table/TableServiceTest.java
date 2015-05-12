@@ -19,7 +19,6 @@ import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
-import com.orangerhymelabs.orangedb.cassandra.database.DatabaseService;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.strategicgains.syntaxe.ValidationException;
@@ -30,7 +29,6 @@ public class TableServiceTest
 
 	private static KeyspaceSchema keyspace;
 	private static TableService tables;
-	private static DatabaseService databases;
 
 	@BeforeClass
 	public static void beforeClass()
