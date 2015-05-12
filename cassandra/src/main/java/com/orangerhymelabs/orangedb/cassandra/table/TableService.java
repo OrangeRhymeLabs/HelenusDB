@@ -88,8 +88,15 @@ public class TableService
 
 	public void update(Table entity, ResultCallback<Table> callback)
 	{
-		ValidationEngine.validateAndThrow(entity);
-		tables.updateAsync(entity, callback);
+		try
+		{
+			ValidationEngine.validateAndThrow(entity);
+			tables.updateAsync(entity, callback);
+		}
+		catch(ValidationException e)
+		{
+			callback.onFailure(e);
+		}
 	}
 
 	public void delete(Identifier id, ResultCallback<Table> callback)
