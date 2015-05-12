@@ -28,7 +28,7 @@ public class TableService
 				@Override
                 public void onSuccess(Boolean result)
                 {
-					if (result)
+					if (!result)
 					{
 						callback.onFailure(new ItemNotFoundException("Database not found: " + entity.database()));
 					}
