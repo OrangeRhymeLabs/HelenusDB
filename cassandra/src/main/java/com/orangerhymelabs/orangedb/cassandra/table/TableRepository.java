@@ -14,6 +14,7 @@ import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class TableRepository
@@ -112,6 +113,31 @@ extends AbstractCassandraRepository<Table>
 		catch(AlreadyExistsException e)
 		{
 			throw new DuplicateItemException(e);
+		}
+	}
+
+	@Override
+	public void delete(Identifier id)
+	{
+		DOCUMENT_SCHEMA.drop(session(), keyspace(), table.toDbTable());
+		super.delete(id);
+	}
+
+	@Override
+	public void deleteAsync(Identifier id, ResultCallback<Table> callback)
+	{
+		try
+		{
+			DOCUMENT_SCHEMA.drop(session(), keyspace(), table.toDbTable());
+			super.deleteAsync(id, callback);
+		}
+		catch(AlreadyExistsException e)
+		{
+			callback.onFailure(new ItemNotFoundException(e));
+		}
+		catch(Exception e)
+		{
+			callback.onFailure(new StorageException(e));
 		}
 	}
 
