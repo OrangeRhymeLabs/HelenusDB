@@ -15,7 +15,7 @@ import java.util.List;
 public class Identifier
 //implements Comparable<Identifier>
 {
-//	private static final String SEPARATOR = ", ";
+	private static final String SEPARATOR = ", ";
 
 	private List<Object> components = new ArrayList<Object>();
 
@@ -177,13 +177,13 @@ public class Identifier
      * 
      * @return a string representation of the identifier.
      */
-//	@Override
-//	public String toString()
-//	{
-//		if (components.isEmpty()) return "";
-//
-//		return (components.size() == 1 ? primaryKey().toString() : "(" + StringUtils.join(SEPARATOR, components) + ")");
-//	}
+	@Override
+	public String toString()
+	{
+		if (components.isEmpty()) return "";
+
+		return (components.size() == 1 ? primaryKey().toString() : "(" + Identifier.toSeparatedString(this, SEPARATOR) + ")");
+	}
 
 	/**
 	 * Returns the first component of the identifier. Return null if the identifier is empty.
@@ -205,4 +205,27 @@ public class Identifier
     {
 	    return components.isEmpty();
     }
+
+	public static String toSeparatedString(Identifier id, String separator)
+	{
+		StringBuilder sb = new StringBuilder();
+		Iterator<Object> iter = id.iterator();
+		boolean isFirst = true;
+
+		while(iter.hasNext())
+		{
+			if (!isFirst)
+			{
+				sb.append(separator);
+			}
+			else
+			{
+				isFirst = false;
+			}
+
+			sb.append(iter.next().toString());
+		}
+
+		return sb.toString();
+	}
 }

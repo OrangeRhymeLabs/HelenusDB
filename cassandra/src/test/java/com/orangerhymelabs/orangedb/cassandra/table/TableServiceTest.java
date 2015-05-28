@@ -100,7 +100,7 @@ public class TableServiceTest
 
 		// Delete
 		callback.clear();
-		tables.delete(entity.getId(), callback);
+		tables.delete(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());

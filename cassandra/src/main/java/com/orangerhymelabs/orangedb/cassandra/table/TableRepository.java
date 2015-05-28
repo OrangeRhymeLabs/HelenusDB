@@ -13,6 +13,7 @@ import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
+import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.orangerhymelabs.orangedb.persistence.ResultCallback;
@@ -119,7 +120,7 @@ extends AbstractCassandraRepository<Table>
 	@Override
 	public void delete(Identifier id)
 	{
-		DOCUMENT_SCHEMA.drop(session(), keyspace(), table.toDbTable());
+		DOCUMENT_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
 		super.delete(id);
 	}
 
@@ -128,7 +129,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.drop(session(), keyspace(), table.toDbTable());
+			DOCUMENT_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
 			super.deleteAsync(id, callback);
 		}
 		catch(AlreadyExistsException e)

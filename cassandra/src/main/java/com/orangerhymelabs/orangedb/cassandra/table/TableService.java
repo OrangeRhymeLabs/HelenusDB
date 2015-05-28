@@ -99,8 +99,8 @@ public class TableService
 		}
 	}
 
-	public void delete(Identifier id, ResultCallback<Table> callback)
+	public void delete(String database, String table, ResultCallback<Table> callback)
 	{
-		tables.deleteAsync(id, callback);
+		tables.deleteAsync(new Identifier(database, table), callback);
 	}
 }

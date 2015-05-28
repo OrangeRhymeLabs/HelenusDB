@@ -1,7 +1,5 @@
 package com.orangerhymelabs.orangedb.cassandra.table;
 
-import java.util.Iterator;
-
 import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseReference;
@@ -132,25 +130,7 @@ extends AbstractEntity
 
 	public String toDbTable()
 	{
-		StringBuilder sb = new StringBuilder();
-		Iterator<Object> iter = getId().iterator();
-		boolean isFirst = true;
-
-		while(iter.hasNext())
-		{
-			if (!isFirst)
-			{
-				sb.append('_');
-			}
-			else
-			{
-				isFirst = false;
-			}
-
-			sb.append(iter.next().toString());
-		}
-
-		return sb.toString();
+		return Identifier.toSeparatedString(getId(), "_");
 	}
 
 	@Override
