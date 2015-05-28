@@ -15,7 +15,7 @@
 */
 package com.orangerhymelabs.orangedb.cassandra;
 
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
+import com.google.common.util.concurrent.FutureCallback;
 
 /**
  * @author toddf
@@ -23,7 +23,7 @@ import com.orangerhymelabs.orangedb.persistence.ResultCallback;
  */
 
 public class TestCallback<T>
-implements ResultCallback<T>
+implements FutureCallback<T>
 {
 	private T entity;
 	private Throwable throwable;

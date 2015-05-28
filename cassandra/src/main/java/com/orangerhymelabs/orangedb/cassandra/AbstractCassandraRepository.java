@@ -19,7 +19,6 @@ import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public abstract class AbstractCassandraRepository<T>
 extends AbstractObservable<T>
@@ -49,7 +48,7 @@ extends AbstractObservable<T>
 		deleteStmt = prepare(buildDeleteStatement());
 	}
 
-	public void createAsync(T entity, ResultCallback<T> callback)
+	public void createAsync(T entity, FutureCallback<T> callback)
 	{
 		ResultSetFuture future = _create(entity);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
@@ -99,7 +98,7 @@ extends AbstractObservable<T>
 		return session.executeAsync(bs);
 	}
 
-	public void updateAsync(T entity, ResultCallback<T> callback)
+	public void updateAsync(T entity, FutureCallback<T> callback)
 	{
 		ResultSetFuture future = _update(entity);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
@@ -150,7 +149,7 @@ extends AbstractObservable<T>
 		return session.executeAsync(bs);
 	}
 
-	public void deleteAsync(Identifier id, ResultCallback<T> callback)
+	public void deleteAsync(Identifier id, FutureCallback<T> callback)
 	{
 		ResultSetFuture future = _delete(id);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
@@ -193,7 +192,7 @@ extends AbstractObservable<T>
 		return session.executeAsync(bs);
 	}
 
-	public void readAsync(Identifier id, ResultCallback<T> callback)
+	public void readAsync(Identifier id, FutureCallback<T> callback)
 	{
 		ResultSetFuture future = _read(id);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
@@ -243,7 +242,7 @@ extends AbstractObservable<T>
 		return session.executeAsync(bs);
 	}
 
-	public void readAllAsync(ResultCallback<List<T>> callback, Object... parms)
+	public void readAllAsync(FutureCallback<List<T>> callback, Object... parms)
 	{
 		ResultSetFuture future = _readAll(parms);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()

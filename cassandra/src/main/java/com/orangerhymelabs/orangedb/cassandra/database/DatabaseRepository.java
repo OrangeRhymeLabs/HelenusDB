@@ -16,7 +16,6 @@ import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class DatabaseRepository
 extends AbstractCassandraRepository<Database>
@@ -80,7 +79,7 @@ extends AbstractCassandraRepository<Database>
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
 
-	public void existsAsync(Identifier id, ResultCallback<Boolean> callback)
+	public void existsAsync(Identifier id, FutureCallback<Boolean> callback)
     {
 		BoundStatement bs = new BoundStatement(existsStmt);
 		bindIdentity(bs, id);

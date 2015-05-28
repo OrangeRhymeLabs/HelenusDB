@@ -7,6 +7,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
@@ -16,7 +17,6 @@ import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ResultCallback;
 
 public class TableRepository
 extends AbstractCassandraRepository<Table>
@@ -86,7 +86,7 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	@Override
-	public void createAsync(Table table, ResultCallback<Table> callback)
+	public void createAsync(Table table, FutureCallback<Table> callback)
 	{
 		try
 		{
@@ -125,7 +125,7 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	@Override
-	public void deleteAsync(Identifier id, ResultCallback<Table> callback)
+	public void deleteAsync(Identifier id, FutureCallback<Table> callback)
 	{
 		try
 		{
