@@ -1,6 +1,7 @@
 package com.orangerhymelabs.orangedb.cassandra.database;
 
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -15,6 +16,7 @@ import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
+import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class DatabaseRepository
@@ -79,11 +81,23 @@ extends AbstractCassandraRepository<Database>
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
 
+	public boolean exists(Identifier id)
+	{
+		ResultSet rs;
+        try
+        {
+	        rs = _exists(id).get();
+	        return (rs.one().getLong(0) > 0);
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }
+	}
+
 	public void existsAsync(Identifier id, FutureCallback<Boolean> callback)
     {
-		BoundStatement bs = new BoundStatement(existsStmt);
-		bindIdentity(bs, id);
-		ResultSetFuture future = session().executeAsync(bs);
+		ResultSetFuture future = _exists(id);
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
 		{
 			@Override
@@ -99,6 +113,13 @@ extends AbstractCassandraRepository<Database>
 			}
 		}, MoreExecutors.sameThreadExecutor());
     }
+
+	private ResultSetFuture _exists(Identifier id)
+	{
+		BoundStatement bs = new BoundStatement(existsStmt);
+		bindIdentity(bs, id);
+		return session().executeAsync(bs);
+	}
 
 	@Override
 	protected String buildCreateStatement()
