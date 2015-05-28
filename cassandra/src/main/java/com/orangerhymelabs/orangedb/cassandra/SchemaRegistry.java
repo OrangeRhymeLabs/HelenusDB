@@ -32,6 +32,13 @@ public class SchemaRegistry
 {
 	private static final SchemaRegistry INSTANCE = new SchemaRegistry();
 
+	static
+	{
+		INSTANCE.register(new KeyspaceSchema());
+		INSTANCE.register(new DatabaseRepository.Schema());
+		INSTANCE.register(new TableRepository.Schema());
+	}
+
 	private List<Schemaable> schemas = new ArrayList<Schemaable>();
 
 	private SchemaRegistry()
@@ -42,13 +49,6 @@ public class SchemaRegistry
 	public static SchemaRegistry instance()
 	{
 		return INSTANCE;
-	}
-
-	public static void config(Session session, String keyspace)
-	{
-		INSTANCE.register(new KeyspaceSchema());
-		INSTANCE.register(new DatabaseRepository.Schema());
-		INSTANCE.register(new TableRepository.Schema());
 	}
 
 	/**
