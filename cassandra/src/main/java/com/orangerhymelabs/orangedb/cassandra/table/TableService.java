@@ -21,7 +21,18 @@ public class TableService
 		this.tables = tableRepository;
 	}
 
-	public void create(Table entity, FutureCallback<Table> callback)
+	public Table create(Table entity)
+	{
+		if (!databases.exists(entity.database().getId()))
+		{
+			throw new ItemNotFoundException("Database not found: " + entity.database());
+		}
+
+		ValidationEngine.validateAndThrow(entity);
+		return tables.create(entity);
+	}
+
+	public void createAsync(Table entity, FutureCallback<Table> callback)
 	{
 		databases.existsAsync(entity.database().getId(), new FutureCallback<Boolean>()
 			{
@@ -55,12 +66,28 @@ public class TableService
 		);
 	}
 
-	public void read(String database, String table, FutureCallback<Table> callback)
+	public Table read(String database, String table)
+	{
+		return tables.read(new Identifier(database, table));
+	}
+
+	public void readAsync(String database, String table, FutureCallback<Table> callback)
 	{
 		tables.readAsync(new Identifier(database, table), callback);
 	}
 
-	public void readAll(String database, FutureCallback<List<Table>> callback)
+	public List<Table> readAll(String database)
+	{
+		Identifier id = new Identifier(database);
+		if (!databases.exists(id))
+		{
+			throw new ItemNotFoundException("Database not found: " + database);
+		}
+
+		return tables.readAll(id);
+	}
+
+	public void readAllAsync(String database, FutureCallback<List<Table>> callback)
 	{
 		databases.existsAsync(new Identifier(database), new FutureCallback<Boolean>()
 			{
@@ -86,7 +113,13 @@ public class TableService
 		);
 	}
 
-	public void update(Table entity, FutureCallback<Table> callback)
+	public Table update(Table entity)
+	{
+		ValidationEngine.validateAndThrow(entity);
+		return tables.update(entity);
+	}
+
+	public void updateAsync(Table entity, FutureCallback<Table> callback)
 	{
 		try
 		{
@@ -99,7 +132,12 @@ public class TableService
 		}
 	}
 
-	public void delete(String database, String table, FutureCallback<Table> callback)
+	public void delete(String database, String table)
+	{
+		tables.delete(new Identifier(database, table));
+	}
+
+	public void deleteAsync(String database, String table, FutureCallback<Table> callback)
 	{
 		tables.deleteAsync(new Identifier(database, table), callback);
 	}

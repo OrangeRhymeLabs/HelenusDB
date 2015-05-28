@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -57,7 +58,53 @@ public class TableServiceTest
 	}
 
 	@Test
-	public void shouldCRUD()
+	public void shouldCRUDSynchronously()
+	throws Exception
+	{
+		// Create
+		Table entity = new Table();
+		entity.name("table1");
+		entity.database(DATABASE);
+		entity.description("a test table");
+		Table createResult = tables.create(entity);
+		assertEquals(entity, createResult);
+
+		// Read
+		Table result = tables.read(entity.databaseName(), entity.name());
+		assertEquals(entity, result);
+		assertNotNull(result.createdAt());
+		assertNotNull(result.updatedAt());
+
+		// Update
+		entity.description("an updated test table");
+		Table updateResult = tables.update(entity);
+		assertEquals(entity, updateResult);
+
+		// Re-Read
+		Table result2 = tables.read(entity.databaseName(), entity.name());
+		assertEquals(entity, result2);
+		assertNotEquals(result2.createdAt(), result2.updatedAt());
+		assertNotNull(result2.createdAt());
+		assertNotNull(result2.updatedAt());
+
+		// Delete
+		tables.delete(entity.databaseName(), entity.name());
+
+		// Re-Read
+		try
+		{
+			tables.read(entity.databaseName(), entity.name());
+		}
+		catch (ItemNotFoundException e)
+		{
+			return;
+		}
+
+		fail("Table not deleted: " + entity.getId().toString());
+	}
+
+	@Test
+	public void shouldCRUDAsync()
 	throws InterruptedException
 	{
 		Table entity = new Table();
@@ -67,14 +114,14 @@ public class TableServiceTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.create(entity, callback);
+		tables.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		tables.read(entity.databaseName(), entity.name(), callback);
+		tables.readAsync(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		assertEquals(entity, callback.entity());
@@ -82,14 +129,14 @@ public class TableServiceTest
 		// Update
 		callback.clear();
 		entity.description("an updated test table");
-		tables.update(entity, callback);
+		tables.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		tables.read(entity.databaseName(), entity.name(), callback);
+		tables.readAsync(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		Table result2 = callback.entity();
@@ -100,22 +147,35 @@ public class TableServiceTest
 
 		// Delete
 		callback.clear();
-		tables.delete(entity.databaseName(), entity.name(), callback);
+		tables.deleteAsync(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		tables.read(entity.databaseName(), entity.name(), callback);
+		tables.readAsync(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test(expected=DuplicateItemException.class)
+	public void shouldThrowOnDuplicateSynchronously()
+	{
+		// Create
+		Table entity = new Table();
+		entity.name("table3");
+		entity.database(DATABASE);
+		Table createResult = tables.create(entity);
+		assertEquals(entity, createResult);
+
+		tables.create(entity);
+	}
+
 	@Test
-	public void shouldThrowOnDuplicate()
+	public void shouldThrowOnDuplicateAsync()
 	throws InterruptedException
 	{
 		Table entity = new Table();
@@ -124,26 +184,38 @@ public class TableServiceTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.create(entity, callback);
+		tables.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Create Duplicate
-		tables.create(entity, callback);
+		tables.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
 	}
 
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnReadNonExistentTableSynchronously()
+	{
+		tables.read(DATABASE, "doesn't exist");
+	}
+
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnReadNonExistentDatabaseSynchronously()
+	{
+		tables.read("db9", "doesn't matter");
+	}
+
 	@Test
-	public void shouldThrowOnReadNonExistent()
+	public void shouldThrowOnReadNonExistentAsync()
 	throws InterruptedException
 	{
 		// Table doesn't exist
 		TestCallback<Table> callback = new TestCallback<Table>();
-		tables.read(DATABASE, "doesn't exist", callback);
+		tables.readAsync(DATABASE, "doesn't exist", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -151,22 +223,40 @@ public class TableServiceTest
 
 		// Database name doesn't exist
 		callback.clear();
-		tables.read("db9", "doesn't matter", callback);
+		tables.readAsync("db9", "doesn't matter", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnUpdateNonExistentTableSynchronously()
+	{
+		Table entity = new Table();
+		entity.database(DATABASE);
+		entity.name("doesnt_exist");
+		tables.update(entity);
+	}
+
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
+	{
+		Table entity = new Table();
+		entity.database("db9");
+		entity.name("doesnt_matter");
+		tables.update(entity);
+	}
+
 	@Test
-	public void shouldThrowOnUpdateNonExistent()
+	public void shouldThrowOnUpdateNonExistentAsync()
 	throws InterruptedException
 	{
 		TestCallback<Table> callback = new TestCallback<Table>();
 		Table entity = new Table();
 		entity.database(DATABASE);
 		entity.name("doesnt_exist");
-		tables.update(entity, callback);
+		tables.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -174,22 +264,55 @@ public class TableServiceTest
 
 		callback.clear();
 		entity.database("db9");
-		tables.update(entity, callback);
+		tables.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test(expected=ValidationException.class)
+	public void shouldThrowOnUpdateInvalidDatabaseSynchronously()
+	{
+		Table entity = new Table();
+		entity.database("invalid db 9");
+		entity.name("doesnt_matter");
+		tables.update(entity);
+	}
+
+	@Test(expected=ValidationException.class)
+	public void shouldThrowOnUpdateInvalidTableSynchronously()
+	{
+		Table entity = new Table();
+		entity.database(DATABASE);
+		entity.name("isn't valid");
+		tables.update(entity);
+	}
+
 	@Test
-	public void shouldThrowOnInvalidDatabaseName()
+	public void shouldThrowOnInvalidDatabaseNameAsync()
 	throws InterruptedException
 	{
 		TestCallback<Table> callback = new TestCallback<Table>();
 		Table entity = new Table();
 		entity.database("invalid db 8");
 		entity.name("doesnt_matter");
-		tables.update(entity, callback);
+		tables.updateAsync(entity, callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof ValidationException);
+	}
+
+	@Test
+	public void shouldThrowOnInvalidTableNameAsync()
+	throws InterruptedException
+	{
+		TestCallback<Table> callback = new TestCallback<Table>();
+		Table entity = new Table();
+		entity.database(DATABASE);
+		entity.name("isn't valid");
+		tables.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
