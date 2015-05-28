@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -48,7 +49,52 @@ public class DatabaseServiceTest
 	}
 
 	@Test
-	public void shouldCreateDatabase()
+	public void shouldCRUDDatabaseSync()
+	throws Exception
+	{
+		// Create
+		Database entity = new Database();
+		entity.name("db1");
+		entity.description("a test database");
+		Database createResult = databases.create(entity);
+		assertEquals(entity, createResult);
+
+		// Read
+		Database result = databases.read(entity.name());
+		assertEquals(entity, result);
+		assertNotNull(result.createdAt());
+		assertNotNull(result.updatedAt());
+
+		// Update
+		entity.description("an updated test database");
+		Database updateResult = databases.update(entity);
+		assertEquals(entity, updateResult);
+
+		// Re-Read
+		Database result2 = databases.read(entity.name());
+		assertEquals(entity, result2);
+		assertNotEquals(result2.createdAt(), result2.updatedAt());
+		assertNotNull(result2.createdAt());
+		assertNotNull(result2.updatedAt());
+
+		// Delete
+		databases.delete(entity.name());
+
+		// Re-Read
+		try
+		{
+			databases.read(entity.name());
+		}
+		catch (ItemNotFoundException e)
+		{
+			return;
+		}
+
+		fail("Database not deleted: " + entity.getId().toString());
+	}
+
+	@Test
+	public void shouldCRUDDatabaseAsync()
 	throws InterruptedException
 	{
 		Database entity = new Database();
@@ -57,14 +103,14 @@ public class DatabaseServiceTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
-		databases.create(entity, callback);
+		databases.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		databases.read(entity.name(), callback);
+		databases.readAsync(entity.name(), callback);
 		waitFor(callback);
 
 		assertEquals(entity, callback.entity());
@@ -72,14 +118,14 @@ public class DatabaseServiceTest
 		// Update
 		callback.clear();
 		entity.description("an updated test database");
-		databases.update(entity, callback);
+		databases.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		databases.read(entity.name(), callback);
+		databases.readAsync(entity.name(), callback);
 		waitFor(callback);
 
 		Database result2 = callback.entity();
@@ -90,22 +136,34 @@ public class DatabaseServiceTest
 
 		// Delete
 		callback.clear();
-		databases.delete(entity.name(), callback);
+		databases.deleteAsync(entity.name(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		databases.read(entity.name(), callback);
+		databases.readAsync(entity.name(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test(expected=DuplicateItemException.class)
+	public void shouldThrowOnDuplicateDatabaseSync()
+	{
+		// Create
+		Database entity = new Database();
+		entity.name("db3");
+		Database createResult = databases.create(entity);
+		assertEquals(entity, createResult);
+
+		databases.create(entity);
+	}
+
 	@Test
-	public void shouldThrowOnDuplicateDatabase()
+	public void shouldThrowOnDuplicateDatabaseAsync()
 	throws InterruptedException
 	{
 		Database entity = new Database();
@@ -113,13 +171,13 @@ public class DatabaseServiceTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
-		databases.create(entity, callback);
+		databases.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Create Duplicate
-		databases.create(entity, callback);
+		databases.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -127,39 +185,53 @@ public class DatabaseServiceTest
 	}
 
 	@Test
-	public void shouldThrowOnReadNonExistentDatabase()
+	public void shouldThrowOnReadNonExistentDatabaseAsync()
 	throws InterruptedException
 	{
 		TestCallback<Database> callback = new TestCallback<Database>();
-		databases.read("doesn't exist", callback);
+		databases.readAsync("doesn't exist", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnReadNonExistentDatabaseSync()
+	{
+		databases.read("doesn't exist");
+	}
+
 	@Test
-	public void shouldThrowOnUpdateNonExistentDatabase()
+	public void shouldThrowOnUpdateNonExistentDatabaseAsync()
 	throws InterruptedException
 	{
 		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesnt_exist");
-		databases.update(entity, callback);
+		databases.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test(expected=ItemNotFoundException.class)
+	public void shouldThrowOnUpdateNonExistentDatabaseSync()
+	{
+		Database entity = new Database();
+		entity.name("doesnt_exist");
+		databases.update(entity);
+	}
+
 	@Test
-	public void shouldThrowOnInvalidDatabaseName()
+	public void shouldThrowOnInvalidDatabaseNameAsync()
 	throws InterruptedException
 	{
 		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesn't exist");
-		databases.update(entity, callback);
+		databases.updateAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -167,11 +239,27 @@ public class DatabaseServiceTest
 
 		// Should be same for create.
 		callback.clear();
-		databases.create(entity, callback);
+		databases.createAsync(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ValidationException);
+	}
+
+	@Test(expected=ValidationException.class)
+	public void shouldThrowOnInvalidDatabaseNameUpdateSync()
+	{
+		Database entity = new Database();
+		entity.name("doesn't exist");
+		databases.update(entity);
+	}
+
+	@Test(expected=ValidationException.class)
+	public void shouldThrowOnInvalidDatabaseNameCreateSync()
+	{
+		Database entity = new Database();
+		entity.name("doesn't exist");
+		databases.create(entity);
 	}
 
 	private void waitFor(TestCallback<?> callback)

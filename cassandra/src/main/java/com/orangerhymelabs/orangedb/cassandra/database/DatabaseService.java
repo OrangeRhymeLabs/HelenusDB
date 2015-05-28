@@ -17,7 +17,13 @@ public class DatabaseService
 		this.databases = databaseRepository;
 	}
 
-	public void create(Database entity, FutureCallback<Database> callback)
+	public Database create(Database entity)
+	{
+		ValidationEngine.validateAndThrow(entity);
+		return databases.create(entity);
+	}
+
+	public void createAsync(Database entity, FutureCallback<Database> callback)
 	{
 		try
 		{
@@ -30,17 +36,33 @@ public class DatabaseService
 		}
 	}
 
-	public void read(String name, FutureCallback<Database> callback)
+	public Database read(String name)
+	{
+		return databases.read(new Identifier(name));		
+	}
+
+	public void readAsync(String name, FutureCallback<Database> callback)
 	{
 		databases.readAsync(new Identifier(name), callback);
 	}
 
-	public void readAll(FutureCallback<List<Database>> callback)
+	public List<Database> readAll()
+	{
+		return databases.readAll();
+	}
+
+	public void readAllAsync(FutureCallback<List<Database>> callback)
 	{
 		databases.readAllAsync(callback);
 	}
 
-	public void update(Database entity, FutureCallback<Database> callback)
+	public Database update(Database entity)
+	{
+		ValidationEngine.validateAndThrow(entity);
+		return databases.update(entity);
+	}
+
+	public void updateAsync(Database entity, FutureCallback<Database> callback)
     {
 		try
 		{
@@ -53,7 +75,12 @@ public class DatabaseService
 		}
     }
 
-	public void delete(String name, FutureCallback<Database> callback)
+	public void delete(String name)
+	{
+		databases.delete(new Identifier(name));
+	}
+
+	public void deleteAsync(String name, FutureCallback<Database> callback)
     {
 		databases.deleteAsync(new Identifier(name), callback);
     }
