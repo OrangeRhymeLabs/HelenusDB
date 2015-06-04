@@ -21,34 +21,34 @@ public class TableService
 		this.tables = tableRepository;
 	}
 
-	public Table create(Table entity)
+	public Table create(Table table)
 	{
-		if (!databases.exists(entity.database().getId()))
+		if (!databases.exists(table.database().getId()))
 		{
-			throw new ItemNotFoundException("Database not found: " + entity.database());
+			throw new ItemNotFoundException("Database not found: " + table.databaseName());
 		}
 
-		ValidationEngine.validateAndThrow(entity);
-		return tables.create(entity);
+		ValidationEngine.validateAndThrow(table);
+		return tables.create(table);
 	}
 
-	public void createAsync(Table entity, FutureCallback<Table> callback)
+	public void createAsync(Table table, FutureCallback<Table> callback)
 	{
-		databases.existsAsync(entity.database().getId(), new FutureCallback<Boolean>()
+		databases.existsAsync(table.database().getId(), new FutureCallback<Boolean>()
 			{
 				@Override
                 public void onSuccess(Boolean result)
                 {
 					if (!result)
 					{
-						callback.onFailure(new ItemNotFoundException("Database not found: " + entity.database()));
+						callback.onFailure(new ItemNotFoundException("Database not found: " + table.databaseName()));
 					}
 					else
 					{
 						try
 						{
-							ValidationEngine.validateAndThrow(entity);
-							tables.createAsync(entity, callback);
+							ValidationEngine.validateAndThrow(table);
+							tables.createAsync(table, callback);
 						}
 						catch(ValidationException e)
 						{
@@ -113,18 +113,18 @@ public class TableService
 		);
 	}
 
-	public Table update(Table entity)
+	public Table update(Table table)
 	{
-		ValidationEngine.validateAndThrow(entity);
-		return tables.update(entity);
+		ValidationEngine.validateAndThrow(table);
+		return tables.update(table);
 	}
 
-	public void updateAsync(Table entity, FutureCallback<Table> callback)
+	public void updateAsync(Table table, FutureCallback<Table> callback)
 	{
 		try
 		{
-			ValidationEngine.validateAndThrow(entity);
-			tables.updateAsync(entity, callback);
+			ValidationEngine.validateAndThrow(table);
+			tables.updateAsync(table, callback);
 		}
 		catch(ValidationException e)
 		{
