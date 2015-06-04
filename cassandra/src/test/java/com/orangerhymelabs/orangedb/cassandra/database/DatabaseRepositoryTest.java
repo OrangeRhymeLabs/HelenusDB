@@ -53,111 +53,111 @@ public class DatabaseRepositoryTest
 	throws Exception
 	{
 		// Create
-		Database entity = new Database();
-		entity.name("db1");
-		entity.description("a test database");
-		Database createResult = databases.create(entity);
-		assertEquals(entity, createResult);
+		Database db = new Database();
+		db.name("db1");
+		db.description("a test database");
+		Database createResult = databases.create(db);
+		assertEquals(db, createResult);
 
 		// Read
-		Database result = databases.read(entity.getId());
-		assertEquals(entity, result);
+		Database result = databases.read(db.getId());
+		assertEquals(db, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
-		entity.description("an updated test database");
-		Database updateResult = databases.update(entity);
-		assertEquals(entity, updateResult);
+		db.description("an updated test database");
+		Database updateResult = databases.update(db);
+		assertEquals(db, updateResult);
 
 		// Re-Read
-		Database result2 = databases.read(entity.getId());
-		assertEquals(entity, result2);
+		Database result2 = databases.read(db.getId());
+		assertEquals(db, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		databases.delete(entity.getId());
+		databases.delete(db.getId());
 
 		// Re-Read
 		try
 		{
-			databases.read(entity.getId());
+			databases.read(db.getId());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Database not deleted: " + entity.getId().toString());
+		fail("Database not deleted: " + db.getId().toString());
 	}
 
 	@Test
 	public void shouldCreateDatabaseAsynchronously()
 	throws InterruptedException
 	{
-		Database entity = new Database();
-		entity.name("db2");
-		entity.description("another test database");
+		Database db = new Database();
+		db.name("db2");
+		db.description("another test database");
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Shouldn't Exist
 		TestCallback<Boolean> existCallback = new TestCallback<Boolean>();
-		databases.existsAsync(entity.getId(), existCallback);
+		databases.existsAsync(db.getId(), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertFalse(existCallback.entity());
 
 		// Create
-		databases.createAsync(entity, callback);
+		databases.createAsync(db, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		databases.readAsync(entity.getId(), callback);
+		databases.readAsync(db.getId(), callback);
 		waitFor(callback);
 
-		assertEquals(entity, callback.entity());
+		assertEquals(db, callback.entity());
 
 		// Should Also Exist
 		existCallback.clear();
-		databases.existsAsync(entity.getId(), existCallback);
+		databases.existsAsync(db.getId(), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertTrue(existCallback.entity());
 
 		// Update
 		callback.clear();
-		entity.description("an updated test database");
-		databases.updateAsync(entity, callback);
+		db.description("an updated test database");
+		databases.updateAsync(db, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(entity.getId(), callback);
+		databases.readAsync(db.getId(), callback);
 		waitFor(callback);
 
 		Database result2 = callback.entity();
-		assertEquals(entity, result2);
+		assertEquals(db, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
 		callback.clear();
-		databases.deleteAsync(entity.getId(), callback);
+		databases.deleteAsync(db.getId(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(entity.getId(), callback);
+		databases.readAsync(db.getId(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
