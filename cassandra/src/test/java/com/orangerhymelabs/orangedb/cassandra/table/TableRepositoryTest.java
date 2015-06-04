@@ -1,6 +1,7 @@
 package com.orangerhymelabs.orangedb.cassandra.table;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -15,6 +16,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.datastax.driver.core.ResultSet;
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;
@@ -52,99 +54,111 @@ public class TableRepositoryTest
 	throws Exception
 	{
 		// Create
-		Table entity = new Table();
-		entity.name("table1");
-		entity.database("db1");
-		entity.description("a test table");
-		Table createResult = tables.create(entity);
-		assertEquals(entity, createResult);
+		Table table = new Table();
+		table.name("table1");
+		table.database("db1");
+		table.description("a test table");
+		Table createResult = tables.create(table);
+		assertEquals(table, createResult);
+
+		// Document table should exist.
+		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
 
 		// Read
-		Table result = tables.read(entity.getId());
-		assertEquals(entity, result);
+		Table result = tables.read(table.getId());
+		assertEquals(table, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
-		entity.description("an updated test table");
-		Table updateResult = tables.update(entity);
-		assertEquals(entity, updateResult);
+		table.description("an updated test table");
+		Table updateResult = tables.update(table);
+		assertEquals(table, updateResult);
 
 		// Re-Read
-		Table result2 = tables.read(entity.getId());
-		assertEquals(entity, result2);
+		Table result2 = tables.read(table.getId());
+		assertEquals(table, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		tables.delete(entity.getId());
+		tables.delete(table.getId());
 
-		// Re-Read
+		// Document table should no longer exist.
+		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
+
+		// Re-Read table
 		try
 		{
-			tables.read(entity.getId());
+			tables.read(table.getId());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Table not deleted: " + entity.getId().toString());
+		fail("Table not deleted: " + table.getId().toString());
 	}
 
 	@Test
-	public void shouldCreateAsynchronously()
+	public void shouldCRUDAsynchronously()
 	throws InterruptedException
 	{
-		Table entity = new Table();
-		entity.database("db2");
-		entity.name("table2");
-		entity.description("another test table");
+		Table table = new Table();
+		table.database("db2");
+		table.name("table2");
+		table.description("another test table");
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.createAsync(entity, callback);
+		tables.createAsync(table, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
+		// Document table should exist.
+		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
+
 		// Read
 		callback.clear();
-		tables.readAsync(entity.getId(), callback);
+		tables.readAsync(table.getId(), callback);
 		waitFor(callback);
 
-		assertEquals(entity, callback.entity());
+		assertEquals(table, callback.entity());
 
 		// Update
 		callback.clear();
-		entity.description("an updated test table");
-		tables.updateAsync(entity, callback);
+		table.description("an updated test table");
+		tables.updateAsync(table, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(entity.getId(), callback);
+		tables.readAsync(table.getId(), callback);
 		waitFor(callback);
 
 		Table result2 = callback.entity();
-		assertEquals(entity, result2);
+		assertEquals(table, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
 		callback.clear();
-		tables.deleteAsync(entity.getId(), callback);
+		tables.deleteAsync(table.getId(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
+		// Document table should no longer exist.
+		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
+
 		// Re-Read
 		callback.clear();
-		tables.readAsync(entity.getId(), callback);
+		tables.readAsync(table.getId(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -155,32 +169,32 @@ public class TableRepositoryTest
 	public void shouldThrowOnDuplicateSynchronously()
 	{
 		// Create
-		Table entity = new Table();
-		entity.name("table3");
-		entity.database("db3");
-		Table createResult = tables.create(entity);
-		assertEquals(entity, createResult);
+		Table table = new Table();
+		table.name("table3");
+		table.database("db3");
+		Table createResult = tables.create(table);
+		assertEquals(table, createResult);
 
-		tables.create(entity);
+		tables.create(table);
 	}
 
 	@Test
 	public void shouldThrowOnDuplicateAynchronously()
 	throws InterruptedException
 	{
-		Table entity = new Table();
-		entity.name("table4");
-		entity.database("db4");
+		Table table = new Table();
+		table.name("table4");
+		table.database("db4");
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.createAsync(entity, callback);
+		tables.createAsync(table, callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Create Duplicate
-		tables.createAsync(entity, callback);
+		tables.createAsync(table, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -208,10 +222,10 @@ public class TableRepositoryTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentSynchronously()
 	{
-		Table entity = new Table();
-		entity.database("db7");
-		entity.name("doesn't exist");
-		tables.update(entity);
+		Table table = new Table();
+		table.database("db7");
+		table.name("doesn't exist");
+		tables.update(table);
 	}
 
 	@Test
@@ -219,10 +233,10 @@ public class TableRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Table> callback = new TestCallback<Table>();
-		Table entity = new Table();
-		entity.database("db8");
-		entity.name("doesn't exist");
-		tables.updateAsync(entity, callback);
+		Table table = new Table();
+		table.database("db8");
+		table.name("doesn't exist");
+		tables.updateAsync(table, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -236,5 +250,11 @@ public class TableRepositoryTest
 		{
 			callback.wait(CALLBACK_TIMEOUT);
 		}
+    }
+
+	private boolean tableExists(String tableName)
+    {
+	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
+		return (rs.one().getLong(0) > 0);
     }
 }
