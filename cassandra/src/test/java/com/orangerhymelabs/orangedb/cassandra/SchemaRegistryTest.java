@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 
 public class SchemaRegistryTest
 {
@@ -33,25 +32,24 @@ public class SchemaRegistryTest
 	public void keyspaceShouldExist()
 	{
 		ResultSet rs = CassandraManager.session().execute(String.format("SELECT count(*) FROM system.schema_keyspaces where keyspace_name='%s'", CassandraManager.keyspace()));
-		Row row = rs.one();
-		assertTrue(row.getLong(0) > 0);
+		assertTrue("Keyspace not created: " + CassandraManager.keyspace(), rs.one().getLong(0) > 0);
 	}
 
 	@Test
 	public void databaseTableShouldExist()
 	{
-		String tableName = "sys_db";
-		ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
-		Row row = rs.one();
-		assertTrue(row.getLong(0) > 0);
+		assertTrue("Table not created: sys_db", tableExists("sys_db"));
 	}
 
 	@Test
 	public void tableTableShouldExist()
 	{
-		String tableName = "sys_tbl";
-		ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
-		Row row = rs.one();
-		assertTrue(row.getLong(0) > 0);
+		assertTrue("Table not created: sys_tbl", tableExists("sys_tbl"));
 	}
+
+	private boolean tableExists(String tableName)
+    {
+	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
+		return (rs.one().getLong(0) > 0);
+    }
 }
