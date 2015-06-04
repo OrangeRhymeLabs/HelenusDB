@@ -17,18 +17,18 @@ public class DatabaseService
 		this.databases = databaseRepository;
 	}
 
-	public Database create(Database entity)
+	public Database create(Database database)
 	{
-		ValidationEngine.validateAndThrow(entity);
-		return databases.create(entity);
+		ValidationEngine.validateAndThrow(database);
+		return databases.create(database);
 	}
 
-	public void createAsync(Database entity, FutureCallback<Database> callback)
+	public void createAsync(Database database, FutureCallback<Database> callback)
 	{
 		try
 		{
-			ValidationEngine.validateAndThrow(entity);
-			databases.createAsync(entity, callback);
+			ValidationEngine.validateAndThrow(database);
+			databases.createAsync(database, callback);
 		}
 		catch(ValidationException e)
 		{
@@ -56,18 +56,18 @@ public class DatabaseService
 		databases.readAllAsync(callback);
 	}
 
-	public Database update(Database entity)
+	public Database update(Database database)
 	{
-		ValidationEngine.validateAndThrow(entity);
-		return databases.update(entity);
+		ValidationEngine.validateAndThrow(database);
+		return databases.update(database);
 	}
 
-	public void updateAsync(Database entity, FutureCallback<Database> callback)
+	public void updateAsync(Database database, FutureCallback<Database> callback)
     {
 		try
 		{
-			ValidationEngine.validateAndThrow(entity);
-			databases.updateAsync(entity, callback);
+			ValidationEngine.validateAndThrow(database);
+			databases.updateAsync(database, callback);
 		}
 		catch(ValidationException e)
 		{
