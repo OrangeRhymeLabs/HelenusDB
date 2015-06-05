@@ -302,6 +302,107 @@ extends AbstractObservable<T>
 		return session.executeAsync(bs);
 	}
 
+	/**
+	 * Read all given identifiers.
+	 * 
+	 * Leverages the token-awareness of the driver to optimally query each node directly instead of invoking a
+	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
+	 * directly and collates the results client-side.
+	 * 
+	 * Note that the callback is not called with a single List of results. Instead it is called once for each
+	 * Identifier provided in the call, whether successful or failed. 
+	 * 
+	 * @param callback a FutureCallback to notify for each ID in the ids array.
+	 * @param ids the partition keys (identifiers) to select.
+	 */
+	public void readInAsync(FutureCallback<T> callback, Identifier... ids)
+	{
+		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
+
+		for (ListenableFuture<ResultSet> future : futures)
+		{
+			Futures.addCallback(future,  new FutureCallback<ResultSet>()
+				{
+					@Override
+					public void onSuccess(ResultSet result)
+					{
+						if (!result.isExhausted())
+						{
+							callback.onSuccess(marshalRow(result.one()));
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable t)
+					{
+						callback.onFailure(t);
+					}
+				}, MoreExecutors.sameThreadExecutor()
+			);
+		}
+	}
+
+	/**
+	 * Read all given identifiers, returning them as a List. No order is guaranteed in the resulting list.
+	 * 
+	 * Leverages the token-awareness of the driver to optimally query each node directly instead of invoking a
+	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
+	 * directly and collates the results client-side.
+	 * 
+	 * @param ids the partition keys (identifiers) to select.
+	 * @return a list of entities identified by the identifiers given in the 'ids' parameter.
+	 */
+	public List<T> readIn(Identifier... ids)
+	{
+		if (ids == null) return Collections.emptyList();
+
+		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
+		List<T> results = new ArrayList<T>(futures.size());
+
+		try
+		{
+			for (ListenableFuture<ResultSet> future : futures)
+			{
+				ResultSet rs = future.get();
+
+				if (!rs.isExhausted())
+				{
+					results.add(marshalRow(rs.one()));
+				}
+			}
+
+			return results;
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
+	}
+
+	/**
+	 * Leverages the token-awareness of the driver to optimally query each node directly instead of invoking a
+	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
+	 * directly and collates the results client-side.
+	 * 
+	 * @param ids the partition keys (identifiers) to select.
+	 * @return a List of ListenableFuture instances for each underlying ResultSet--one for each ID.
+	 */
+	private List<ListenableFuture<ResultSet>> _readIn(Identifier... ids)
+	{
+		if (ids == null) return null;
+
+		List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>(ids.length);
+		BoundStatement bs = new BoundStatement(readStmt);
+
+		for (Identifier id : ids)
+		{
+			bindIdentity(bs, id);
+			futures.add(session.executeAsync(bs));
+		}
+
+		return Futures.inCompletionOrder(futures);
+	}
+
 	public Session session()
 	{
 		return session;
