@@ -11,9 +11,6 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
-import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
-import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class DocumentRepository
 extends AbstractCassandraRepository<Document>
@@ -27,9 +24,9 @@ extends AbstractCassandraRepository<Document>
 		    "object blob," +
 			"created_at timestamp," +
 		    "updated_at timestamp," +
-			"primary key (id))";
-		// + "primary key ((id), updated_at))"
-		// + ") with clustering order by (updated_at DESC);";
+//			"primary key (id))" +
+		 	"primary key ((id), updated_at)" +
+		 ") with clustering order by (updated_at DESC);";
 
         public boolean drop(Session session, String keyspace, String table)
         {
@@ -64,7 +61,6 @@ extends AbstractCassandraRepository<Document>
 	{
 		super(session, keyspace);
 		this.table = table;
-		addObserver(new StateChangeEventingObserver(new DocumentEventFactory()));
 	}
 
 	@Override
@@ -107,29 +103,6 @@ extends AbstractCassandraRepository<Document>
 		d.createdAt(row.getDate(Columns.CREATED_AT));
 		d.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return d;
-	}
-
-	private class DocumentEventFactory
-	implements EventFactory
-	{
-
-		@Override
-		public Object newCreatedEvent(Object object)
-		{
-			return new DocumentCreatedEvent((Document) object);
-		}
-
-		@Override
-		public Object newUpdatedEvent(Object object)
-		{
-			return new DocumentUpdatedEvent((Document) object);
-		}
-
-		@Override
-		public Object newDeletedEvent(Object object)
-		{
-			return new DocumentDeletedEvent((Identifier) object);
-		}
 	}
 
 	@Override

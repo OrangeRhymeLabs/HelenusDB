@@ -11,8 +11,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
-import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
-import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
@@ -82,7 +80,6 @@ extends AbstractCassandraRepository<Table>
 	public TableRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
-		addObserver(new StateChangeEventingObserver(new CollectionEventFactory()));
 	}
 
 	@Override
@@ -184,28 +181,6 @@ extends AbstractCassandraRepository<Table>
 		c.createdAt(row.getDate(Columns.CREATED_AT));
 		c.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return c;
-	}
-
-	private class CollectionEventFactory
-	implements EventFactory
-	{
-		@Override
-		public Object newCreatedEvent(Object object)
-		{
-			return new TableCreatedEvent((Table) object);
-		}
-
-		@Override
-		public Object newUpdatedEvent(Object object)
-		{
-			return new TableUpdatedEvent((Table) object);
-		}
-
-		@Override
-		public Object newDeletedEvent(Object object)
-		{
-			return new TableDeletedEvent((Identifier) object);
-		}
 	}
 
 	@Override

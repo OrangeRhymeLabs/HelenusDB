@@ -19,12 +19,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
-import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
-import com.orangerhymelabs.orangedb.persistence.ObservableState;
 
 public abstract class AbstractCassandraRepository<T>
-extends AbstractObservable<T>
 {
 	private Session session;
 	private String keyspace;
@@ -64,7 +61,6 @@ extends AbstractObservable<T>
 					callback.onFailure(new DuplicateItemException(entity.toString()));
 				}
 
-				AbstractCassandraRepository.this.notify(ObservableState.AFTER_CREATE, entity);
 				callback.onSuccess(null);
 			}
 
@@ -84,7 +80,6 @@ extends AbstractObservable<T>
 
 			if (rs.wasApplied())
 			{
-				notify(ObservableState.AFTER_CREATE, entity);
 				return entity;
 			}
 
@@ -100,7 +95,6 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(createStmt);
 		bindCreate(bs, entity);
-		notify(ObservableState.BEFORE_CREATE, entity);
 		return session.executeAsync(bs);
 	}
 
@@ -117,7 +111,6 @@ extends AbstractObservable<T>
 					callback.onFailure(new ItemNotFoundException(entity.toString()));
 				}
 
-				AbstractCassandraRepository.this.notify(ObservableState.AFTER_UPDATE, entity);
 				callback.onSuccess(null);
 			}
 
@@ -137,7 +130,6 @@ extends AbstractObservable<T>
 
 			if (rs.wasApplied())
 			{
-				notify(ObservableState.AFTER_UPDATE, entity);
 				return entity;
 			}
 
@@ -153,7 +145,6 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(updateStmt);
 		bindUpdate(bs, entity);
-		notify(ObservableState.BEFORE_UPDATE, entity);
 		return session.executeAsync(bs);
 	}
 
@@ -170,7 +161,6 @@ extends AbstractObservable<T>
 					callback.onFailure(new ItemNotFoundException(id.toString()));
 				}
 
-				AbstractCassandraRepository.this.notify(ObservableState.AFTER_DELETE, id);
 				callback.onSuccess(null);
 			}
 
@@ -187,7 +177,6 @@ extends AbstractObservable<T>
 		try
 		{
 			_delete(id).get();
-			notify(ObservableState.AFTER_DELETE, id);
 		}
 		catch (InterruptedException | ExecutionException e)
 		{
@@ -199,7 +188,6 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(deleteStmt);
 		bindIdentity(bs, id);
-		notify(ObservableState.BEFORE_DELETE, id);
 		return session.executeAsync(bs);
 	}
 
@@ -217,7 +205,6 @@ extends AbstractObservable<T>
 				}
 
 				T entity = marshalRow(result.one());
-				AbstractCassandraRepository.this.notify(ObservableState.AFTER_READ, entity);
 				callback.onSuccess(entity);
 			}
 
@@ -241,7 +228,6 @@ extends AbstractObservable<T>
 			}
 
 			T entity = marshalRow(rs.one());
-			notify(ObservableState.AFTER_READ, entity);
 			return entity;
 		}
 		catch (InterruptedException | ExecutionException e)
@@ -254,7 +240,6 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(readStmt);
 		bindIdentity(bs, id);
-		notify(ObservableState.BEFORE_READ, id);
 		return session.executeAsync(bs);
 	}
 

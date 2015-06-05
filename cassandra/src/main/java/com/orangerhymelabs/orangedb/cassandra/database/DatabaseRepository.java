@@ -14,8 +14,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
-import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
-import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
@@ -77,7 +75,6 @@ extends AbstractCassandraRepository<Database>
 	public DatabaseRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
-		addObserver(new StateChangeEventingObserver(new DatabaseEventFactory()));
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
 
@@ -183,28 +180,5 @@ extends AbstractCassandraRepository<Database>
 		n.createdAt(row.getDate(Columns.CREATED_AT));
 		n.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return n;
-	}
-
-	private class DatabaseEventFactory
-	implements EventFactory
-	{
-
-		@Override
-		public Object newCreatedEvent(Object object)
-		{
-			return new DatabaseCreatedEvent((Database) object);
-		}
-
-		@Override
-		public Object newUpdatedEvent(Object object)
-		{
-			return new DatabaseUpdatedEvent((Database) object);
-		}
-
-		@Override
-		public Object newDeletedEvent(Object object)
-		{
-			return new DatabaseDeletedEvent((Identifier) object);
-		}
 	}
 }
