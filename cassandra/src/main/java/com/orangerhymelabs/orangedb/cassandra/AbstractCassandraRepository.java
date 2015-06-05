@@ -1,6 +1,7 @@
 package com.orangerhymelabs.orangedb.cassandra;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -13,12 +14,14 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.AbstractObservable;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
+import com.orangerhymelabs.orangedb.persistence.ObservableState;
 
 public abstract class AbstractCassandraRepository<T>
 extends AbstractObservable<T>
@@ -61,6 +64,7 @@ extends AbstractObservable<T>
 					callback.onFailure(new DuplicateItemException(entity.toString()));
 				}
 
+				AbstractCassandraRepository.this.notify(ObservableState.AFTER_CREATE, entity);
 				callback.onSuccess(null);
 			}
 
@@ -80,6 +84,7 @@ extends AbstractObservable<T>
 
 			if (rs.wasApplied())
 			{
+				notify(ObservableState.AFTER_CREATE, entity);
 				return entity;
 			}
 
@@ -95,6 +100,7 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(createStmt);
 		bindCreate(bs, entity);
+		notify(ObservableState.BEFORE_CREATE, entity);
 		return session.executeAsync(bs);
 	}
 
@@ -108,10 +114,10 @@ extends AbstractObservable<T>
 			{
 				if (!result.wasApplied())
 				{
-					callback.onFailure(new ItemNotFoundException(entity
-					    .toString()));
+					callback.onFailure(new ItemNotFoundException(entity.toString()));
 				}
 
+				AbstractCassandraRepository.this.notify(ObservableState.AFTER_UPDATE, entity);
 				callback.onSuccess(null);
 			}
 
@@ -131,6 +137,7 @@ extends AbstractObservable<T>
 
 			if (rs.wasApplied())
 			{
+				notify(ObservableState.AFTER_UPDATE, entity);
 				return entity;
 			}
 
@@ -146,6 +153,7 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(updateStmt);
 		bindUpdate(bs, entity);
+		notify(ObservableState.BEFORE_UPDATE, entity);
 		return session.executeAsync(bs);
 	}
 
@@ -162,6 +170,7 @@ extends AbstractObservable<T>
 					callback.onFailure(new ItemNotFoundException(id.toString()));
 				}
 
+				AbstractCassandraRepository.this.notify(ObservableState.AFTER_DELETE, id);
 				callback.onSuccess(null);
 			}
 
@@ -178,6 +187,7 @@ extends AbstractObservable<T>
 		try
 		{
 			_delete(id).get();
+			notify(ObservableState.AFTER_DELETE, id);
 		}
 		catch (InterruptedException | ExecutionException e)
 		{
@@ -189,6 +199,7 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(deleteStmt);
 		bindIdentity(bs, id);
+		notify(ObservableState.BEFORE_DELETE, id);
 		return session.executeAsync(bs);
 	}
 
@@ -205,7 +216,9 @@ extends AbstractObservable<T>
 					callback.onFailure(new ItemNotFoundException(id.toString()));
 				}
 
-				callback.onSuccess(marshalRow(result.one()));
+				T entity = marshalRow(result.one());
+				AbstractCassandraRepository.this.notify(ObservableState.AFTER_READ, entity);
+				callback.onSuccess(entity);
 			}
 
 			@Override
@@ -227,7 +240,9 @@ extends AbstractObservable<T>
 				throw new ItemNotFoundException(id.toString());
 			}
 
-			return marshalRow(rs.one());
+			T entity = marshalRow(rs.one());
+			notify(ObservableState.AFTER_READ, entity);
+			return entity;
 		}
 		catch (InterruptedException | ExecutionException e)
 		{
@@ -239,6 +254,7 @@ extends AbstractObservable<T>
 	{
 		BoundStatement bs = new BoundStatement(readStmt);
 		bindIdentity(bs, id);
+		notify(ObservableState.BEFORE_READ, id);
 		return session.executeAsync(bs);
 	}
 

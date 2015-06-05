@@ -82,7 +82,7 @@ extends AbstractCassandraRepository<Table>
 	public TableRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
-		addObserver(new StateChangeEventingObserver<Table>(new CollectionEventFactory()));
+		addObserver(new StateChangeEventingObserver(new CollectionEventFactory()));
 	}
 
 	@Override
@@ -187,24 +187,24 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	private class CollectionEventFactory
-	implements EventFactory<Table>
+	implements EventFactory
 	{
 		@Override
-		public Object newCreatedEvent(Table object)
+		public Object newCreatedEvent(Object object)
 		{
-			return new TableCreatedEvent(object);
+			return new TableCreatedEvent((Table) object);
 		}
 
 		@Override
-		public Object newUpdatedEvent(Table object)
+		public Object newUpdatedEvent(Object object)
 		{
-			return new TableUpdatedEvent(object);
+			return new TableUpdatedEvent((Table) object);
 		}
 
 		@Override
-		public Object newDeletedEvent(Table object)
+		public Object newDeletedEvent(Object object)
 		{
-			return new TableDeletedEvent(object);
+			return new TableDeletedEvent((Identifier) object);
 		}
 	}
 

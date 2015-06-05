@@ -19,7 +19,7 @@ package com.orangerhymelabs.orangedb.persistence;
  * @author toddf
  * @since May 5, 2015
  */
-public interface Observer<T>
+public interface Observer
 {
-	public void observe(ObservableState state, T object);
+	public void observe(ObservableState state, Object object);
 }

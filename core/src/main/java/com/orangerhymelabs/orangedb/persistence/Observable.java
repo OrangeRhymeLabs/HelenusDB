@@ -21,14 +21,14 @@ import java.util.List;
  * @author toddf
  * @since May 5, 2015
  */
-public interface Observable<T>
+public interface Observable
 {
 	/**
 	 * Add an observer to the observable.
 	 * 
 	 * @param observer
 	 */
-	public void addObserver(Observer<T> observer);
+	public void addObserver(Observer observer);
 
 	/**
 	 * Remove all observers from this observable.
@@ -40,7 +40,7 @@ public interface Observable<T>
 	 * 
 	 * @return the observers.
 	 */
-	public List<Observer<T>> observers();
+	public List<Observer> observers();
 
 	/**
 	 * Remove given observer from the list of observers.
@@ -48,12 +48,12 @@ public interface Observable<T>
 	 * @param observer
 	 * @return true if the observer was removed.
 	 */
-	public boolean removeObserver(Observer<T> observer);
+	public boolean removeObserver(Observer observer);
 
 	/**
 	 * Notify the observers.
 	 * 
 	 * @param object
 	 */
-	public void notify(ObservableState state, T object);
+	public void notify(ObservableState state, Object object);
 }

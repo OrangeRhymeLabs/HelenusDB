@@ -49,7 +49,7 @@ public class DatabaseRepositoryReadAllTest
 	{
 		shouldReturnEmptyListSynchronously();
 		shouldReturnEmptyListAsynchronously();
-		populateDatabase();
+		populateDatabase("dba", 10);
 		shouldReturnListSynchronously();
 		shouldReturnListAsynchronously();
 	}
@@ -72,17 +72,15 @@ public class DatabaseRepositoryReadAllTest
 		assertTrue(callback.entity().isEmpty());
     }
 
-	private void populateDatabase()
+	private void populateDatabase(String prefix, int count)
     {
 		Database db = new Database();
-		db.name("dba1");
-		databases.create(db);
-		db.name("dba2");
-		databases.create(db);
-		db.name("dba3");
-		databases.create(db);
-		db.name("dba4");
-		databases.create(db);
+
+		for (int i = 1; i <= count; i++)
+		{
+			db.name(prefix + i);
+			databases.create(db);
+		}
     }
 
 	private void shouldReturnListSynchronously()
@@ -90,7 +88,7 @@ public class DatabaseRepositoryReadAllTest
 		List<Database> dbs = databases.readAll();
 		assertNotNull(dbs);
 		assertFalse(dbs.isEmpty());
-		assertEquals(4, dbs.size());
+		assertEquals(10, dbs.size());
     }
 
 	private void shouldReturnListAsynchronously()
@@ -103,7 +101,7 @@ public class DatabaseRepositoryReadAllTest
 		List<Database> dbs = callback.entity();
 		assertNotNull(dbs);
 		assertFalse(dbs.isEmpty());
-		assertEquals(4, dbs.size());
+		assertEquals(10, dbs.size());
     }
 
 	private void waitFor(TestCallback<List<Database>> callback)

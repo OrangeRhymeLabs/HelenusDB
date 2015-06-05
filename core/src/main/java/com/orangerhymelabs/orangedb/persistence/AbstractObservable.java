@@ -11,9 +11,9 @@ import java.util.List;
  * @since Oct 12, 2010
  */
 public abstract class AbstractObservable<T>
-implements Observable<T>
+implements Observable
 {
-	private List<Observer<T>> observers = new ArrayList<Observer<T>>();
+	private List<Observer> observers = new ArrayList<Observer>();
 
 	
 	public AbstractObservable()
@@ -23,7 +23,7 @@ implements Observable<T>
 
 
 	@Override
-	public void addObserver(Observer<T> observer)
+	public void addObserver(Observer observer)
 	{
 		_observers().add(observer);
 	}
@@ -37,7 +37,7 @@ implements Observable<T>
 		_observers().clear();
 	}
 	
-	private List<Observer<T>> _observers()
+	private List<Observer> _observers()
 	{
 		return observers;
 	}
@@ -48,21 +48,21 @@ implements Observable<T>
 	 * @return the repository's observers.
 	 */
 	@Override
-	public List<Observer<T>> observers()
+	public List<Observer> observers()
 	{
 		return Collections.unmodifiableList(_observers());
 	}
 	
 	@Override
-	public boolean removeObserver(Observer<T> observer)
+	public boolean removeObserver(Observer observer)
 	{
 		return _observers().remove(observer);
 	}
 
 	@Override
-	public void notify(ObservableState state, T object)
+	public void notify(ObservableState state, Object object)
 	{
-		for(Observer<T> observer : _observers())
+		for(Observer observer : _observers())
 		{
 			observer.observe(state, object);
 		}

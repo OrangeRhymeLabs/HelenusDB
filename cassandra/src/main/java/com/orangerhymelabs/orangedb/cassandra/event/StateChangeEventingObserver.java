@@ -7,19 +7,19 @@ import com.orangerhymelabs.orangedb.persistence.Observer;
  * @author toddf
  * @since Aug 1, 2014
  */
-public class StateChangeEventingObserver<T>
-implements Observer<T>
+public class StateChangeEventingObserver
+implements Observer
 {
-	private EventFactory<T> factory;
+	private EventFactory factory;
 
-	public StateChangeEventingObserver(EventFactory<T> eventFactory)
+	public StateChangeEventingObserver(EventFactory eventFactory)
 	{
 		super();
 		this.factory = eventFactory;
 	}
 
 	@Override
-    public void observe(ObservableState state, T object)
+    public void observe(ObservableState state, Object object)
     {
 		if (factory != null)
 		{

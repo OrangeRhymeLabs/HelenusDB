@@ -77,7 +77,7 @@ extends AbstractCassandraRepository<Database>
 	public DatabaseRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
-		addObserver(new StateChangeEventingObserver<Database>(new DatabaseEventFactory()));
+		addObserver(new StateChangeEventingObserver(new DatabaseEventFactory()));
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
 
@@ -186,25 +186,25 @@ extends AbstractCassandraRepository<Database>
 	}
 
 	private class DatabaseEventFactory
-	implements EventFactory<Database>
+	implements EventFactory
 	{
 
 		@Override
-		public Object newCreatedEvent(Database object)
+		public Object newCreatedEvent(Object object)
 		{
-			return new DatabaseCreatedEvent(object);
+			return new DatabaseCreatedEvent((Database) object);
 		}
 
 		@Override
-		public Object newUpdatedEvent(Database object)
+		public Object newUpdatedEvent(Object object)
 		{
-			return new DatabaseUpdatedEvent(object);
+			return new DatabaseUpdatedEvent((Database) object);
 		}
 
 		@Override
-		public Object newDeletedEvent(Database object)
+		public Object newDeletedEvent(Object object)
 		{
-			return new DatabaseDeletedEvent(object);
+			return new DatabaseDeletedEvent((Identifier) object);
 		}
 	}
 }

@@ -1,9 +1,9 @@
 package com.orangerhymelabs.orangedb.cassandra.event;
 
 
-public interface EventFactory<T>
+public interface EventFactory
 {
-	Object newCreatedEvent(T object);
-	Object newUpdatedEvent(T object);
-	Object newDeletedEvent(T object);
+	Object newCreatedEvent(Object object);
+	Object newUpdatedEvent(Object object);
+	Object newDeletedEvent(Object object);
 }

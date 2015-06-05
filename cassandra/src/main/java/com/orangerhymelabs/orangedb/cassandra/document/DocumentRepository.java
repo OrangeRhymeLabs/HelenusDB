@@ -13,6 +13,7 @@ import com.mongodb.util.JSON;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.event.EventFactory;
 import com.orangerhymelabs.orangedb.cassandra.event.StateChangeEventingObserver;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 public class DocumentRepository
 extends AbstractCassandraRepository<Document>
@@ -63,8 +64,7 @@ extends AbstractCassandraRepository<Document>
 	{
 		super(session, keyspace);
 		this.table = table;
-		addObserver(new DocumentObserver());
-		addObserver(new StateChangeEventingObserver<Document>(new DocumentEventFactory()));
+		addObserver(new StateChangeEventingObserver(new DocumentEventFactory()));
 	}
 
 	@Override
@@ -110,25 +110,25 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	private class DocumentEventFactory
-	implements EventFactory<Document>
+	implements EventFactory
 	{
 
 		@Override
-		public Object newCreatedEvent(Document object)
+		public Object newCreatedEvent(Object object)
 		{
-			return new DocumentCreatedEvent(object);
+			return new DocumentCreatedEvent((Document) object);
 		}
 
 		@Override
-		public Object newUpdatedEvent(Document object)
+		public Object newUpdatedEvent(Object object)
 		{
-			return new DocumentUpdatedEvent(object);
+			return new DocumentUpdatedEvent((Document) object);
 		}
 
 		@Override
-		public Object newDeletedEvent(Document object)
+		public Object newDeletedEvent(Object object)
 		{
-			return new DocumentDeletedEvent(object);
+			return new DocumentDeletedEvent((Identifier) object);
 		}
 	}
 
