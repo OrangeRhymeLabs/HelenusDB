@@ -16,13 +16,18 @@
 package com.orangerhymelabs.orangedb.cassandra.table;
 
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
@@ -93,12 +98,56 @@ extends AbstractCassandraRepository<Table>
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.SCHEMA + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
+	private static final String EXISTS_CQL = "select count(*) from %s.%s" + IDENTITY_CQL + " limit 1";
 
 	private static final  DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
+
+	private PreparedStatement existsStmt;
 
 	public TableRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
+		existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
+	}
+
+	public boolean exists(Identifier id)
+	{
+		ResultSet rs;
+        try
+        {
+	        rs = _exists(id).get();
+	        return (rs.one().getLong(0) > 0);
+        }
+        catch (InterruptedException | ExecutionException e)
+        {
+        	throw new StorageException(e);
+        }
+	}
+
+	public void existsAsync(Identifier id, FutureCallback<Boolean> callback)
+    {
+		ResultSetFuture future = _exists(id);
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
+			{
+				callback.onSuccess(result.one().getLong(0) > 0);
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
+    }
+
+	private ResultSetFuture _exists(Identifier id)
+	{
+		BoundStatement bs = new BoundStatement(existsStmt);
+		bindIdentity(bs, id);
+		return session().executeAsync(bs);
 	}
 
 	@Override
