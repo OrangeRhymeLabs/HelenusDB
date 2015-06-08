@@ -18,13 +18,11 @@ package com.orangerhymelabs.orangedb.cassandra.document;
 import java.nio.ByteBuffer;
 
 import org.bson.BSON;
-import org.bson.BSONObject;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.mongodb.util.JSON;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 
 /**
@@ -85,18 +83,18 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected void bindCreate(BoundStatement bs, Document entity)
 	{
-		BSONObject bson = (BSONObject) JSON.parse(entity.object());
-		bs.bind(entity.getUuid(), ByteBuffer.wrap(BSON.encode(bson)),
-		    entity.createdAt(), entity.updatedAt());
+		bs.bind(entity.id(),
+			ByteBuffer.wrap(BSON.encode(entity.object())),
+		    entity.createdAt(),
+		    entity.updatedAt());
 	}
 
 	@Override
 	protected void bindUpdate(BoundStatement bs, Document entity)
 	{
-		BSONObject bson = (BSONObject) JSON.parse(entity.object());
-
-		bs.bind(ByteBuffer.wrap(BSON.encode(bson)), entity.updatedAt(),
-		    entity.getUuid());
+		bs.bind(ByteBuffer.wrap(BSON.encode(entity.object())),
+			entity.updatedAt(),
+		    entity.id());
 	}
 
 	@Override
@@ -108,15 +106,14 @@ extends AbstractCassandraRepository<Document>
 		}
 
 		Document d = new Document();
-		d.setUuid(row.getUUID(Columns.ID));
+		d.id(row.getUUID(Columns.ID));
 		ByteBuffer b = row.getBytes(Columns.OBJECT);
 
 		if (b != null && b.hasArray())
 		{
 			byte[] result = new byte[b.remaining()];
 			b.get(result);
-			BSONObject o = BSON.decode(result);
-			d.object(JSON.serialize(o));
+			d.object(BSON.decode(result));
 		}
 
 		d.createdAt(row.getDate(Columns.CREATED_AT));

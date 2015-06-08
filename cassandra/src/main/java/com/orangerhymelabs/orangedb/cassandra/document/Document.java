@@ -15,7 +15,7 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.document;
 
-import java.util.UUID;
+import org.bson.BSONObject;
 
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
@@ -31,19 +31,14 @@ import com.strategicgains.syntaxe.annotation.Required;
 public class Document
 extends AbstractEntity
 {
-	// TODO: allow something other than UUID as object id.
-	// TODO: add any necessary metadata regarding a document.
-	// TODO: documents are versioned per transaction via updateAt timestamp.
-	private UUID id;
+	private Object id;
 
-	// need a separate version (as opposed to updatedAt)?
-	// private long version;
 	@Required("Table")
 	@ChildValidation
 	private TableReference table;
 
-	// The JSON document.
-	private String object;
+	// The BSON document.
+	private BSONObject bson;
 
 	public Document()
 	{
@@ -55,12 +50,12 @@ extends AbstractEntity
 		return new Identifier(databaseName(), tableName(), id, updatedAt());
 	}
 
-	public UUID getUuid()
+	public Object id()
 	{
 		return id;
 	}
 
-	public void setUuid(UUID id)
+	public void id(Object id)
 	{
 		this.id = id;
 	}
@@ -95,20 +90,25 @@ extends AbstractEntity
 		return (hasTable() ? table.database() : null);
 	}
 
-	public String object()
+	public boolean hasObject()
 	{
-		return object;
+		return (bson != null);
 	}
 
-	public void object(String json)
+	public BSONObject object()
 	{
-		this.object = json;
+		return bson;
+	}
+
+	public void object(BSONObject bson)
+	{
+		this.bson = bson;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "Document{" + "id=" + id + ", table=" + table + ", object=" + object + '}';
+		return "Document{" + "id=" + id + ", table=" + table + ", object=" + object() + '}';
 	}
 
 }
