@@ -15,6 +15,10 @@
 */
 package com.orangerhymelabs.orangedb.cassandra;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 
@@ -30,11 +34,11 @@ implements Schemaable
 		static final String DROP = "drop keyspace if exists %s";
 		static final String CREATE = "create keyspace if not exists %s";
 		static final String LOCAL_REPLICATION = " with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }";		
-		// TODO: Make this configurable.
-		static final String NETWORK_REPLICATION = " with replication = { 'class' : 'NetworkTopologyStrategy', 'use1' : 2, 'usw2' : 2}";
+		static final String NETWORK_REPLICATION = " with replication = { 'class' : 'NetworkTopologyStrategy', %s}";
 	}
 
-	private boolean isNetworkReplication = true;
+	private boolean isNetworkReplication;
+	private Map<String, Integer> dataCenters;
 
 	public KeyspaceSchema()
     {
@@ -44,6 +48,11 @@ implements Schemaable
 	public void useLocalReplication()
 	{
 		isNetworkReplication = false;
+	}
+
+	public void useNetworkReplication(Map<String, Integer> dataCenters)
+	{
+		this.dataCenters = new HashMap<String, Integer>(dataCenters);
 	}
 
 	@Override
@@ -62,7 +71,7 @@ implements Schemaable
 
 		if (isNetworkReplication)
 		{
-			rs = session.execute(create + Schema.NETWORK_REPLICATION);
+			rs = session.execute(create + String.format(Schema.NETWORK_REPLICATION, replicationFactors(dataCenters)));
 		}
 		else
 		{
@@ -71,5 +80,37 @@ implements Schemaable
 
 		return rs.wasApplied();
 
+	}
+
+	/**
+	 * Creates a string of the form "'use1' : 2, 'usw2' : 2" that is used to set
+	 * datacenter/replication factors on the NetworkTopologyStrategy.
+	 * 
+	 * @param replFactors a map of datacenter names with corresponding integer replication factors.
+	 * @return a formatted string of the form, "'use1' : 2, 'usw2' : 2"
+	 */
+	String replicationFactors(Map<String, Integer> replFactors)
+	{
+		StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
+
+		for (Entry<String, Integer> entry : replFactors.entrySet())
+		{
+			if (isFirst)
+			{
+				sb.append("'");
+			}
+			else
+			{
+				sb.append(", '");
+			}
+
+			sb.append(entry.getKey());
+			sb.append("' : ");
+			sb.append(entry.getValue());
+			isFirst = false;
+		}
+
+		return sb.toString();
 	}
 }

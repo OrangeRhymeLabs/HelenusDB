@@ -15,11 +15,15 @@
  */
 package com.orangerhymelabs.orangedb.cassandra;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -66,7 +70,12 @@ public class KeyspaceSchemaTest
 	@Test
 	public void shouldUseNetworkReplication()
 	{
+		Map<String, Integer> dataCenters = new HashMap<String, Integer>();
+		dataCenters.put("use1", 2);
+		dataCenters.put("esw2", 2);
+
 		KeyspaceSchema schema = new KeyspaceSchema();
+		schema.useNetworkReplication(dataCenters);
 		assertTrue(schema.create(CassandraManager.session(), CassandraManager.keyspace()));
 		Session session = CassandraManager.cluster().connect(CassandraManager.keyspace());
 		assertNotNull(session);
@@ -81,5 +90,16 @@ public class KeyspaceSchemaTest
 		}
 
 		fail("Did not drop the keyspace: " + CassandraManager.keyspace());
+	}
+
+	@Test
+	public void shouldCreateReplicationFactorString()
+	{
+		Map<String, Integer> dataCenters = new LinkedHashMap<String, Integer>();
+		dataCenters.put("use1", 2);
+		dataCenters.put("usw2", 3);
+
+		KeyspaceSchema schema = new KeyspaceSchema();
+		assertEquals("'use1' : 2, 'usw2' : 3", schema.replicationFactors(dataCenters));
 	}
 }
