@@ -66,6 +66,12 @@ public class SchemaRegistryTest
 		assertTrue("Table not created: sys_tbl", tableExists("sys_tbl"));
 	}
 
+	@Test
+	public void indexTableShouldExist()
+	{
+		assertTrue("Table not created: sys_idx", tableExists("sys_idx"));
+	}
+
 	private boolean tableExists(String tableName)
     {
 	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
