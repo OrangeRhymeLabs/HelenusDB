@@ -25,7 +25,7 @@ import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 /**
  * A Singleton object to drop and/or (re)create the database schema in Cassandra.
  * 
- * @author toddf
+ * @author tfredrich
  * @since May 7, 2015
  */
 public class SchemaRegistry

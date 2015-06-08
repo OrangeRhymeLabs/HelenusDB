@@ -18,7 +18,7 @@ package com.orangerhymelabs.orangedb.cassandra;
 import com.google.common.util.concurrent.FutureCallback;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since May 11, 2015
  */
 

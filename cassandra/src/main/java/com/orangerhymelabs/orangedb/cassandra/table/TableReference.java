@@ -21,7 +21,7 @@ import com.strategicgains.syntaxe.annotation.RegexValidation;
 import java.util.Objects;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since Jan 30, 2015
  */
 public class TableReference

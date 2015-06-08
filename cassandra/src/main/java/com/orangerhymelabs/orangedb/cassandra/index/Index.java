@@ -26,7 +26,7 @@ import com.strategicgains.syntaxe.annotation.ChildValidation;
 import com.strategicgains.syntaxe.annotation.Required;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since Jun 8, 2015
  */
 public class Index

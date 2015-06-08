@@ -25,7 +25,7 @@ import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.orangerhymelabs.orangedb.exception.ConfigurationException;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since May 7, 2015
  */
 public class CassandraConfig

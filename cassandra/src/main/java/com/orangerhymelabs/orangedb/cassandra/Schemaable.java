@@ -18,7 +18,7 @@ package com.orangerhymelabs.orangedb.cassandra;
 import com.datastax.driver.core.Session;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since May 7, 2015
  */
 public interface Schemaable

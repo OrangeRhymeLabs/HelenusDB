@@ -19,7 +19,7 @@ import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.strategicgains.syntaxe.annotation.RegexValidation;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since Jan 25, 2015
  */
 public class DatabaseReference

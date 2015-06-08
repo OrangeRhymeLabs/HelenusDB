@@ -26,7 +26,7 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since May 8, 2015
  */
 public class CassandraManager
