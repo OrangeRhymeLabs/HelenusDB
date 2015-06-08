@@ -39,7 +39,6 @@ extends AbstractCassandraRepository<Index>
 {
 	private class Tables
 	{
-
 		static final String BY_ID = "sys_idx";
 	}
 

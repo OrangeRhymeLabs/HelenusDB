@@ -78,7 +78,7 @@ public class IndexRepositoryTest
 		index.name("index1");
 		index.table("db1", "table1");
 		index.description("a test index");
-		index.fields(Arrays.asList("a", "b", "C"));
+		index.fields(Arrays.asList("a:text", "b:timestamp", "-C:uuid"));
 		index.isUnique(true);
 		Index createResult = indexes.create(index);
 		assertEquals(index, createResult);
@@ -131,7 +131,7 @@ public class IndexRepositoryTest
 		index.name("index1");
 		index.table("db2", "table1");
 		index.description("another test index");
-		index.fields(Arrays.asList("a", "b", "C"));
+		index.fields(Arrays.asList("a:integer", "-b:DOUBLE", "-C:bigInt"));
 		index.isUnique(true);
 		TestCallback<Index> callback = new TestCallback<Index>();
 
@@ -196,6 +196,7 @@ public class IndexRepositoryTest
 		Index index = new Index();
 		index.name("index1");
 		index.table("db3", "table1");
+		index.fields(Arrays.asList("foo:text"));
 		index.isUnique(true);
 		Index createResult = indexes.create(index);
 		assertEquals(index, createResult);
@@ -210,6 +211,7 @@ public class IndexRepositoryTest
 		Index index = new Index();
 		index.name("index2");
 		index.table("db4", "table1");
+		index.fields(Arrays.asList("foo:uuid", "-bar:integer", "bat:timestamp"));
 		TestCallback<Index> callback = new TestCallback<Index>();
 
 		// Create

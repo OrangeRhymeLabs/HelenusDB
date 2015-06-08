@@ -116,13 +116,55 @@ extends AbstractEntity
 
 	public String toColumnDefs()
     {
-	    // TODO Auto-generated method stub
-	    return "dummy text";
+		StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
+
+		for (IndexField field : parseFieldSpecs())
+		{
+			if (!isFirst)
+			{
+				sb.append(", ");
+			}
+
+			sb.append(field.name());
+			sb.append(" ");
+			sb.append(field.type().cassandraType());
+			isFirst = false;
+		}
+
+		return sb.toString();
     }
 
 	public String toPkDefs()
     {
-	    // TODO Auto-generated method stub
-	    return "dummy";
+		StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
+
+		for (IndexField field : parseFieldSpecs())
+		{
+			if (!isFirst)
+			{
+				sb.append(", ");
+			}
+
+			sb.append(field.name());
+			isFirst = false;
+		}
+
+		return sb.toString();
     }
+
+	private List<IndexField> parseFieldSpecs()
+	{
+		if (fields == null) return Collections.emptyList();
+
+		List<IndexField> results = new ArrayList<IndexField>(fields.size());
+
+		for (String field : fields)
+		{
+			results.add(new IndexField(field));
+		}
+
+		return results;
+	}
 }
