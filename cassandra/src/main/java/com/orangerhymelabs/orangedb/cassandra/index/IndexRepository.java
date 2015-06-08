@@ -21,8 +21,14 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
+import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
+import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
+import com.orangerhymelabs.orangedb.exception.StorageException;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 /**
  * @author tfredrich
@@ -81,16 +87,75 @@ extends AbstractCassandraRepository<Index>
 		static final String UPDATED_AT = "updated_at";
 	}
 
-	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? " + Columns.TBL_NAME + " = ? " + Columns.NAME + " = ?";
+	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
 	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.DB_NAME + ", " + Columns.TBL_NAME + ", " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.FIELDS + ", " + Columns.IS_UNIQUE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists";
 	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 
+	private static final BucketIndexRepository.Schema BUCKET_SCHEMA = new BucketIndexRepository.Schema();
+
 	public IndexRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
+	}
+
+	@Override
+	public void createAsync(Index index, FutureCallback<Index> callback)
+	{
+		try
+		{
+			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.toColumnDefs(), index.toPkDefs());
+			super.createAsync(index, callback);
+		}
+		catch(AlreadyExistsException e)
+		{
+			callback.onFailure(new DuplicateItemException(e));
+		}
+		catch(Exception e)
+		{
+			callback.onFailure(new StorageException(e));
+		}
+	}
+
+	@Override
+	public Index create(Index index)
+	{
+		try
+		{
+			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.toColumnDefs(), index.toPkDefs());
+			return super.create(index);
+		}
+		catch(AlreadyExistsException e)
+		{
+			throw new DuplicateItemException(e);
+		}
+	}
+
+	@Override
+	public void delete(Identifier id)
+	{
+		BUCKET_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
+		super.delete(id);
+	}
+
+	@Override
+	public void deleteAsync(Identifier id, FutureCallback<Index> callback)
+	{
+		try
+		{
+			BUCKET_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
+			super.deleteAsync(id, callback);
+		}
+		catch(AlreadyExistsException e)
+		{
+			callback.onFailure(new ItemNotFoundException(e));
+		}
+		catch(Exception e)
+		{
+			callback.onFailure(new StorageException(e));
+		}
 	}
 
 	@Override

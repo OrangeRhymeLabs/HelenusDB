@@ -45,6 +45,9 @@ extends AbstractEntity
 	private List<String> fields;
 	private boolean isUnique;
 
+	@Required
+	private IndexEngine engine = IndexEngine.BUCKET_INDEXER;
+
 	@Override
 	public Identifier getId()
 	{
@@ -105,4 +108,21 @@ extends AbstractEntity
 	{
 		this.isUnique = flag;
 	}
+
+	public String toDbTable()
+    {
+		return Identifier.toSeparatedString(getId(), "_");
+    }
+
+	public String toColumnDefs()
+    {
+	    // TODO Auto-generated method stub
+	    return "dummy text";
+    }
+
+	public String toPkDefs()
+    {
+	    // TODO Auto-generated method stub
+	    return "dummy";
+    }
 }
