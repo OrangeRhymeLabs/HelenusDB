@@ -46,9 +46,11 @@ public enum FieldType
     {
 		switch(name.toLowerCase())
 		{
+			case "varchar":
 			case "text": return TEXT;
 			case "uuid": return UUID;
 			case "timestamp": return TIMESTAMP;
+			case "int":
 			case "integer": return INTEGER;
 			case "bigint": return BIGINT;
 			case "float": return FLOAT;
