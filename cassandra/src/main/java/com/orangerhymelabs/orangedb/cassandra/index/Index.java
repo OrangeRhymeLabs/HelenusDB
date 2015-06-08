@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
@@ -87,6 +88,11 @@ extends AbstractEntity
 	public void table(String databaseName, String tableName)
 	{
 		this.table = new TableReference(databaseName, tableName);
+	}
+
+	public Table table()
+	{
+		return (table == null ? null : table.asObject());
 	}
 
 	public List<String> fields()
