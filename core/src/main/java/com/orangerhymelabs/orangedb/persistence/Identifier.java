@@ -15,7 +15,8 @@ import java.util.List;
 public class Identifier
 //implements Comparable<Identifier>
 {
-	private static final String SEPARATOR = ", ";
+	private static final String DB_NAME_SEPARATOR = "_";
+	private static final String TO_STRING_SEPARATOR = ", ";
 
 	private List<Object> components = new ArrayList<Object>();
 
@@ -182,7 +183,7 @@ public class Identifier
 	{
 		if (components.isEmpty()) return "";
 
-		return (components.size() == 1 ? primaryKey().toString() : "(" + Identifier.toSeparatedString(this, SEPARATOR) + ")");
+		return (components.size() == 1 ? primaryKey().toString() : "(" + Identifier.toSeparatedString(this, TO_STRING_SEPARATOR) + ")");
 	}
 
 	/**
@@ -205,6 +206,11 @@ public class Identifier
     {
 	    return components.isEmpty();
     }
+
+	public String toDbName()
+	{
+		return toSeparatedString(this, DB_NAME_SEPARATOR);
+	}
 
 	public static String toSeparatedString(Identifier id, String separator)
 	{
