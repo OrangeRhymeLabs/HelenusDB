@@ -155,7 +155,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable());
+			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
 			super.createAsync(table, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -173,7 +173,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable());
+			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
 			return super.create(table);
 		}
 		catch(AlreadyExistsException e)

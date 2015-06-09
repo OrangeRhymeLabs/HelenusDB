@@ -105,6 +105,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
+//			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.docIdType().cassandraType(), index.toColumnDefs(), index.toPkDefs());
 			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.toColumnDefs(), index.toPkDefs());
 			super.createAsync(index, callback);
 		}
@@ -123,6 +124,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
+//			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.docIdType().cassandraType(), index.toColumnDefs(), index.toPkDefs());
 			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.toColumnDefs(), index.toPkDefs());
 			return super.create(index);
 		}

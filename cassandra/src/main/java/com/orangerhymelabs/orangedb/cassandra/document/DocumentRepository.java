@@ -24,6 +24,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
+import com.orangerhymelabs.orangedb.cassandra.index.FieldType;
 
 /**
  * @author tfredrich
@@ -37,7 +38,7 @@ extends AbstractCassandraRepository<Document>
 		private static final String DROP_TABLE = "drop table if exists %s.%s;";
 		private static final String CREATE_TABLE = "create table %s.%s" +
 		"(" +
-			"id uuid," +
+			"id %s," +
 		    "object blob," +
 			"created_at timestamp," +
 		    "updated_at timestamp," +
@@ -51,9 +52,9 @@ extends AbstractCassandraRepository<Document>
 	        return rs.wasApplied();
         }
 
-        public boolean create(Session session, String keyspace, String table)
+        public boolean create(Session session, String keyspace, String table, FieldType idType)
         {
-			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace, table));
+			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace, table, idType.cassandraType()));
 	        return rs.wasApplied();
         }
 	}

@@ -18,6 +18,7 @@ package com.orangerhymelabs.orangedb.cassandra.table;
 import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseReference;
+import com.orangerhymelabs.orangedb.cassandra.index.FieldType;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -42,6 +43,9 @@ extends AbstractEntity
 
 	@Required("Table Type")
 	private TableType type = TableType.DOCUMENT;
+
+	@Required("ID Type")
+	private FieldType idType = FieldType.UUID;
 
 	// How long should the table's data live?
 	private long ttl;
@@ -147,6 +151,11 @@ extends AbstractEntity
 	    return (hasDatabase() & hasName() ? new Identifier(database.name(), name) : null);
     }
 
+	public FieldType idType()
+	{
+		return idType;
+	}
+
 	public String toDbTable()
 	{
 		return Identifier.toSeparatedString(getId(), "_");
@@ -155,12 +164,18 @@ extends AbstractEntity
 	@Override
 	public String toString()
 	{
-		StringBuilder sb = new StringBuilder(name);
+		StringBuilder sb = new StringBuilder(name());
 
 		if (hasDescription())
 		{
-			sb.append(" (");
-			sb.append(description);
+			sb.append("=(");
+			sb.append(description());
+			sb.append(", Type=");
+			sb.append(type());
+			sb.append(", ID Type=");
+			sb.append(idType());
+			sb.append(", TTL=");
+			sb.append(ttl());
 			sb.append(")");
 		}
 		return sb.toString();
