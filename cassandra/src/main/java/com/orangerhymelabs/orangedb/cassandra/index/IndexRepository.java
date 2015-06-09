@@ -107,8 +107,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-//			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.docIdType().cassandraType(), index.toColumnDefs(), index.toPkDefs());
-			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.toColumnDefs(), index.toPkDefs());
+			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs());
 			super.createAsync(index, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -126,8 +125,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-//			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.docIdType().cassandraType(), index.toColumnDefs(), index.toPkDefs());
-			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.toColumnDefs(), index.toPkDefs());
+			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs());
 			return super.create(index);
 		}
 		catch(AlreadyExistsException e)
@@ -139,7 +137,7 @@ extends AbstractCassandraRepository<Index>
 	@Override
 	public void delete(Identifier id)
 	{
-		BUCKET_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
+		BUCKET_SCHEMA.drop(session(), keyspace(), id.toDbName());
 		super.delete(id);
 	}
 
@@ -148,7 +146,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-			BUCKET_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
+			BUCKET_SCHEMA.drop(session(), keyspace(), id.toDbName());
 			super.deleteAsync(id, callback);
 		}
 		catch(AlreadyExistsException e)

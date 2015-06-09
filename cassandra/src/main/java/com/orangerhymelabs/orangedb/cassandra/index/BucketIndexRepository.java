@@ -31,8 +31,7 @@ public class BucketIndexRepository
 			"(" +
 				"bucket_id bigint," +
 				"%s," + // arbitrary blank area for creating the actual fields that are indexed.
-				"doc_id uuid," +
-//				"doc_id %s," +
+				"object_id %s," +
 				"object blob," +
 				"created_at timestamp," +
 				"updated_at timestamp," +
@@ -45,10 +44,9 @@ public class BucketIndexRepository
 			return rs.wasApplied();
 		}
 
-//		public boolean create(Session session, String keyspace, String table, FieldType docIdType, String columnDefs, String pkDefs)
-		public boolean create(Session session, String keyspace, String table, String columnDefs, String pkDefs)
+		public boolean create(Session session, String keyspace, String table, FieldType oidType, String columnDefs, String pkDefs)
 		{
-			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, pkDefs));
+			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, oidType.cassandraType(), pkDefs));
 			return rs.wasApplied();
 		}
     }
