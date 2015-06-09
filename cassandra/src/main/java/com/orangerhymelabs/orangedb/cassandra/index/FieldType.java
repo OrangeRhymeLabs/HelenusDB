@@ -23,6 +23,7 @@ public enum FieldType
 {
 	TEXT("text"),
 	UUID("uuid"),
+	TIMEUUID("timeuuid"),
 	TIMESTAMP("timestamp"),
 	INTEGER("int"),
 	BIGINT("bigint"),
@@ -49,6 +50,7 @@ public enum FieldType
 			case "varchar":
 			case "text": return TEXT;
 			case "uuid": return UUID;
+			case "timeuuid": return TIMEUUID;
 			case "timestamp": return TIMESTAMP;
 			case "int":
 			case "integer": return INTEGER;
