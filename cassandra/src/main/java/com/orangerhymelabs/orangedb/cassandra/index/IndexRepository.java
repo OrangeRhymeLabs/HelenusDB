@@ -222,11 +222,10 @@ extends AbstractCassandraRepository<Index>
 		if (row == null) return null;
 
 		Index n = new Index();
-		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME));
+		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), FieldType.from(row.getString(Columns.ID_TYPE)));
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
 		n.fields(row.getList(Columns.FIELDS, String.class));
-		n.idType(FieldType.from(row.getString(Columns.ID_TYPE)));
 		n.isUnique(row.getBool(Columns.IS_UNIQUE));
 		n.createdAt(row.getDate(Columns.CREATED_AT));
 		n.updatedAt(row.getDate(Columns.UPDATED_AT));

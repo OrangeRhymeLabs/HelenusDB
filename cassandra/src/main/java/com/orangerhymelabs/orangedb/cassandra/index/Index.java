@@ -21,7 +21,6 @@ import java.util.List;
 
 import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -37,10 +36,7 @@ extends AbstractEntity
 {
 	@Required
 	@ChildValidation
-	private TableReference table;
-
-	@Required("ID Type")
-	private FieldType idType = FieldType.UUID;
+	private IndexTableReference table;
 
 	@RegexValidation(name = "Index Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
@@ -91,9 +87,9 @@ extends AbstractEntity
 		return (table == null ? null : table.name());
 	}
 
-	public void table(String databaseName, String tableName)
+	public void table(String databaseName, String tableName, FieldType idType)
 	{
-		this.table = new TableReference(databaseName, tableName);
+		this.table = new IndexTableReference(databaseName, tableName, idType);
 	}
 
 	public Table table()
@@ -107,18 +103,12 @@ extends AbstractEntity
 
 	public void table(Table table)
 	{
-		this.table = new TableReference(table);
-		idType(table.idType());
+		this.table = new IndexTableReference(table);
 	}
 
 	public FieldType idType()
 	{
-		return idType;
-	}
-
-	public void idType(FieldType idType)
-	{
-		this.idType = idType;
+		return table.idType();
 	}
 
 	public List<String> fields()

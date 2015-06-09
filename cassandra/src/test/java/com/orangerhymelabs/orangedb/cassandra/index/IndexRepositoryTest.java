@@ -76,7 +76,7 @@ public class IndexRepositoryTest
 		// Create
 		Index index = new Index();
 		index.name("index1");
-		index.table("db1", "table1");
+		index.table("db1", "table1", FieldType.UUID);
 		index.description("a test index");
 		index.fields(Arrays.asList("a:text", "b:timestamp", "-C:uuid"));
 		index.isUnique(true);
@@ -129,7 +129,7 @@ public class IndexRepositoryTest
 	{
 		Index index = new Index();
 		index.name("index1");
-		index.table("db2", "table1");
+		index.table("db2", "table1", FieldType.UUID);
 		index.description("another test index");
 		index.fields(Arrays.asList("a:integer", "-b:DOUBLE", "-C:bigInt"));
 		index.isUnique(true);
@@ -195,7 +195,7 @@ public class IndexRepositoryTest
 		// Create
 		Index index = new Index();
 		index.name("index1");
-		index.table("db3", "table1");
+		index.table("db3", "table1", FieldType.BIGINT);
 		index.fields(Arrays.asList("foo:text"));
 		index.isUnique(true);
 		Index createResult = indexes.create(index);
@@ -210,7 +210,7 @@ public class IndexRepositoryTest
 	{
 		Index index = new Index();
 		index.name("index2");
-		index.table("db4", "table1");
+		index.table("db4", "table1", FieldType.TIMESTAMP);
 		index.fields(Arrays.asList("foo:uuid", "-bar:integer", "bat:timestamp"));
 		TestCallback<Index> callback = new TestCallback<Index>();
 
@@ -251,7 +251,7 @@ public class IndexRepositoryTest
 	{
 		Index index = new Index();
 		index.name("index1");
-		index.table("db1", "doesnt_exist");
+		index.table("db1", "doesnt_exist", FieldType.UUID);
 		indexes.update(index);
 	}
 
@@ -262,7 +262,7 @@ public class IndexRepositoryTest
 		TestCallback<Index> callback = new TestCallback<Index>();
 		Index index = new Index();
 		index.name("index1");
-		index.table("db1", "doesnt_exist");
+		index.table("db1", "doesnt_exist", FieldType.UUID);
 		indexes.updateAsync(index, callback);
 		waitFor(callback);
 

@@ -49,11 +49,12 @@ import com.strategicgains.syntaxe.ValidationException;
 public class IndexServiceTest
 {
 	private static final int CALLBACK_TIMEOUT = 2000;
-	private static final String DATABASE = "test_db";
-	private static final String TABLE = "test_tbl";
+	private static final String DATABASE_NAME = "test_db";
+	private static final String TABLE_NAME = "test_tbl";
 
 	private static KeyspaceSchema keyspace;
 	private static IndexService indexes;
+	private static Table tbl;
 
 	@BeforeClass
 	public static void beforeClass()
@@ -72,12 +73,12 @@ public class IndexServiceTest
 		indexes = new IndexService(indexRepository, tableRepository);
 
 		Database db = new Database();
-		db.name(DATABASE);
+		db.name(DATABASE_NAME);
 		databaseRepository.create(db);
 
-		Table tbl = new Table();
+		tbl = new Table();
 		tbl.database(db);
-		tbl.name(TABLE);
+		tbl.name(TABLE_NAME);
 		tableRepository.create(tbl);
 	}
 
@@ -94,7 +95,7 @@ public class IndexServiceTest
 		// Create
 		Index index = new Index();
 		index.name("index1");
-		index.table(DATABASE, TABLE);
+		index.table(tbl);
 		index.description("a test index");
 		index.fields(Arrays.asList("foo:int"));
 		Index createResult = indexes.create(index);
@@ -139,7 +140,7 @@ public class IndexServiceTest
 	throws InterruptedException
 	{
 		Index index = new Index();
-		index.table(DATABASE, TABLE);
+		index.table(tbl);
 		index.name("index2");
 		index.description("another test index");
 		index.fields(Arrays.asList("foo:int"));
@@ -199,7 +200,7 @@ public class IndexServiceTest
 		// Create
 		Index index = new Index();
 		index.name("index3");
-		index.table(DATABASE, TABLE);
+		index.table(tbl);
 		index.fields(Arrays.asList("foo:int"));
 		Index createResult = indexes.create(index);
 		assertEquals(index, createResult);
@@ -212,7 +213,7 @@ public class IndexServiceTest
 	throws InterruptedException
 	{
 		Index index = new Index();
-		index.table(DATABASE, TABLE);
+		index.table(tbl);
 		index.name("index4");
 		index.fields(Arrays.asList("foo:int"));
 		TestCallback<Index> callback = new TestCallback<Index>();
@@ -234,19 +235,19 @@ public class IndexServiceTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentIndexSynchronously()
 	{
-		indexes.read(DATABASE, TABLE, "doesnt_exist");
+		indexes.read(DATABASE_NAME, TABLE_NAME, "doesnt_exist");
 	}
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentDatabaseSynchronously()
 	{
-		indexes.read("db9", TABLE, "index1");
+		indexes.read("db9", TABLE_NAME, "index1");
 	}
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentTableSynchronously()
 	{
-		indexes.read(DATABASE, "doesnt_exist", "index1");
+		indexes.read(DATABASE_NAME, "doesnt_exist", "index1");
 	}
 
 	@Test
@@ -255,7 +256,7 @@ public class IndexServiceTest
 	{
 		// Index doesn't exist
 		TestCallback<Index> callback = new TestCallback<Index>();
-		indexes.readAsync(DATABASE, TABLE, "doesnt_exist", callback);
+		indexes.readAsync(DATABASE_NAME, TABLE_NAME, "doesnt_exist", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -263,7 +264,7 @@ public class IndexServiceTest
 
 		// Database name doesn't exist
 		callback.clear();
-		indexes.readAsync("db9", TABLE, "index1", callback);
+		indexes.readAsync("db9", TABLE_NAME, "index1", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -271,7 +272,7 @@ public class IndexServiceTest
 
 		// Table name doesn't exist
 		callback.clear();
-		indexes.readAsync(DATABASE, "doesnt_exist", "index1", callback);
+		indexes.readAsync(DATABASE_NAME, "doesnt_exist", "index1", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -282,7 +283,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateNonExistentTableSynchronously()
 	{
 		Index entity = new Index();
-		entity.table(DATABASE, "doesnt_exist");
+		entity.table(DATABASE_NAME, "doesnt_exist", FieldType.UUID);
 		entity.name("index1");
 		entity.fields(Arrays.asList("foo:int"));
 		indexes.update(entity);
@@ -292,7 +293,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
 	{
 		Index entity = new Index();
-		entity.table("db9", TABLE);
+		entity.table("db9", TABLE_NAME, FieldType.UUID);
 		entity.name("index1");
 		entity.fields(Arrays.asList("foo:int"));
 		indexes.update(entity);
@@ -304,7 +305,7 @@ public class IndexServiceTest
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
 		Index entity = new Index();
-		entity.table(DATABASE, TABLE);
+		entity.table(tbl);
 		entity.name("doesnt_exist");
 		entity.fields(Arrays.asList("foo:int"));
 		indexes.updateAsync(entity, callback);
@@ -314,7 +315,7 @@ public class IndexServiceTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 
 		callback.clear();
-		entity.table("db9", TABLE);
+		entity.table("db9", TABLE_NAME, FieldType.UUID);
 		indexes.updateAsync(entity, callback);
 		waitFor(callback);
 
@@ -326,7 +327,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateInvalidDatabaseSynchronously()
 	{
 		Index entity = new Index();
-		entity.table("invalid db 9", TABLE);
+		entity.table("invalid db 9", TABLE_NAME, FieldType.UUID);
 		entity.name("doesnt_matter");
 		indexes.update(entity);
 	}
@@ -335,7 +336,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateInvalidTableSynchronously()
 	{
 		Index entity = new Index();
-		entity.table(DATABASE, "Isn't valid");
+		entity.table(DATABASE_NAME, "Isn't valid", FieldType.UUID);
 		entity.name("doesnt_matter");
 		indexes.update(entity);
 	}
@@ -346,7 +347,7 @@ public class IndexServiceTest
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
 		Index entity = new Index();
-		entity.table("invalid db 8", TABLE);
+		entity.table("invalid db 8", TABLE_NAME, FieldType.UUID);
 		entity.name("doesnt_matter");
 		indexes.updateAsync(entity, callback);
 		waitFor(callback);
@@ -361,7 +362,7 @@ public class IndexServiceTest
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
 		Index entity = new Index();
-		entity.table(DATABASE, TABLE);
+		entity.table(tbl);
 		entity.name("isn't valid");
 		indexes.updateAsync(entity, callback);
 		waitFor(callback);
