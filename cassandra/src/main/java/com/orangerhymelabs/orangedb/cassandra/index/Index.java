@@ -39,6 +39,9 @@ extends AbstractEntity
 	@ChildValidation
 	private TableReference table;
 
+	@Required("ID Type")
+	private FieldType idType = FieldType.UUID;
+
 	@RegexValidation(name = "Index Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 	private String description;
@@ -95,7 +98,27 @@ extends AbstractEntity
 
 	public Table table()
 	{
-		return (table == null ? null : table.asObject());
+		if (table == null) return null;
+
+		Table t = table.asObject();
+		t.idType(idType());
+		return t;
+	}
+
+	public void table(Table table)
+	{
+		this.table = new TableReference(table);
+		idType(table.idType());
+	}
+
+	public FieldType idType()
+	{
+		return idType;
+	}
+
+	public void idType(FieldType idType)
+	{
+		this.idType = idType;
 	}
 
 	public List<String> fields()

@@ -156,6 +156,11 @@ extends AbstractEntity
 		return idType;
 	}
 
+	public void idType(FieldType idType)
+	{
+		this.idType = idType;
+	}
+
 	public String toDbTable()
 	{
 		return Identifier.toSeparatedString(getId(), "_");

@@ -54,6 +54,7 @@ extends AbstractCassandraRepository<Index>
 				"description text," +
 				"is_unique boolean," +
 				"fields list<text>," +
+				"id_type text," +
 				"created_at timestamp," +
 				"updated_at timestamp," +
 				"primary key ((db_name), tbl_name, name)" +
@@ -82,12 +83,13 @@ extends AbstractCassandraRepository<Index>
 		static final String DESCRIPTION = "description";
 		static final String IS_UNIQUE = "is_unique";
 		static final String FIELDS = "fields";
+		static final String ID_TYPE = "id_type";
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.DB_NAME + ", " + Columns.TBL_NAME + ", " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.FIELDS + ", " + Columns.IS_UNIQUE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists";
+	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.DB_NAME + ", " + Columns.TBL_NAME + ", " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.FIELDS + ", " + Columns.ID_TYPE + ", " + Columns.IS_UNIQUE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
 	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String READ_ALL_CQL = "select * from %s.%s";
@@ -198,6 +200,7 @@ extends AbstractCassandraRepository<Index>
 			index.name(),
 			index.description(),
 			index.fields(),
+			index.idType().toString(),
 			index.isUnique(),
 			index.createdAt(),
 		    index.updatedAt());
@@ -216,16 +219,14 @@ extends AbstractCassandraRepository<Index>
 
 	protected Index marshalRow(Row row)
 	{
-		if (row == null)
-		{
-			return null;
-		}
+		if (row == null) return null;
 
 		Index n = new Index();
 		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME));
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
 		n.fields(row.getList(Columns.FIELDS, String.class));
+		n.idType(FieldType.from(row.getString(Columns.ID_TYPE)));
 		n.isUnique(row.getBool(Columns.IS_UNIQUE));
 		n.createdAt(row.getDate(Columns.CREATED_AT));
 		n.updatedAt(row.getDate(Columns.UPDATED_AT));
