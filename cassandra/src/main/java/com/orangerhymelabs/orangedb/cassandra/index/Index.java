@@ -46,6 +46,7 @@ extends AbstractEntity
 	@Required("Index Fields")
 	@ChildValidation
 	private List<String> fields;
+	private transient List<IndexField> fieldSpecs;
 	private boolean isUnique;
 
 	@Required("Index Engine")
@@ -127,7 +128,7 @@ extends AbstractEntity
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : parseFieldSpecs())
+		for (IndexField field : getFieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -148,7 +149,7 @@ extends AbstractEntity
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : parseFieldSpecs())
+		for (IndexField field : getFieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -162,17 +163,20 @@ extends AbstractEntity
 		return sb.toString();
     }
 
-	private List<IndexField> parseFieldSpecs()
+	private List<IndexField> getFieldSpecs()
 	{
 		if (fields == null) return Collections.emptyList();
 
-		List<IndexField> results = new ArrayList<IndexField>(fields.size());
-
-		for (String field : fields)
+		if (fieldSpecs == null)
 		{
-			results.add(new IndexField(field));
+			this.fieldSpecs = new ArrayList<IndexField>(fields.size());
+			
+			for (String field : fields)
+			{
+				fieldSpecs.add(new IndexField(field));
+			}
 		}
 
-		return results;
+		return fieldSpecs;
 	}
 }
