@@ -19,11 +19,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
+import com.strategicgains.syntaxe.annotation.RegexValidation;
 import com.strategicgains.syntaxe.annotation.Required;
 
 /**
@@ -37,16 +39,16 @@ extends AbstractEntity
 	@ChildValidation
 	private TableReference table;
 
-	@Required
+	@RegexValidation(name = "Index Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 	private String description;
 
-	@Required
+	@Required("Index Fields")
 	@ChildValidation
 	private List<String> fields;
 	private boolean isUnique;
 
-	@Required
+	@Required("Index Engine")
 	private IndexEngine engine = IndexEngine.BUCKET_INDEXER;
 
 	@Override

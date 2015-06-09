@@ -26,7 +26,6 @@ import java.util.Objects;
  */
 public class TableReference
 {
-
 	@RegexValidation(name = "Database Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String database;
 
