@@ -136,7 +136,7 @@ extends AbstractCassandraRepository<Table>
 	@Override
 	public void delete(Identifier id)
 	{
-		DOCUMENT_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
+		DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
 		super.delete(id);
 	}
 
@@ -145,7 +145,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.drop(session(), keyspace(), Identifier.toSeparatedString(id, "_"));
+			DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
 			super.deleteAsync(id, callback);
 		}
 		catch(AlreadyExistsException e)

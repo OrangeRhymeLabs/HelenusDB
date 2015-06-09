@@ -133,7 +133,7 @@ extends AbstractEntity
 
 	public String toDbTable()
     {
-		return Identifier.toSeparatedString(getId(), "_");
+		return getId().toDbName();
     }
 
 	public String toColumnDefs()
