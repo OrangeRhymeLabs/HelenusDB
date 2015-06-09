@@ -18,8 +18,8 @@ package com.orangerhymelabs.orangedb.cassandra.index;
 import java.util.List;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
-import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -42,37 +42,28 @@ public class IndexService
 
 	public Index create(Index index)
 	{
-		if (!tables.exists(index.table().getId()))
-		{
-			throw new ItemNotFoundException("Database not found: " + index.databaseName());
-		}
-
+		Table previous = tables.read(index.table().getId());
+		index.table(previous);
 		ValidationEngine.validateAndThrow(index);
 		return indexes.create(index);
 	}
 
-	public void createAsync(Index table, FutureCallback<Index> callback)
+	public void createAsync(Index index, FutureCallback<Index> callback)
 	{
-		tables.existsAsync(table.table().getId(), new FutureCallback<Boolean>()
+		tables.readAsync(index.table().getId(), new FutureCallback<Table>()
 			{
 				@Override
-                public void onSuccess(Boolean result)
+                public void onSuccess(Table previous)
                 {
-					if (!result)
+					try
 					{
-						callback.onFailure(new ItemNotFoundException("Database not found: " + table.databaseName()));
+						index.table(previous);
+						ValidationEngine.validateAndThrow(index);
+						indexes.createAsync(index, callback);
 					}
-					else
+					catch(ValidationException e)
 					{
-						try
-						{
-							ValidationEngine.validateAndThrow(table);
-							indexes.createAsync(table, callback);
-						}
-						catch(ValidationException e)
-						{
-							callback.onFailure(e);
-						}
+						callback.onFailure(e);
 					}
                 }
 
@@ -97,30 +88,38 @@ public class IndexService
 
 	public List<Index> readAll(String database, String table)
 	{
-		Identifier id = new Identifier(database, table);
-		if (!tables.exists(id))
-		{
-			throw new ItemNotFoundException("Table not found: " + Identifier.toSeparatedString(id, "_"));
-		}
-
-		return indexes.readAll(id);
+		return indexes.readAll(new Identifier(database, table));
 	}
 
 	public void readAllAsync(String database, String table, FutureCallback<List<Index>> callback)
 	{
-		Identifier id = new Identifier(database, table);
-		tables.existsAsync(id, new FutureCallback<Boolean>()
+		indexes.readAllAsync(callback, new Identifier(database, table));
+	}
+
+	public Index update(Index index)
+	{
+		Table previous = tables.read(index.table().getId());
+		index.table(previous);
+		ValidationEngine.validateAndThrow(index);
+		return indexes.update(index);
+	}
+
+	public void updateAsync(Index index, FutureCallback<Index> callback)
+	{
+		tables.readAsync(index.table().getId(), new FutureCallback<Table>()
 			{
 				@Override
-                public void onSuccess(Boolean result)
+                public void onSuccess(Table previous)
                 {
-					if (!result)
+					try
 					{
-						callback.onFailure(new ItemNotFoundException("Table not found: " + Identifier.toSeparatedString(id, "_")));
+						index.table(previous);
+						ValidationEngine.validateAndThrow(index);
+						indexes.updateAsync(index, callback);
 					}
-					else
+					catch(ValidationException e)
 					{
-						indexes.readAllAsync(callback, database);
+						callback.onFailure(e);
 					}
                 }
 
@@ -131,25 +130,6 @@ public class IndexService
                 }
 			}
 		);
-	}
-
-	public Index update(Index table)
-	{
-		ValidationEngine.validateAndThrow(table);
-		return indexes.update(table);
-	}
-
-	public void updateAsync(Index table, FutureCallback<Index> callback)
-	{
-		try
-		{
-			ValidationEngine.validateAndThrow(table);
-			indexes.updateAsync(table, callback);
-		}
-		catch(ValidationException e)
-		{
-			callback.onFailure(e);
-		}
 	}
 
 	public void delete(String database, String table, String name)

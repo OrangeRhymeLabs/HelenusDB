@@ -323,7 +323,7 @@ public class IndexServiceTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	@Test(expected=ValidationException.class)
+	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateInvalidDatabaseSynchronously()
 	{
 		Index entity = new Index();
@@ -332,7 +332,7 @@ public class IndexServiceTest
 		indexes.update(entity);
 	}
 
-	@Test(expected=ValidationException.class)
+	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateInvalidTableSynchronously()
 	{
 		Index entity = new Index();
@@ -353,11 +353,11 @@ public class IndexServiceTest
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
-		assertTrue(callback.throwable() instanceof ValidationException);
+		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
 	@Test
-	public void shouldThrowOnInvalidTableNameAsync()
+	public void shouldThrowOnInvalidIndexNameAsync()
 	throws InterruptedException
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
