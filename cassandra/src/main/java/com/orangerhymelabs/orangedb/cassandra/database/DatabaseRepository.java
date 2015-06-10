@@ -49,7 +49,7 @@ extends AbstractCassandraRepository<Database>
 	implements Schemaable
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
-		private static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
+		private static final String CREATE_TABLE = "create table if not exists %s." + Tables.BY_ID +
 			"(" +
 				"db_name text," +
 				"description text," +

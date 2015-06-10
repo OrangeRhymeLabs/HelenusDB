@@ -36,7 +36,7 @@ extends AbstractCassandraRepository<Document>
 	public static class Schema
 	{
 		private static final String DROP_TABLE = "drop table if exists %s.%s;";
-		private static final String CREATE_TABLE = "create table %s.%s" +
+		private static final String CREATE_TABLE = "create table if not exists %s.%s" +
 		"(" +
 			"id %s," +
 		    "object blob," +
