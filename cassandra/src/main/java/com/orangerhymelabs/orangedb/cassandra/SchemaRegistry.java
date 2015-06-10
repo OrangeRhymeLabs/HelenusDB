@@ -21,6 +21,7 @@ import java.util.List;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.orangedb.cassandra.index.IndexRepository;
+import com.orangerhymelabs.orangedb.cassandra.meta.MetadataRepository;
 import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 
 /**
@@ -36,6 +37,7 @@ public class SchemaRegistry
 	static
 	{
 		INSTANCE.register(new KeyspaceSchema());
+		INSTANCE.register(new MetadataRepository.Schema());
 		INSTANCE.register(new DatabaseRepository.Schema());
 		INSTANCE.register(new TableRepository.Schema());
 		INSTANCE.register(new IndexRepository.Schema());
