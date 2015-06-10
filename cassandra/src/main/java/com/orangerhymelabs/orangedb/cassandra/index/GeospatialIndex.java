@@ -12,30 +12,43 @@
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-*/
+ */
 package com.orangerhymelabs.orangedb.cassandra.index;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.lang.NotImplementedException;
-
-import com.google.common.util.concurrent.FutureCallback;
-import com.orangerhymelabs.orangedb.cassandra.document.Document;
-import com.orangerhymelabs.orangedb.cassandra.document.Location;
 
 /**
  * @author tfredrich
- * @since Jun 10, 2015
+ * @since Jun 8, 2015
  */
-public class GeoSpacialIndexRepository
+public class GeospatialIndex
+extends AbstractIndex
 {
-	public List<Document> isWithin(int miles, Location location)
+	private static final String INDEX_NAME = "geo_loc";
+	private static List<IndexField> FIELD_SPECS = new ArrayList<IndexField>(2);
+
+	static
 	{
-		throw new NotImplementedException();
+		FIELD_SPECS.add(new IndexField("lattitude:DOUBLE"));
+		FIELD_SPECS.add(new IndexField("longitude:DOUBLE"));
 	}
 
-	public void isWithinAsync(int miles, Location location, FutureCallback<Index> callback)
+	public GeospatialIndex()
+    {
+		super();
+		engineType(IndexEngineType.GEOSPACIAL_INDEXER);
+    }
+
+	@Override
+    public String name()
 	{
-		callback.onFailure(new NotImplementedException());
+		return INDEX_NAME;
 	}
+
+	@Override
+    List<IndexField> getFieldSpecs()
+    {
+		return FIELD_SPECS;
+    }
 }

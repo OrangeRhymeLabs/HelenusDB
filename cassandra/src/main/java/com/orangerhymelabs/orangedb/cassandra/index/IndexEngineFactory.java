@@ -15,11 +15,24 @@
 */
 package com.orangerhymelabs.orangedb.cassandra.index;
 
+import com.orangerhymelabs.orangedb.exception.StorageException;
+
 /**
  * @author tfredrich
  * @since Jun 10, 2015
  */
-public interface IndexEngine
+public class IndexEngineFactory
 {
-
+	public IndexEngine create(IndexEngineType engine)
+	{
+		switch(engine)
+		{
+			case BUCKET_INDEXER:
+				return new BucketIndexEngine();
+			case GEOSPACIAL_INDEXER:
+				return new GeospatialIndexEngine();
+			default:
+				throw new StorageException("Invalid IndexEngineType: " + engine.toString());
+		}
+	}
 }

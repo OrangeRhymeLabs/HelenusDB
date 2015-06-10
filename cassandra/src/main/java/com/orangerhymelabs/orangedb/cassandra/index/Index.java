@@ -20,9 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.orangerhymelabs.orangedb.cassandra.Constants;
-import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
-import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
 import com.strategicgains.syntaxe.annotation.RegexValidation;
 import com.strategicgains.syntaxe.annotation.Required;
@@ -32,12 +29,8 @@ import com.strategicgains.syntaxe.annotation.Required;
  * @since Jun 8, 2015
  */
 public class Index
-extends AbstractEntity
+extends AbstractIndex
 {
-	@Required
-	@ChildValidation
-	private IndexTableReference table;
-
 	@RegexValidation(name = "Index Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 	private String description;
@@ -48,14 +41,11 @@ extends AbstractEntity
 	private transient List<IndexField> fieldSpecs;
 	private boolean isUnique;
 
-	@Required("Index Engine")
-	private IndexEngine engine = IndexEngine.BUCKET_INDEXER;
-
-	@Override
-	public Identifier getId()
-	{
-		return new Identifier(table.database(), table.name(), name);
-	}
+	public Index()
+    {
+		super();
+		engineType(IndexEngineType.BUCKET_INDEXER);
+    }
 
 	public String description()
 	{
@@ -65,50 +55,6 @@ extends AbstractEntity
 	public void description(String description)
 	{
 		this.description = description;
-	}
-
-	public String name()
-	{
-		return name;
-	}
-
-	public void name(String name)
-	{
-		this.name = name;
-	}
-
-	public String databaseName()
-	{
-		return (table == null ? null : table.database());
-	}
-
-	public String tableName()
-	{
-		return (table == null ? null : table.name());
-	}
-
-	public void table(String databaseName, String tableName, FieldType idType)
-	{
-		this.table = new IndexTableReference(databaseName, tableName, idType);
-	}
-
-	public Table table()
-	{
-		if (table == null) return null;
-
-		Table t = table.asObject();
-		t.idType(idType());
-		return t;
-	}
-
-	public void table(Table table)
-	{
-		this.table = new IndexTableReference(table);
-	}
-
-	public FieldType idType()
-	{
-		return table.idType();
 	}
 
 	public List<String> fields()
@@ -126,57 +72,23 @@ extends AbstractEntity
 		return isUnique;
 	}
 
-	public void isUnique(boolean flag)
+	public void isUnique(boolean isUnique)
 	{
-		this.isUnique = flag;
+		this.isUnique = isUnique;
 	}
 
-	public String toDbTable()
-    {
-		return getId().toDbName();
-    }
+	public String name()
+	{
+		return name;
+	}
 
-	public String toColumnDefs()
-    {
-		StringBuilder sb = new StringBuilder();
-		boolean isFirst = true;
+	public void name(String name)
+	{
+		this.name = name;
+	}
 
-		for (IndexField field : getFieldSpecs())
-		{
-			if (!isFirst)
-			{
-				sb.append(", ");
-			}
-
-			sb.append(field.name());
-			sb.append(" ");
-			sb.append(field.type().cassandraType());
-			isFirst = false;
-		}
-
-		return sb.toString();
-    }
-
-	public String toPkDefs()
-    {
-		StringBuilder sb = new StringBuilder();
-		boolean isFirst = true;
-
-		for (IndexField field : getFieldSpecs())
-		{
-			if (!isFirst)
-			{
-				sb.append(", ");
-			}
-
-			sb.append(field.name());
-			isFirst = false;
-		}
-
-		return sb.toString();
-    }
-
-	private List<IndexField> getFieldSpecs()
+	@Override
+    List<IndexField> getFieldSpecs()
 	{
 		if (fields == null) return Collections.emptyList();
 

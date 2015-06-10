@@ -15,11 +15,27 @@
 */
 package com.orangerhymelabs.orangedb.cassandra.index;
 
+import java.util.List;
+
+import org.apache.commons.lang.NotImplementedException;
+
+import com.google.common.util.concurrent.FutureCallback;
+import com.orangerhymelabs.orangedb.cassandra.document.Document;
+import com.orangerhymelabs.orangedb.cassandra.document.Location;
+
 /**
  * @author tfredrich
  * @since Jun 10, 2015
  */
-public interface IndexEngine
+public class GeospatialIndexRepository
 {
+	public List<Document> isWithin(int miles, Location location)
+	{
+		throw new NotImplementedException();
+	}
 
+	public void isWithinAsync(int miles, Location location, FutureCallback<Index> callback)
+	{
+		callback.onFailure(new NotImplementedException());
+	}
 }

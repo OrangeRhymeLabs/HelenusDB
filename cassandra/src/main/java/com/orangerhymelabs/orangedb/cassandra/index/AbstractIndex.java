@@ -15,7 +15,6 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.index;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
@@ -28,23 +27,15 @@ import com.strategicgains.syntaxe.annotation.Required;
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public class GeoSpacialIndex
+public abstract class AbstractIndex
 extends AbstractEntity
 {
-	private static List<IndexField> FIELD_SPECS = new ArrayList<IndexField>(2);
-
-	static
-	{
-		FIELD_SPECS.add(new IndexField("lattitude:DOUBLE"));
-		FIELD_SPECS.add(new IndexField("longitude:DOUBLE"));
-	}
-
 	@Required
 	@ChildValidation
 	private IndexTableReference table;
 
 	@Required("Index Engine")
-	private IndexEngine engine = IndexEngine.GEO_INDEXER;
+	private IndexEngineType engineType;
 
 	@Override
 	public Identifier getId()
@@ -52,14 +43,23 @@ extends AbstractEntity
 		return new Identifier(table.database(), table.name(), name());
 	}
 
-	public String name()
-	{
-		return "geolocation";
-	}
+	public abstract String name();
+
+	abstract List<IndexField> getFieldSpecs();
 
 	public String databaseName()
 	{
 		return (table == null ? null : table.database());
+	}
+
+	public IndexEngineType engineType()
+	{
+		return engineType;
+	}
+
+	void engineType(IndexEngineType engineType)
+	{
+		this.engineType = engineType;
 	}
 
 	public String tableName()
@@ -67,10 +67,9 @@ extends AbstractEntity
 		return (table == null ? null : table.name());
 	}
 
-	public void table(String databaseName, String tableName)
+	public void table(String databaseName, String tableName, FieldType docIdType)
 	{
-		//TODO: what IS the actual type of the indexed field?
-		this.table = new IndexTableReference(databaseName, tableName, FieldType.DOUBLE);
+		this.table = new IndexTableReference(databaseName, tableName, docIdType);
 	}
 
 	public Table table()
@@ -93,16 +92,16 @@ extends AbstractEntity
 	}
 
 	public String toDbTable()
-    {
+	{
 		return getId().toDbName();
-    }
+	}
 
 	public String toColumnDefs()
-    {
+	{
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : FIELD_SPECS)
+		for (IndexField field : getFieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -116,14 +115,14 @@ extends AbstractEntity
 		}
 
 		return sb.toString();
-    }
+	}
 
 	public String toPkDefs()
-    {
+	{
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : FIELD_SPECS)
+		for (IndexField field : getFieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -135,5 +134,5 @@ extends AbstractEntity
 		}
 
 		return sb.toString();
-    }
+	}
 }

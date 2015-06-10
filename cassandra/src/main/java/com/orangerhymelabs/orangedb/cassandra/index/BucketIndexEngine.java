@@ -19,7 +19,8 @@ package com.orangerhymelabs.orangedb.cassandra.index;
  * @author tfredrich
  * @since Jun 10, 2015
  */
-public interface IndexEngine
+public class BucketIndexEngine
+implements IndexEngine
 {
 
 }
