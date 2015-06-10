@@ -40,6 +40,10 @@ extends AbstractEntity
 	// The BSON document.
 	private BSONObject bson;
 
+	// Optional location information.
+	@ChildValidation
+	private Location location;
+
 	public Document()
 	{
 	}
