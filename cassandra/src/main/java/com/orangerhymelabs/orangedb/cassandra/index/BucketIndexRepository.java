@@ -17,6 +17,7 @@ package com.orangerhymelabs.orangedb.cassandra.index;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
+import com.orangerhymelabs.orangedb.FieldType;
 
 /**
  * @author tfredrich

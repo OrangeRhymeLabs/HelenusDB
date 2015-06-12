@@ -23,8 +23,8 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.orangedb.cassandra.index.FieldType;
 
 /**
  * @author tfredrich

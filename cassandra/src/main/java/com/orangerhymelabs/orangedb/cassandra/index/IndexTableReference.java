@@ -15,6 +15,7 @@
 */
 package com.orangerhymelabs.orangedb.cassandra.index;
 
+import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.strategicgains.syntaxe.annotation.Required;

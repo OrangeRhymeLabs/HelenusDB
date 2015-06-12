@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
+import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;

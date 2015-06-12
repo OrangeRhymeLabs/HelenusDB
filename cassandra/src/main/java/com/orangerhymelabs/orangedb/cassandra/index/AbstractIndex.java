@@ -17,6 +17,7 @@ package com.orangerhymelabs.orangedb.cassandra.index;
 
 import java.util.List;
 
+import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;

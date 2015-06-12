@@ -1,3 +1,4 @@
+package com.orangerhymelabs.orangedb;
 /*
     Copyright 2015, Strategic Gains, Inc.
 
@@ -13,7 +14,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.index;
+
 
 /**
  * @author tfredrich

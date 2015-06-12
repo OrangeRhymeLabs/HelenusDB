@@ -23,6 +23,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
+import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
