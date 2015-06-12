@@ -16,7 +16,9 @@
 package com.orangerhymelabs.orangedb.cassandra.table;
 
 import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.strategicgains.syntaxe.annotation.RegexValidation;
+import com.strategicgains.syntaxe.annotation.Required;
 
 import java.util.Objects;
 
@@ -32,15 +34,19 @@ public class TableReference
 	@RegexValidation(name = "Table Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 
-	public TableReference(String database, String table)
+	@Required("ID Type")
+	private FieldType idType = FieldType.UUID;
+
+	public TableReference(String database, String table, FieldType idType)
 	{
 		this.database = database;
 		this.name = table;
+		this.idType = idType;
 	}
 
 	public TableReference(Table table)
 	{
-		this(table.databaseName(), table.name());
+		this(table.databaseName(), table.name(), table.idType());
 	}
 
 	public String database()
@@ -53,11 +59,17 @@ public class TableReference
 		return name;
 	}
 
+	public FieldType idType()
+	{
+		return idType;
+	}
+
 	public Table asObject()
 	{
 		Table t = new Table();
 		t.database(database);
 		t.name(name);
+		t.idType(idType);
 		return t;
 	}
 
@@ -67,6 +79,7 @@ public class TableReference
 		int hash = 5;
 		hash = 59 * hash + Objects.hashCode(this.database);
 		hash = 59 * hash + Objects.hashCode(this.name);
+		hash = 59 * hash + Objects.hashCode(this.idType);
 		return hash;
 	}
 
@@ -95,12 +108,17 @@ public class TableReference
 			return false;
 		}
 
+		if (this.idType != other.idType)
+		{
+			return false;
+		}
+
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "TableReference{" + "database=" + database + ", name=" + name + '}';
+		return "TableReference{" + "database=" + database + ", name=" + name +  ", idType=" + idType.toString() + '}';
 	}
 }

@@ -15,6 +15,8 @@
 */
 package com.orangerhymelabs.orangedb.cassandra.index;
 
+import com.orangerhymelabs.orangedb.cassandra.index.bucket.BucketIndexEngine;
+import com.orangerhymelabs.orangedb.cassandra.index.geo.GeospatialIndexEngine;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 
 /**

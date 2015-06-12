@@ -3,7 +3,7 @@ package com.orangerhymelabs.orangedb.cassandra.index;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.orangerhymelabs.orangedb.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.strategicgains.syntaxe.ValidationException;
 
 public class IndexField

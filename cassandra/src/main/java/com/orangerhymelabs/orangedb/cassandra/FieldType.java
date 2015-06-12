@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.orangedb.cassandra;
 /*
     Copyright 2015, Strategic Gains, Inc.
 

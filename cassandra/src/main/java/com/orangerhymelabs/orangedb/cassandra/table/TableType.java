@@ -29,7 +29,7 @@ public enum TableType
 {
 	DOCUMENT,
 	SCHEMA,
-	COUNTER,
+	COUNTER,	// Cannot index counter tables.
 	TIME_SERIES;
 
 	public static TableType valueOf(int ordinal)

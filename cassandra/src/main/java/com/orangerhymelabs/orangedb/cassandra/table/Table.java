@@ -15,8 +15,8 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.table;
 
-import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;

@@ -13,11 +13,11 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.index;
+package com.orangerhymelabs.orangedb.cassandra.index.bucket;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.orangedb.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 
 /**
  * @author tfredrich

@@ -13,13 +13,14 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.index;
+package com.orangerhymelabs.orangedb.cassandra.index.geo;
 
 import java.util.List;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.document.Document;
 import com.orangerhymelabs.orangedb.cassandra.document.Location;
+import com.orangerhymelabs.orangedb.cassandra.index.Index;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 
 /**

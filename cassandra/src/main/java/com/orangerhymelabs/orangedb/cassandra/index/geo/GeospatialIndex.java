@@ -13,10 +13,14 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.orangedb.cassandra.index;
+package com.orangerhymelabs.orangedb.cassandra.index.geo;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.orangerhymelabs.orangedb.cassandra.index.AbstractIndex;
+import com.orangerhymelabs.orangedb.cassandra.index.IndexEngineType;
+import com.orangerhymelabs.orangedb.cassandra.index.IndexField;
 
 /**
  * @author tfredrich
@@ -47,7 +51,7 @@ extends AbstractIndex
 	}
 
 	@Override
-    List<IndexField> getFieldSpecs()
+    protected List<IndexField> getFieldSpecs()
     {
 		return FIELD_SPECS;
     }

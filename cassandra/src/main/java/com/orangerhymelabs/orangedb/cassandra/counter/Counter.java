@@ -15,7 +15,6 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.counter;
 
-import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.persistence.Identifiable;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
@@ -27,12 +26,10 @@ public class Counter
 implements Identifiable
 {
 	private Object id;
-	private FieldType idType;
 
 	@Override
 	public Identifier getId()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

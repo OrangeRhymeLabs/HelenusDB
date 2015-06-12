@@ -13,13 +13,15 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.index;
+package com.orangerhymelabs.orangedb.cassandra.index.bucket;
+
+import com.orangerhymelabs.orangedb.cassandra.index.IndexEngine;
 
 /**
  * @author tfredrich
  * @since Jun 10, 2015
  */
-public class GeospatialIndexEngine
+public class BucketIndexEngine
 implements IndexEngine
 {
 

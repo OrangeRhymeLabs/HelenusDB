@@ -17,8 +17,9 @@ package com.orangerhymelabs.orangedb.cassandra.index;
 
 import java.util.List;
 
-import com.orangerhymelabs.orangedb.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -33,7 +34,7 @@ extends AbstractEntity
 {
 	@Required
 	@ChildValidation
-	private IndexTableReference table;
+	private TableReference table;
 
 	@Required("Index Engine")
 	private IndexEngineType engineType;
@@ -46,7 +47,7 @@ extends AbstractEntity
 
 	public abstract String name();
 
-	abstract List<IndexField> getFieldSpecs();
+	protected abstract List<IndexField> getFieldSpecs();
 
 	public String databaseName()
 	{
@@ -58,7 +59,7 @@ extends AbstractEntity
 		return engineType;
 	}
 
-	void engineType(IndexEngineType engineType)
+	protected void engineType(IndexEngineType engineType)
 	{
 		this.engineType = engineType;
 	}
@@ -70,7 +71,7 @@ extends AbstractEntity
 
 	public void table(String databaseName, String tableName, FieldType docIdType)
 	{
-		this.table = new IndexTableReference(databaseName, tableName, docIdType);
+		this.table = new TableReference(databaseName, tableName, docIdType);
 	}
 
 	public Table table()
@@ -84,7 +85,7 @@ extends AbstractEntity
 
 	public void table(Table table)
 	{
-		this.table = new IndexTableReference(table);
+		this.table = new TableReference(table);
 	}
 
 	public FieldType idType()

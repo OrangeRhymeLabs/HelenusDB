@@ -23,10 +23,13 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.orangedb.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 
 /**
+ * Document repositories are unique per document/table and therefore must be cached by table.
+ * 
  * @author tfredrich
  * @since Jun 8, 2015
  */
@@ -42,9 +45,10 @@ extends AbstractCassandraRepository<Document>
 		    "object blob," +
 			"created_at timestamp," +
 		    "updated_at timestamp," +
-//			"primary key (id))" +
-		 	"primary key ((id), updated_at)" +
-		 ") with clustering order by (updated_at DESC);";
+			"primary key (id))" +
+		")";
+//		 	"primary key ((id), updated_at)" +
+//		 ") with clustering order by (updated_at DESC);";
 
         public boolean drop(Session session, String keyspace, String table)
         {
@@ -73,9 +77,9 @@ extends AbstractCassandraRepository<Document>
 	private static final String UPDATE_CQL = "update %s set object = ?, updated_at = ? where id = ? if exists";
 	private static final String CREATE_CQL = "insert into %s.%s (id, object, created_at, updated_at) values (?, ?, ?, ?) if not exists";
 
-	private String table;
+	private TableReference table;
 
-	public DocumentRepository(Session session, String keyspace, String table)
+	public DocumentRepository(Session session, String keyspace, TableReference table)
 	{
 		super(session, keyspace);
 		this.table = table;
@@ -107,7 +111,7 @@ extends AbstractCassandraRepository<Document>
 		}
 
 		Document d = new Document();
-		d.id(row.getUUID(Columns.ID));
+		d.id(getId(row));
 		ByteBuffer b = row.getBytes(Columns.OBJECT);
 
 		if (b != null && b.hasArray())
@@ -121,6 +125,23 @@ extends AbstractCassandraRepository<Document>
 		d.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return d;
 	}
+
+	private Object getId(Row row)
+    {
+		switch(table.idType())
+		{
+			case BIGINT: return row.getLong(Columns.ID);
+			case DECIMAL: return row.getDecimal(Columns.ID);
+			case DOUBLE: return row.getDouble(Columns.ID);
+			case FLOAT: return row.getFloat(Columns.ID);
+			case INTEGER: return row.getInt(Columns.ID);
+			case TEXT: return row.getString(Columns.ID);
+			case TIMESTAMP: return row.getDate(Columns.ID);
+			case TIMEUUID:
+			case UUID:  return row.getUUID(Columns.ID);
+			default: throw new UnsupportedOperationException("Conversion of ID type: " + table.idType().toString());
+		}
+    }
 
 	@Override
     protected String buildCreateStatement()

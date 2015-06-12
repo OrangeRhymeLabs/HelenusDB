@@ -17,6 +17,7 @@ package com.orangerhymelabs.orangedb.cassandra.document;
 
 import org.bson.BSONObject;
 
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
@@ -74,9 +75,9 @@ extends AbstractEntity
 		return (hasTable() ? table.asObject() : null);
 	}
 
-	public void table(String database, String table)
+	public void table(String database, String table, FieldType idType)
 	{
-		this.table = new TableReference(database, table);
+		this.table = new TableReference(database, table, idType);
 	}
 
 	public void table(Table table)

@@ -88,7 +88,7 @@ extends AbstractIndex
 	}
 
 	@Override
-    List<IndexField> getFieldSpecs()
+    protected List<IndexField> getFieldSpecs()
 	{
 		if (fields == null) return Collections.emptyList();
 
