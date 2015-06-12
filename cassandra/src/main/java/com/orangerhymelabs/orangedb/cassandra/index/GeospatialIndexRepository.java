@@ -17,11 +17,10 @@ package com.orangerhymelabs.orangedb.cassandra.index;
 
 import java.util.List;
 
-import org.apache.commons.lang.NotImplementedException;
-
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.document.Document;
 import com.orangerhymelabs.orangedb.cassandra.document.Location;
+import com.orangerhymelabs.orangedb.exception.StorageException;
 
 /**
  * @author tfredrich
@@ -31,11 +30,11 @@ public class GeospatialIndexRepository
 {
 	public List<Document> isWithin(int miles, Location location)
 	{
-		throw new NotImplementedException();
+		throw new StorageException("Not Implemented Yet");
 	}
 
 	public void isWithinAsync(int miles, Location location, FutureCallback<Index> callback)
 	{
-		callback.onFailure(new NotImplementedException());
+		callback.onFailure(new StorageException("Not Implemented Yet"));
 	}
 }
