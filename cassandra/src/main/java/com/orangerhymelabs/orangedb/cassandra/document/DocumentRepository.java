@@ -45,7 +45,7 @@ extends AbstractCassandraRepository<Document>
 		    "object blob," +
 			"created_at timestamp," +
 		    "updated_at timestamp," +
-			"primary key (id))" +
+			"primary key (id)" +
 		")";
 //		 	"primary key ((id), updated_at)" +
 //		 ") with clustering order by (updated_at DESC);";
