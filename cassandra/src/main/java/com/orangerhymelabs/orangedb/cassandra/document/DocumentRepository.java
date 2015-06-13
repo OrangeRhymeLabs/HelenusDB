@@ -25,6 +25,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 
 /**
@@ -47,10 +48,8 @@ extends AbstractCassandraRepository<Document>
 		    "updated_at timestamp," +
 			"primary key (id)" +
 		")";
-//		 	"primary key ((id), updated_at)" +
-//		 ") with clustering order by (updated_at DESC);";
 
-        public boolean drop(Session session, String keyspace, String table)
+		public boolean drop(Session session, String keyspace, String table)
         {
 			ResultSet rs = session.execute(String.format(DROP_TABLE, keyspace, table));
 	        return rs.wasApplied();
@@ -59,7 +58,7 @@ extends AbstractCassandraRepository<Document>
         public boolean create(Session session, String keyspace, String table, FieldType idType)
         {
 			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace, table, idType.cassandraType()));
-	        return rs.wasApplied();
+			return rs.wasApplied();
         }
 	}
 
@@ -83,6 +82,11 @@ extends AbstractCassandraRepository<Document>
 	{
 		super(session, keyspace);
 		this.table = table;
+	}
+
+	public Table table()
+	{
+		return table.asObject();
 	}
 
 	@Override
@@ -146,19 +150,19 @@ extends AbstractCassandraRepository<Document>
 	@Override
     protected String buildCreateStatement()
     {
-	    return String.format(CREATE_CQL, keyspace(), table);
+	    return String.format(CREATE_CQL, keyspace(), table.name());
     }
 
 	@Override
     protected String buildUpdateStatement()
     {
-	    return String.format(UPDATE_CQL, keyspace(), table);
+	    return String.format(UPDATE_CQL, keyspace(), table.name());
     }
 
 	@Override
     protected String buildReadStatement()
     {
-	    return String.format(READ_CQL, keyspace(), table);
+	    return String.format(READ_CQL, keyspace(), table.name());
     }
 
 	@Override
@@ -170,6 +174,6 @@ extends AbstractCassandraRepository<Document>
 	@Override
     protected String buildDeleteStatement()
     {
-	    return String.format(DELETE_CQL, keyspace(), table);
+	    return String.format(DELETE_CQL, keyspace(), table.name());
     }
 }
