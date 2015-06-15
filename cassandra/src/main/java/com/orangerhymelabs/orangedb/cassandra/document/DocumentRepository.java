@@ -115,7 +115,7 @@ extends AbstractCassandraRepository<Document>
 		}
 
 		Document d = new Document();
-		d.id(getId(row));
+		d.id(marshalId(row));
 		ByteBuffer b = row.getBytes(Columns.OBJECT);
 
 		if (b != null && b.hasArray())
@@ -130,7 +130,7 @@ extends AbstractCassandraRepository<Document>
 		return d;
 	}
 
-	private Object getId(Row row)
+	private Object marshalId(Row row)
     {
 		switch(table.idType())
 		{
