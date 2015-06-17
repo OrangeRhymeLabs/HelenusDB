@@ -16,6 +16,7 @@
 package com.orangerhymelabs.orangedb.cassandra.document;
 
 import java.nio.ByteBuffer;
+import java.util.Date;
 
 import org.bson.BSON;
 
@@ -26,6 +27,7 @@ import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 /**
  * Document repositories are unique per document/table and therefore must be cached by table.
@@ -73,7 +75,7 @@ extends AbstractCassandraRepository<Document>
 
 	private static final String READ_CQL = "select * from %s.%s where id = ?";
 	private static final String DELETE_CQL = "delete from %s.%s where id = ?";
-	private static final String UPDATE_CQL = "update %s set object = ?, updated_at = ? where id = ? if exists";
+	private static final String UPDATE_CQL = "update %s.%s set object = ?, updated_at = ? where id = ? if exists";
 	private static final String CREATE_CQL = "insert into %s.%s (id, object, created_at, updated_at) values (?, ?, ?, ?) if not exists";
 
 	private Table table;
@@ -101,20 +103,51 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	@Override
-	protected void bindCreate(BoundStatement bs, Document entity)
+	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
-		bs.bind(entity.id(),
-			ByteBuffer.wrap(BSON.encode(entity.object())),
-		    entity.createdAt(),
-		    entity.updatedAt());
+		bs.bind(id.components().subList(0, bs.preparedStatement().getVariables().size()).toArray());
 	}
 
 	@Override
-	protected void bindUpdate(BoundStatement bs, Document entity)
+	protected void bindCreate(BoundStatement bs, Document document)
 	{
-		bs.bind(ByteBuffer.wrap(BSON.encode(entity.object())),
-			entity.updatedAt(),
-		    entity.id());
+		Date now = new Date();
+		document.createdAt(now);
+		document.updatedAt(now);
+
+		if (document.hasObject())
+		{
+			bs.bind(document.id(),
+				ByteBuffer.wrap(BSON.encode(document.object())),
+			    document.createdAt(),
+			    document.updatedAt());
+		}
+		else
+		{
+			bs.bind(document.id(),
+				null,
+			    document.createdAt(),
+			    document.updatedAt());
+		}
+	}
+
+	@Override
+	protected void bindUpdate(BoundStatement bs, Document document)
+	{
+		document.updatedAt(new Date());
+
+		if (document.hasObject())
+		{
+			bs.bind(ByteBuffer.wrap(BSON.encode(document.object())),
+				document.updatedAt(),
+			    document.id());
+		}
+		else
+		{
+			bs.bind(null,
+				document.updatedAt(),
+			    document.id());
+		}
 	}
 
 	@Override

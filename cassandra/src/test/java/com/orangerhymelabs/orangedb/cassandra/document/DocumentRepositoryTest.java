@@ -365,7 +365,7 @@ public class DocumentRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		dateDocs.readAsync(new Identifier(UUID.randomUUID()), callback);
+		dateDocs.readAsync(new Identifier(new Date()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
