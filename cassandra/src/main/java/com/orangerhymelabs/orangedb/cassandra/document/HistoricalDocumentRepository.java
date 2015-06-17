@@ -166,6 +166,12 @@ extends DocumentRepository
 	}
 
 	@Override
+	protected void bindIdentity(BoundStatement bs, Identifier id)
+	{
+		bs.bind(id.components().toArray());
+	}
+
+	@Override
     protected String buildUpdateStatement()
     {
 	    return String.format(UPDATE_CQL, keyspace(), tableName());

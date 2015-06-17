@@ -46,7 +46,6 @@ extends AbstractEntity
 	@Override
 	public Identifier getIdentifier()
 	{
-		// TODO: Resolve this: for non-historical documents, updatedAt is not part of the identifier.
 		return new Identifier(id, updatedAt());
 	}
 
