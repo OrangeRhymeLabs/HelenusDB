@@ -16,7 +16,7 @@
 package com.orangerhymelabs.orangedb.exception;
 
 /**
- * @author toddf
+ * @author tfredrich
  * @since May 7, 2015
  */
 public class StorageException
