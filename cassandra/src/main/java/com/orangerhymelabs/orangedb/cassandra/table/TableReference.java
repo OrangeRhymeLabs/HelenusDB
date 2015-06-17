@@ -64,7 +64,7 @@ public class TableReference
 		return idType;
 	}
 
-	public Table asObject()
+	public Table toTable()
 	{
 		Table t = new Table();
 		t.database(database);

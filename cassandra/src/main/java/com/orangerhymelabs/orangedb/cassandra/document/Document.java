@@ -17,9 +17,6 @@ package com.orangerhymelabs.orangedb.cassandra.document;
 
 import org.bson.BSONObject;
 
-import com.orangerhymelabs.orangedb.cassandra.FieldType;
-import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -32,11 +29,8 @@ import com.strategicgains.syntaxe.annotation.Required;
 public class Document
 extends AbstractEntity
 {
+	@Required("Document ID")
 	private Object id;
-
-	@Required("Table")
-	@ChildValidation
-	private TableReference table;
 
 	// The BSON document.
 	private BSONObject bson;
@@ -52,7 +46,7 @@ extends AbstractEntity
 	@Override
 	public Identifier getId()
 	{
-		return new Identifier(databaseName(), tableName(), id, updatedAt());
+		return new Identifier(id, updatedAt());
 	}
 
 	public Object id()
@@ -63,36 +57,6 @@ extends AbstractEntity
 	public void id(Object id)
 	{
 		this.id = id;
-	}
-
-	public boolean hasTable()
-	{
-		return (table != null);
-	}
-
-	public Table table()
-	{
-		return (hasTable() ? table.asObject() : null);
-	}
-
-	public void table(String database, String table, FieldType idType)
-	{
-		this.table = new TableReference(database, table, idType);
-	}
-
-	public void table(Table table)
-	{
-		this.table = (table != null ? new TableReference(table) : null);
-	}
-
-	public String tableName()
-	{
-		return (hasTable() ? table.name() : null);
-	}
-
-	public String databaseName()
-	{
-		return (hasTable() ? table.database() : null);
 	}
 
 	public boolean hasObject()
@@ -113,7 +77,7 @@ extends AbstractEntity
 	@Override
 	public String toString()
 	{
-		return "Document{" + "id=" + id + ", table=" + table + ", object=" + object() + '}';
+		return "Document{" + "id=" + id + ", object=" + object() + '}';
 	}
 
 }

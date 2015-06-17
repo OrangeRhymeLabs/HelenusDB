@@ -27,7 +27,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
-import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
@@ -49,6 +49,7 @@ extends DocumentRepository
 		"(" +
 			"id %s," +
 		    "object blob," +
+		    // TODO: Add Location details to HistoricalDocument.
 			"created_at timestamp," +
 		    "updated_at timestamp," +
 		 	"primary key ((id), updated_at)" +
@@ -75,7 +76,7 @@ extends DocumentRepository
 	private PreparedStatement existsStmt;
 	private PreparedStatement historyStmt;
 
-	public HistoricalDocumentRepository(Session session, String keyspace, TableReference table)
+	public HistoricalDocumentRepository(Session session, String keyspace, Table table)
 	{
 		super(session, keyspace, table);
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), table.name()));
@@ -167,12 +168,12 @@ extends DocumentRepository
 	@Override
     protected String buildUpdateStatement()
     {
-	    return String.format(UPDATE_CQL, keyspace(), table().name());
+	    return String.format(UPDATE_CQL, keyspace(), tableName());
     }
 
 	@Override
     protected String buildReadStatement()
     {
-	    return String.format(READ_CQL, keyspace(), table().name());
+	    return String.format(READ_CQL, keyspace(), tableName());
     }
 }

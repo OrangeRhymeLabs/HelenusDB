@@ -78,7 +78,7 @@ extends AbstractEntity
 	{
 		if (table == null) return null;
 
-		Table t = table.asObject();
+		Table t = table.toTable();
 		t.idType(idType());
 		return t;
 	}
