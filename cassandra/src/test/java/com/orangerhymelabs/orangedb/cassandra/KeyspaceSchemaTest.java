@@ -50,7 +50,6 @@ public class KeyspaceSchemaTest
 	public void shouldUseLocalReplication()
 	{
 		KeyspaceSchema schema = new KeyspaceSchema();
-		schema.useLocalReplication();
 		assertTrue(schema.create(CassandraManager.session(), CassandraManager.keyspace()));
 		Session session = CassandraManager.cluster().connect(CassandraManager.keyspace());
 		assertNotNull(session);

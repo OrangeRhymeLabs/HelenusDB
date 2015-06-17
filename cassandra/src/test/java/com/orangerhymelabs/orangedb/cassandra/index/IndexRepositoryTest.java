@@ -58,7 +58,6 @@ public class IndexRepositoryTest
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
-		keyspace.useLocalReplication();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 		new IndexRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		indexes = new IndexRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());

@@ -55,7 +55,6 @@ public class DatabaseRepositoryTest
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
-		keyspace.useLocalReplication();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 		new DatabaseRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		databases = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());

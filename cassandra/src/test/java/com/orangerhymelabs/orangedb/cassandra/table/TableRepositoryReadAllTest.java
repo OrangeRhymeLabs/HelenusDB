@@ -50,7 +50,6 @@ public class TableRepositoryReadAllTest
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
-		keyspace.useLocalReplication();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 		new TableRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		tables = new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());

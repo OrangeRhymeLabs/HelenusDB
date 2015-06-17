@@ -63,7 +63,6 @@ public class IndexServiceTest
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
-		keyspace.useLocalReplication();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 		new TableRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		new DatabaseRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());

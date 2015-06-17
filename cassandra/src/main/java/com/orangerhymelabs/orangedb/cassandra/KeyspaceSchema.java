@@ -37,17 +37,16 @@ implements Schemaable
 		static final String NETWORK_REPLICATION = " with replication = { 'class' : 'NetworkTopologyStrategy', %s}";
 	}
 
-	private boolean isNetworkReplication;
-	private Map<String, Integer> dataCenters;
+	private Map<String, Integer> dataCenters = null;
 
 	public KeyspaceSchema()
     {
 		super();
     }
 
-	public void useLocalReplication()
+	public boolean isNetworkReplication()
 	{
-		isNetworkReplication = false;
+		return (dataCenters != null);
 	}
 
 	public void useNetworkReplication(Map<String, Integer> dataCenters)
@@ -69,7 +68,7 @@ implements Schemaable
 		String create = String.format(Schema.CREATE, keyspace);
 		ResultSet rs;
 
-		if (isNetworkReplication)
+		if (isNetworkReplication())
 		{
 			rs = session.execute(create + String.format(Schema.NETWORK_REPLICATION, replicationFactors(dataCenters)));
 		}

@@ -63,7 +63,6 @@ public class DocumentRepositoryTest
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
-		keyspace.useLocalReplication();
 		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
 
 		new TableRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
