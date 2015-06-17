@@ -70,7 +70,18 @@ public abstract class AbstractCassandraRepository<T>
 
 	public void createAsync(T entity, FutureCallback<T> callback)
 	{
-		ResultSetFuture future = _create(entity);
+		ResultSetFuture future = null;
+		
+		try
+		{
+			future = _create(entity);
+		}
+		catch(Exception e)
+		{
+			callback.onFailure(e);
+			return;
+		}
+
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
 		{
 			@Override
@@ -120,7 +131,18 @@ public abstract class AbstractCassandraRepository<T>
 
 	public void updateAsync(T entity, FutureCallback<T> callback)
 	{
-		ResultSetFuture future = _update(entity);
+		ResultSetFuture future = null;
+		
+		try
+		{
+			future = _update(entity);
+		}
+		catch (Exception e)
+		{
+			callback.onFailure(e);
+			return;
+		}
+
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
 		{
 			@Override
