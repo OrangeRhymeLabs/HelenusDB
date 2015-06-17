@@ -28,7 +28,7 @@ implements Identifiable
 	private Object id;
 
 	@Override
-	public Identifier getId()
+	public Identifier getIdentifier()
 	{
 		return null;
 	}

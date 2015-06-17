@@ -26,7 +26,7 @@ public class Event
 implements Identifiable
 {
 	@Override
-	public Identifier getId()
+	public Identifier getIdentifier()
 	{
 		// TODO Auto-generated method stub
 		return null;

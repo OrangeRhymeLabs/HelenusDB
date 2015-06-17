@@ -44,7 +44,7 @@ extends AbstractEntity
 		name(name);
 	}
 
-	public Identifier getId()
+	public Identifier getIdentifier()
 	{
 		return new Identifier(name());
 	}

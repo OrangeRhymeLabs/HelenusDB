@@ -79,7 +79,7 @@ public class DatabaseRepositoryTest
 		assertEquals(db, createResult);
 
 		// Read
-		Database result = databases.read(db.getId());
+		Database result = databases.read(db.getIdentifier());
 		assertEquals(db, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -90,26 +90,26 @@ public class DatabaseRepositoryTest
 		assertEquals(db, updateResult);
 
 		// Re-Read
-		Database result2 = databases.read(db.getId());
+		Database result2 = databases.read(db.getIdentifier());
 		assertEquals(db, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		databases.delete(db.getId());
+		databases.delete(db.getIdentifier());
 
 		// Re-Read
 		try
 		{
-			databases.read(db.getId());
+			databases.read(db.getIdentifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Database not deleted: " + db.getId().toString());
+		fail("Database not deleted: " + db.getIdentifier().toString());
 	}
 
 	@Test
@@ -123,7 +123,7 @@ public class DatabaseRepositoryTest
 
 		// Shouldn't Exist
 		TestCallback<Boolean> existCallback = new TestCallback<Boolean>();
-		databases.existsAsync(db.getId(), existCallback);
+		databases.existsAsync(db.getIdentifier(), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertFalse(existCallback.entity());
@@ -136,14 +136,14 @@ public class DatabaseRepositoryTest
 
 		// Read
 		callback.clear();
-		databases.readAsync(db.getId(), callback);
+		databases.readAsync(db.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertEquals(db, callback.entity());
 
 		// Should Also Exist
 		existCallback.clear();
-		databases.existsAsync(db.getId(), existCallback);
+		databases.existsAsync(db.getIdentifier(), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertTrue(existCallback.entity());
@@ -158,7 +158,7 @@ public class DatabaseRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(db.getId(), callback);
+		databases.readAsync(db.getIdentifier(), callback);
 		waitFor(callback);
 
 		Database result2 = callback.entity();
@@ -169,14 +169,14 @@ public class DatabaseRepositoryTest
 
 		// Delete
 		callback.clear();
-		databases.deleteAsync(db.getId(), callback);
+		databases.deleteAsync(db.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(db.getId(), callback);
+		databases.readAsync(db.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

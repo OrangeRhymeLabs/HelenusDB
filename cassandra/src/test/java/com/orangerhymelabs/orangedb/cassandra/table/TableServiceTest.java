@@ -119,7 +119,7 @@ public class TableServiceTest
 			return;
 		}
 
-		fail("Table not deleted: " + entity.getId().toString());
+		fail("Table not deleted: " + entity.getIdentifier().toString());
 	}
 
 	@Test

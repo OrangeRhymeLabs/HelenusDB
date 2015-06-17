@@ -133,7 +133,7 @@ public class IndexServiceTest
 			return;
 		}
 
-		fail("Index not deleted: " + index.getId().toString());
+		fail("Index not deleted: " + index.getIdentifier().toString());
 	}
 
 	@Test

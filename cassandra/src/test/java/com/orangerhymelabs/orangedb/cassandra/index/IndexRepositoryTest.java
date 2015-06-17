@@ -88,7 +88,7 @@ public class IndexRepositoryTest
 		assertTrue("Bucket table not created: " + index.toDbTable(), tableExists(index.toDbTable()));
 
 		// Read
-		Index result = indexes.read(index.getId());
+		Index result = indexes.read(index.getIdentifier());
 		assertEquals(index, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -99,14 +99,14 @@ public class IndexRepositoryTest
 		assertEquals(index, updateResult);
 
 		// Re-Read
-		Index result2 = indexes.read(index.getId());
+		Index result2 = indexes.read(index.getIdentifier());
 		assertEquals(index, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		indexes.delete(index.getId());
+		indexes.delete(index.getIdentifier());
 
 		// Bucket table should no longer exist.
 		assertFalse("Bucket table not deleted: " + index.toDbTable(), tableExists(index.toDbTable()));
@@ -114,14 +114,14 @@ public class IndexRepositoryTest
 		// Re-Read table
 		try
 		{
-			indexes.read(index.getId());
+			indexes.read(index.getIdentifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Index not deleted: " + index.getId().toString());
+		fail("Index not deleted: " + index.getIdentifier().toString());
 	}
 
 	@Test
@@ -147,7 +147,7 @@ public class IndexRepositoryTest
 
 		// Read
 		callback.clear();
-		indexes.readAsync(index.getId(), callback);
+		indexes.readAsync(index.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertEquals(index, callback.entity());
@@ -162,7 +162,7 @@ public class IndexRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		indexes.readAsync(index.getId(), callback);
+		indexes.readAsync(index.getIdentifier(), callback);
 		waitFor(callback);
 
 		Index result2 = callback.entity();
@@ -173,7 +173,7 @@ public class IndexRepositoryTest
 
 		// Delete
 		callback.clear();
-		indexes.deleteAsync(index.getId(), callback);
+		indexes.deleteAsync(index.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
@@ -183,7 +183,7 @@ public class IndexRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		indexes.readAsync(index.getId(), callback);
+		indexes.readAsync(index.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

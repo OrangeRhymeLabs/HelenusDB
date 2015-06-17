@@ -42,7 +42,7 @@ public class TableService
 
 	public Table create(Table table)
 	{
-		if (!databases.exists(table.database().getId()))
+		if (!databases.exists(table.database().getIdentifier()))
 		{
 			throw new ItemNotFoundException("Database not found: " + table.databaseName());
 		}
@@ -53,7 +53,7 @@ public class TableService
 
 	public void createAsync(Table table, FutureCallback<Table> callback)
 	{
-		databases.existsAsync(table.database().getId(), new FutureCallback<Boolean>()
+		databases.existsAsync(table.database().getIdentifier(), new FutureCallback<Boolean>()
 			{
 				@Override
                 public void onSuccess(Boolean result)

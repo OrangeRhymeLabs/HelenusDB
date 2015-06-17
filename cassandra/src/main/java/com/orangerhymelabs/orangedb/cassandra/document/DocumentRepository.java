@@ -105,6 +105,7 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
+		// TODO: Fix this as it's a performance / GC issue.
 		bs.bind(id.components().subList(0, bs.preparedStatement().getVariables().size()).toArray());
 	}
 

@@ -42,7 +42,7 @@ public class IndexService
 
 	public Index create(Index index)
 	{
-		Table previous = tables.read(index.table().getId());
+		Table previous = tables.read(index.table().getIdentifier());
 		index.table(previous);
 		ValidationEngine.validateAndThrow(index);
 		return indexes.create(index);
@@ -50,7 +50,7 @@ public class IndexService
 
 	public void createAsync(Index index, FutureCallback<Index> callback)
 	{
-		tables.readAsync(index.table().getId(), new FutureCallback<Table>()
+		tables.readAsync(index.table().getIdentifier(), new FutureCallback<Table>()
 			{
 				@Override
                 public void onSuccess(Table previous)
@@ -98,7 +98,7 @@ public class IndexService
 
 	public Index update(Index index)
 	{
-		Table previous = tables.read(index.table().getId());
+		Table previous = tables.read(index.table().getIdentifier());
 		index.table(previous);
 		ValidationEngine.validateAndThrow(index);
 		return indexes.update(index);
@@ -106,7 +106,7 @@ public class IndexService
 
 	public void updateAsync(Index index, FutureCallback<Index> callback)
 	{
-		tables.readAsync(index.table().getId(), new FutureCallback<Table>()
+		tables.readAsync(index.table().getIdentifier(), new FutureCallback<Table>()
 			{
 				@Override
                 public void onSuccess(Table previous)

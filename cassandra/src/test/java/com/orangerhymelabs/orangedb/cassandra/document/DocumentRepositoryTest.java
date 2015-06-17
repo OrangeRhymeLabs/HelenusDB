@@ -106,7 +106,7 @@ public class DocumentRepositoryTest
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = uuidDocs.read(doc.getId());
+		Document result = uuidDocs.read(doc.getIdentifier());
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -117,26 +117,26 @@ public class DocumentRepositoryTest
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = uuidDocs.read(doc.getId());
+		Document result2 = uuidDocs.read(doc.getIdentifier());
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		uuidDocs.delete(doc.getId());
+		uuidDocs.delete(doc.getIdentifier());
 
 		// Re-Read
 		try
 		{
-			uuidDocs.read(doc.getId());
+			uuidDocs.read(doc.getIdentifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Document not deleted: " + doc.getId().toString());
+		fail("Document not deleted: " + doc.getIdentifier().toString());
 	}
 
 	@Test
@@ -153,7 +153,7 @@ public class DocumentRepositoryTest
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = dateDocs.read(doc.getId());
+		Document result = dateDocs.read(doc.getIdentifier());
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -164,26 +164,26 @@ public class DocumentRepositoryTest
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = dateDocs.read(doc.getId());
+		Document result2 = dateDocs.read(doc.getIdentifier());
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		dateDocs.delete(doc.getId());
+		dateDocs.delete(doc.getIdentifier());
 
 		// Re-Read
 		try
 		{
-			dateDocs.read(doc.getId());
+			dateDocs.read(doc.getIdentifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Document not deleted: " + doc.getId().toString());
+		fail("Document not deleted: " + doc.getIdentifier().toString());
 	}
 
 	@Test
@@ -203,7 +203,7 @@ public class DocumentRepositoryTest
 
 		// Read
 		callback.clear();
-		uuidDocs.readAsync(doc.getId(), callback);
+		uuidDocs.readAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -218,7 +218,7 @@ public class DocumentRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		uuidDocs.readAsync(doc.getId(), callback);
+		uuidDocs.readAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -229,14 +229,14 @@ public class DocumentRepositoryTest
 
 		// Delete
 		callback.clear();
-		uuidDocs.deleteAsync(doc.getId(), callback);
+		uuidDocs.deleteAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		uuidDocs.readAsync(doc.getId(), callback);
+		uuidDocs.readAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -260,7 +260,7 @@ public class DocumentRepositoryTest
 
 		// Read
 		callback.clear();
-		dateDocs.readAsync(doc.getId(), callback);
+		dateDocs.readAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -275,7 +275,7 @@ public class DocumentRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		dateDocs.readAsync(doc.getId(), callback);
+		dateDocs.readAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -286,14 +286,14 @@ public class DocumentRepositoryTest
 
 		// Delete
 		callback.clear();
-		dateDocs.deleteAsync(doc.getId(), callback);
+		dateDocs.deleteAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		dateDocs.readAsync(doc.getId(), callback);
+		dateDocs.readAsync(doc.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

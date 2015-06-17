@@ -40,7 +40,7 @@ extends AbstractEntity
 	private IndexEngineType engineType;
 
 	@Override
-	public Identifier getId()
+	public Identifier getIdentifier()
 	{
 		return new Identifier(table.database(), table.name(), name());
 	}
@@ -95,7 +95,7 @@ extends AbstractEntity
 
 	public String toDbTable()
 	{
-		return getId().toDbName();
+		return getIdentifier().toDbName();
 	}
 
 	public String toColumnDefs()

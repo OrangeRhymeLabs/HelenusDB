@@ -84,7 +84,7 @@ public class TableRepositoryTest
 		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
 
 		// Read
-		Table result = tables.read(table.getId());
+		Table result = tables.read(table.getIdentifier());
 		assertEquals(table, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -95,14 +95,14 @@ public class TableRepositoryTest
 		assertEquals(table, updateResult);
 
 		// Re-Read
-		Table result2 = tables.read(table.getId());
+		Table result2 = tables.read(table.getIdentifier());
 		assertEquals(table, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		tables.delete(table.getId());
+		tables.delete(table.getIdentifier());
 
 		// Document table should no longer exist.
 		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
@@ -110,14 +110,14 @@ public class TableRepositoryTest
 		// Re-Read table
 		try
 		{
-			tables.read(table.getId());
+			tables.read(table.getIdentifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Table not deleted: " + table.getId().toString());
+		fail("Table not deleted: " + table.getIdentifier().toString());
 	}
 
 	@Test
@@ -141,7 +141,7 @@ public class TableRepositoryTest
 
 		// Read
 		callback.clear();
-		tables.readAsync(table.getId(), callback);
+		tables.readAsync(table.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertEquals(table, callback.entity());
@@ -156,7 +156,7 @@ public class TableRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(table.getId(), callback);
+		tables.readAsync(table.getIdentifier(), callback);
 		waitFor(callback);
 
 		Table result2 = callback.entity();
@@ -167,7 +167,7 @@ public class TableRepositoryTest
 
 		// Delete
 		callback.clear();
-		tables.deleteAsync(table.getId(), callback);
+		tables.deleteAsync(table.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
@@ -177,7 +177,7 @@ public class TableRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(table.getId(), callback);
+		tables.readAsync(table.getIdentifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

@@ -109,7 +109,7 @@ public class DatabaseServiceTest
 			return;
 		}
 
-		fail("Database not deleted: " + entity.getId().toString());
+		fail("Database not deleted: " + entity.getIdentifier().toString());
 	}
 
 	@Test
