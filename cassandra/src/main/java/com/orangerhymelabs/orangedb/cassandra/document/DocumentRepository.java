@@ -24,9 +24,11 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 /**
@@ -115,19 +117,26 @@ extends AbstractCassandraRepository<Document>
 		document.createdAt(now);
 		document.updatedAt(now);
 
-		if (document.hasObject())
+		try
 		{
-			bs.bind(document.id(),
-				ByteBuffer.wrap(BSON.encode(document.object())),
-			    document.createdAt(),
-			    document.updatedAt());
+			if (document.hasObject())
+			{
+				bs.bind(document.id(),
+					ByteBuffer.wrap(BSON.encode(document.object())),
+				    document.createdAt(),
+				    document.updatedAt());
+			}
+			else
+			{
+				bs.bind(document.id(),
+					null,
+				    document.createdAt(),
+				    document.updatedAt());
+			}
 		}
-		else
+		catch (InvalidTypeException e)
 		{
-			bs.bind(document.id(),
-				null,
-			    document.createdAt(),
-			    document.updatedAt());
+			throw new InvalidIdentifierException(e);
 		}
 	}
 
@@ -136,17 +145,24 @@ extends AbstractCassandraRepository<Document>
 	{
 		document.updatedAt(new Date());
 
-		if (document.hasObject())
+		try
 		{
-			bs.bind(ByteBuffer.wrap(BSON.encode(document.object())),
-				document.updatedAt(),
-			    document.id());
+			if (document.hasObject())
+			{
+				bs.bind(ByteBuffer.wrap(BSON.encode(document.object())),
+					document.updatedAt(),
+				    document.id());
+			}
+			else
+			{
+				bs.bind(null,
+					document.updatedAt(),
+				    document.id());
+			}
 		}
-		else
+		catch (InvalidTypeException e)
 		{
-			bs.bind(null,
-				document.updatedAt(),
-			    document.id());
+			throw new InvalidIdentifierException(e);
 		}
 	}
 

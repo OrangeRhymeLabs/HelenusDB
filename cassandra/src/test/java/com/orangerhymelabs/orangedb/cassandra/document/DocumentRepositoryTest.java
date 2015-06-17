@@ -41,6 +41,7 @@ import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
+import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
@@ -333,6 +334,57 @@ public class DocumentRepositoryTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
+	}
+
+	@Test(expected=InvalidIdentifierException.class)
+	public void shouldThrowOnCreateInvalidIdSynchronously()
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		dateDocs.create(doc);
+	}
+
+	@Test
+	public void shouldThrowOnCreateInvalidIdAynchronously()
+	throws InterruptedException
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		TestCallback<Document> callback = new TestCallback<Document>();
+
+		dateDocs.createAsync(doc, callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
+	}
+
+	@Test(expected=InvalidIdentifierException.class)
+	public void shouldThrowOnUpdateInvalidIdSynchronously()
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		dateDocs.update(doc);
+	}
+
+	@Test
+	public void shouldThrowOnUpdateInvalidIdAynchronously()
+	throws InterruptedException
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		TestCallback<Document> callback = new TestCallback<Document>();
+
+		// Create
+		dateDocs.updateAsync(doc, callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
 	@Test(expected=ItemNotFoundException.class)
