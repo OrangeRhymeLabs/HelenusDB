@@ -447,15 +447,15 @@ public abstract class AbstractCassandraRepository<T>
 
 	protected List<T> marshalAll(ResultSet rs)
 	{
-		List<T> dbs = new ArrayList<T>();
+		List<T> results = new ArrayList<T>();
 		Iterator<Row> i = rs.iterator();
 
 		while (i.hasNext())
 		{
-			dbs.add(marshalRow(i.next()));
+			results.add(marshalRow(i.next()));
 		}
 
-		return dbs;
+		return results;
 	}
 
 	protected abstract void bindCreate(BoundStatement bs, T entity);
