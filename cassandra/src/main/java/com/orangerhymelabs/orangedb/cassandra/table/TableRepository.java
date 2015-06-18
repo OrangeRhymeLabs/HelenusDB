@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
 import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
+import com.orangerhymelabs.orangedb.cassandra.document.HistoricalDocumentRepository;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
@@ -95,6 +96,7 @@ extends AbstractCassandraRepository<Table>
 	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
 
 	private static final  DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
+	private static final  HistoricalDocumentRepository.Schema HISTORICAL_DOCUMENT_SCHEMA = new HistoricalDocumentRepository.Schema();
 
 	public TableRepository(Session session, String keyspace)
 	{
@@ -106,7 +108,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+			createDocumentSchema(table);
 			super.createAsync(table, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -124,7 +126,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+			createDocumentSchema(table);
 			return super.create(table);
 		}
 		catch(AlreadyExistsException e)
@@ -136,7 +138,7 @@ extends AbstractCassandraRepository<Table>
 	@Override
 	public void delete(Identifier id)
 	{
-		DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
+		dropDocumentSchema(id);
 		super.delete(id);
 	}
 
@@ -145,7 +147,7 @@ extends AbstractCassandraRepository<Table>
 	{
 		try
 		{
-			DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
+			dropDocumentSchema(id);
 			super.deleteAsync(id, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -230,5 +232,22 @@ extends AbstractCassandraRepository<Table>
     protected String buildDeleteStatement()
     {
 	    return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
+    }
+
+	private void createDocumentSchema(Table table)
+    {
+	    if (TableType.HISTORICAL_DOCUMENT.equals(table.type()))
+	    {
+	    	HISTORICAL_DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+	    }
+	    else
+	    {
+	    	DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+	    }
+    }
+
+	private void dropDocumentSchema(Identifier id)
+    {
+		DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
     }
 }

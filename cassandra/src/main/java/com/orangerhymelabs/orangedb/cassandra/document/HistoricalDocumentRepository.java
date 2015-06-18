@@ -172,12 +172,6 @@ extends DocumentRepository
 	}
 
 	@Override
-	protected void bindIdentity(BoundStatement bs, Identifier id)
-	{
-		bs.bind(id.components().toArray());
-	}
-
-	@Override
 	protected void bindUpdate(BoundStatement bs, Document document)
 	{
 		document.updatedAt(new Date());
@@ -186,15 +180,17 @@ extends DocumentRepository
 		{
 			if (document.hasObject())
 			{
-				bs.bind(ByteBuffer.wrap(BSON.encode(document.object())),
-					document.updatedAt(),
-				    document.id());
+				bs.bind(document.id(),
+					ByteBuffer.wrap(BSON.encode(document.object())),
+				    document.createdAt(),
+				    document.updatedAt());
 			}
 			else
 			{
-				bs.bind(null,
-					document.updatedAt(),
-				    document.id());
+				bs.bind(document.id(),
+					null,
+				    document.createdAt(),
+				    document.updatedAt());
 			}
 		}
 		catch (InvalidTypeException e)

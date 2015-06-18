@@ -16,6 +16,7 @@
 package com.orangerhymelabs.orangedb.cassandra.document;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -24,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
@@ -40,6 +42,7 @@ import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
+import com.orangerhymelabs.orangedb.cassandra.table.TableType;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
@@ -71,15 +74,17 @@ public class HistoricalDocumentRepositoryTest
 
 		Table uuids = new Table();
 		uuids.name("uuids");
-		uuids.database("db1");
+		uuids.database("db2");
+		uuids.type(TableType.HISTORICAL_DOCUMENT);
 		uuids.description("a test UUID-keyed table");
 		Table uuidTable = tables.create(uuids);
 		uuidDocs = new HistoricalDocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), uuidTable);
 
 		Table dates = new Table();
 		dates.name("dates");
-		dates.database("db1");
+		dates.database("db2");
 		dates.idType(FieldType.TIMESTAMP);
+		dates.type(TableType.HISTORICAL_DOCUMENT);
 		dates.description("a test date-keyed table");
 		Table dateTable = tables.create(dates);
 		dateDocs = new HistoricalDocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), dateTable);
@@ -313,6 +318,56 @@ public class HistoricalDocumentRepositoryTest
 	}
 
 	@Test
+	public void shouldReturnHistorySynchronously()
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		Document createResult = uuidDocs.create(doc);
+		assertEquals(doc, createResult);
+
+		doc.object(BSON);
+		uuidDocs.update(doc);
+		List<Document> docs = uuidDocs.readHistory(doc.getIdentifier());
+		assertNotNull(docs);
+		assertEquals(2, docs.size());
+		assertTrue(docs.get(0).hasObject());
+		assertFalse(docs.get(1).hasObject());
+	}
+
+	@Test
+	public void shouldReturnHistoryAynchronously()
+	throws InterruptedException
+	{
+		// Create some history.
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		TestCallback<Document> callback = new TestCallback<Document>();
+
+		uuidDocs.createAsync(doc, callback);
+		waitFor(callback);
+
+		assertTrue(callback.isEmpty());
+
+		doc.object(BSON);
+		uuidDocs.updateAsync(doc, callback);
+		waitFor(callback);
+		assertNull(callback.throwable());
+
+		TestCallback<List<Document>> histCallback = new TestCallback<List<Document>>();
+		uuidDocs.readHistoryAsync(doc.getIdentifier(), histCallback);
+		waitFor(histCallback);
+		assertNull(histCallback.throwable());
+		
+		List<Document> docs = histCallback.entity();
+		assertNotNull(docs);
+		assertEquals(2, docs.size());
+		assertTrue(docs.get(0).hasObject());
+		assertFalse(docs.get(1).hasObject());
+	}
+
+	@Test
 	public void shouldThrowOnDuplicateAynchronously()
 	throws InterruptedException
 	{
@@ -444,7 +499,7 @@ public class HistoricalDocumentRepositoryTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitFor(TestCallback<Document> callback)
+	private void waitFor(TestCallback<?> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
