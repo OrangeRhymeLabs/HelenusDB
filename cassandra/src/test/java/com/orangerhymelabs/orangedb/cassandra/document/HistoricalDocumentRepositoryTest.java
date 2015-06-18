@@ -49,14 +49,14 @@ import com.orangerhymelabs.orangedb.persistence.Identifier;
  * @author tfredrich
  * @since Jun 16, 2015
  */
-public class DocumentRepositoryTest
+public class HistoricalDocumentRepositoryTest
 {
 	private static final int CALLBACK_TIMEOUT = 2000;
 	private static final BSONObject BSON = (BSONObject) JSON.parse("{'a':'some', 'b':1, 'c':'excitement'}");
 
 	private static KeyspaceSchema keyspace;
-	private static DocumentRepository uuidDocs;
-	private static DocumentRepository dateDocs;
+	private static HistoricalDocumentRepository uuidDocs;
+	private static HistoricalDocumentRepository dateDocs;
 
 	@BeforeClass
 	public static void beforeClass()
@@ -74,7 +74,7 @@ public class DocumentRepositoryTest
 		uuids.database("db1");
 		uuids.description("a test UUID-keyed table");
 		Table uuidTable = tables.create(uuids);
-		uuidDocs = new DocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), uuidTable);
+		uuidDocs = new HistoricalDocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), uuidTable);
 
 		Table dates = new Table();
 		dates.name("dates");
@@ -82,7 +82,7 @@ public class DocumentRepositoryTest
 		dates.idType(FieldType.TIMESTAMP);
 		dates.description("a test date-keyed table");
 		Table dateTable = tables.create(dates);
-		dateDocs = new DocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), dateTable);
+		dateDocs = new HistoricalDocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), dateTable);
 	}
 
 	@AfterClass

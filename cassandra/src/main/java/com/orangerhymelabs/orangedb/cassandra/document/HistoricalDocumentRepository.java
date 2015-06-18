@@ -15,19 +15,25 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.document;
 
+import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import org.bson.BSON;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 
@@ -79,8 +85,8 @@ extends DocumentRepository
 	public HistoricalDocumentRepository(Session session, String keyspace, Table table)
 	{
 		super(session, keyspace, table);
-		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), table.name()));
-		this.historyStmt = prepare(String.format(READ_HISTORY_CQL, keyspace(), table.name()));
+		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), tableName()));
+		this.historyStmt = prepare(String.format(READ_HISTORY_CQL, keyspace(), tableName()));
 	}
 
 	public boolean exists(Identifier id)
@@ -169,6 +175,32 @@ extends DocumentRepository
 	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
 		bs.bind(id.components().toArray());
+	}
+
+	@Override
+	protected void bindUpdate(BoundStatement bs, Document document)
+	{
+		document.updatedAt(new Date());
+
+		try
+		{
+			if (document.hasObject())
+			{
+				bs.bind(ByteBuffer.wrap(BSON.encode(document.object())),
+					document.updatedAt(),
+				    document.id());
+			}
+			else
+			{
+				bs.bind(null,
+					document.updatedAt(),
+				    document.id());
+			}
+		}
+		catch (InvalidTypeException e)
+		{
+			throw new InvalidIdentifierException(e);
+		}
 	}
 
 	@Override
