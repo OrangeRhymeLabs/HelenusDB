@@ -46,7 +46,7 @@ extends AbstractEntity
 	@Override
 	public Identifier getIdentifier()
 	{
-		return new Identifier(id, updatedAt());
+		return new Identifier(id);
 	}
 
 	public Object id()

@@ -105,12 +105,6 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	@Override
-	protected void bindIdentity(BoundStatement bs, Identifier id)
-	{
-		bs.bind(id.primaryKey());
-	}
-
-	@Override
 	protected void bindCreate(BoundStatement bs, Document document)
 	{
 		Date now = new Date();
