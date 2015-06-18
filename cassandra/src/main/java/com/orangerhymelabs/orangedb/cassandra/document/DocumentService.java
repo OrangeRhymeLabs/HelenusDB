@@ -22,7 +22,6 @@ import java.util.Map;
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
-import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 import com.orangerhymelabs.orangedb.cassandra.table.TableService;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
@@ -38,9 +37,10 @@ public class DocumentService
 	private TableService tables;
 	private DocumentRepositoryFactory factory;
 
-	public DocumentService(TableRepository tableRepository, DocumentRepositoryFactory repositoryFactory)
+	public DocumentService(TableService tableService, DocumentRepositoryFactory repositoryFactory)
 	{
 		super();
+		this.tables = tableService;
 		this.factory = repositoryFactory;
 	}
 
