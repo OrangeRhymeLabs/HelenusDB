@@ -29,7 +29,6 @@ import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
-import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 /**
  * Document repositories are unique per document/table and therefore must be cached by table.
