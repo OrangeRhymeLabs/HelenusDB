@@ -28,7 +28,6 @@ package com.orangerhymelabs.orangedb.cassandra.table;
 public enum TableType
 {
 	DOCUMENT,
-	HISTORICAL_DOCUMENT,
 	SCHEMA,
 	COUNTER,	// Cannot index counter tables.
 	TIME_SERIES;
