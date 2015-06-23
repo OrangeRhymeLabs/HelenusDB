@@ -21,7 +21,6 @@ import java.util.Map;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.cassandra.table.TableReference;
 import com.orangerhymelabs.orangedb.cassandra.table.TableService;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
@@ -68,13 +67,13 @@ public class DocumentService
 	public Document read(String database, String table, Object id)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		return docs.read(new Identifier(database, table, id));
+		return docs.read(new Identifier(id));
 	}
 
 	public void readAsync(String database, String table, Object id, FutureCallback<Document> callback)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.readAsync(new Identifier(database, table, id), callback);
+		docs.readAsync(new Identifier(id), callback);
 	}
 
 	public List<Document> readIn(String database, String table, Object... ids)
@@ -84,7 +83,7 @@ public class DocumentService
 
 		for (Object id : ids)
 		{
-			inIds[i++] = new Identifier(database, table, id);
+			inIds[i++] = new Identifier(id);
 		}
 
 		DocumentRepository docs = acquireRepositoryFor(database, table);
@@ -98,18 +97,18 @@ public class DocumentService
 
 		for (Object id : ids)
 		{
-			inIds[i++] = new Identifier(database, table, id);
+			inIds[i++] = new Identifier(id);
 		}
 
 		DocumentRepository docs = acquireRepositoryFor(database, table);
 		docs.readInAsync(callback, inIds);
 	}
 
-	public void update(String database, String table, Document document)
+	public Document update(String database, String table, Document document)
 	{
 		ValidationEngine.validateAndThrow(document);
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.update(document);
+		return docs.update(document);
 	}
 
 	public void updateAsync(String database, String table, Document document, FutureCallback<Document> callback)
@@ -129,30 +128,27 @@ public class DocumentService
 	public void delete(String database, String table, Object id)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.delete(new Identifier(database, table, id));
+		docs.delete(new Identifier(id));
 	}
 
 	public void deleteAsync(String database, String table, Object id, FutureCallback<Document> callback)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.deleteAsync(new Identifier(database, table, id), callback);
+		docs.deleteAsync(new Identifier(id), callback);
 	}
-
-	private DocumentRepository acquireRepositoryFor(Table table)
-    {
-		DocumentRepository repo = repoCache.get(table.toDbTable());
-
-		if (repo == null)
-		{
-			repo = factory.newDocumentRepositoryFor(table);
-			repoCache.put(table.toDbTable(), repo);
-		}
-
-		return repo;
-    }
 
 	private DocumentRepository acquireRepositoryFor(String database, String table)
     {
-		return acquireRepositoryFor(new TableReference(database, table, null).toTable());
+		String cacheKey = String.format("%s_%s", database, table);
+		DocumentRepository repo = repoCache.get(cacheKey);
+
+		if (repo == null)
+		{
+			Table t = tables.read(database, table);
+			repo = factory.newDocumentRepositoryFor(t);
+			repoCache.put(cacheKey, repo);
+		}
+
+		return repo;
     }
 }
