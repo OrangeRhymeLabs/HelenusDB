@@ -110,7 +110,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs());
+			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs(), index.toClusterOrderings());
 			super.createAsync(index, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -128,7 +128,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs());
+			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs(), index.toClusterOrderings());
 			return super.create(index);
 		}
 		catch(AlreadyExistsException e)

@@ -37,7 +37,8 @@ public class BucketIndexer
 				"created_at timestamp," +
 				"updated_at timestamp," +
 				"primary key ((bucket_id), %s)" +
-			")";
+			")" +
+			"WITH CLUSTERING ORDER BY (%s)";
 
 		public boolean drop(Session session, String keyspace, String table)
 		{
@@ -45,9 +46,9 @@ public class BucketIndexer
 			return rs.wasApplied();
 		}
 
-		public boolean create(Session session, String keyspace, String table, FieldType oidType, String columnDefs, String pkDefs)
+		public boolean create(Session session, String keyspace, String table, FieldType oidType, String columnDefs, String pkDefs, String ordering)
 		{
-			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, oidType.cassandraType(), pkDefs));
+			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, oidType.cassandraType(), pkDefs, ordering));
 			return rs.wasApplied();
 		}
     }

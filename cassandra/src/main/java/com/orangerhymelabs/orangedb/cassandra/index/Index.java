@@ -194,6 +194,35 @@ extends AbstractEntity
 		return sb.toString();
 	}
 
+	public String toClusterOrderings()
+	{
+		StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
+
+		for (IndexField field : getFieldSpecs())
+		{
+			if (!isFirst)
+			{
+				sb.append(", ");
+			}
+
+			sb.append(field.name());
+
+			if (field.isAscending())
+			{
+				sb.append(" ASC");
+			}
+			else
+			{
+				sb.append(" DESC");
+			}
+
+			isFirst = false;
+		}
+
+		return sb.toString();
+	}
+
     protected List<IndexField> getFieldSpecs()
 	{
 		if (fields == null) return Collections.emptyList();
