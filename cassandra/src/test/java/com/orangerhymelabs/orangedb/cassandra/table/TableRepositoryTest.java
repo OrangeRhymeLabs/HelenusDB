@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
+import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
@@ -217,6 +218,44 @@ public class TableRepositoryTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
+	}
+
+	@Test
+	public void shouldMarshal()
+	throws InterruptedException
+	{
+		// Create
+		Table table = new Table();
+		table.name("table5");
+		table.database("db5");
+		table.idType(FieldType.BIGINT);
+		Table createResult = tables.create(table);
+		assertEquals(table, createResult);
+
+		Table sync = tables.read(table.getIdentifier());
+		assertEquals(table.createdAt(), sync.createdAt());
+		assertEquals(table.updatedAt(), sync.updatedAt());
+		assertEquals(table.databaseName(), sync.databaseName());
+		assertEquals(table.description(), sync.description());
+		assertEquals(table.idType(), sync.idType());
+		assertEquals(table.name(), sync.name());
+		assertEquals(table.schema(), sync.schema());
+		assertEquals(table.ttl(), sync.ttl());
+
+		TestCallback<Table> callback = new TestCallback<Table>();
+		tables.readAsync(table.getIdentifier(), callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		Table async = callback.entity();
+		assertEquals(table.createdAt(), async.createdAt());
+		assertEquals(table.updatedAt(), async.updatedAt());
+		assertEquals(table.databaseName(), async.databaseName());
+		assertEquals(table.description(), async.description());
+		assertEquals(table.idType(), async.idType());
+		assertEquals(table.name(), async.name());
+		assertEquals(table.schema(), async.schema());
+		assertEquals(table.ttl(), async.ttl());
 	}
 
 	@Test(expected=ItemNotFoundException.class)

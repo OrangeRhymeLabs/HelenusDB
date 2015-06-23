@@ -15,6 +15,7 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.table;
 
+
 /**
  * MegaDoc supports four table types:
  * DOCUMENT (default, if not specified) - indexable schema-less BSON documents.
@@ -32,8 +33,16 @@ public enum TableType
 	COUNTER,	// Cannot index counter tables.
 	TIME_SERIES;
 
-	public static TableType valueOf(int ordinal)
-	{
-		return (TableType.values()[ordinal]);
-	}
+	public static TableType from(String name)
+    {
+		switch(name.toLowerCase())
+		{
+			case "document": return DOCUMENT;
+			case "schema": return SCHEMA;
+			case "counter": return COUNTER;
+			case "time_series": return TIME_SERIES;
+			default:
+				throw new IllegalStateException("Invalid table type: " + name);
+		}
+    }
 }
