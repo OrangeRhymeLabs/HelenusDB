@@ -27,11 +27,13 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
+import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
@@ -235,7 +237,18 @@ public abstract class AbstractCassandraRepository<T>
 
 	public void readAsync(Identifier id, FutureCallback<T> callback)
 	{
-		ResultSetFuture future = _read(id);
+		ResultSetFuture future;
+
+		try
+		{
+			future = _read(id);
+		}
+		catch(Exception e)
+		{
+			callback.onFailure(e);
+			return;
+		}
+
 		Futures.addCallback(future, new FutureCallback<ResultSet>()
 		{
 			@Override
@@ -442,7 +455,14 @@ public abstract class AbstractCassandraRepository<T>
 
 	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
-		bs.bind(id.components().toArray());
+		try
+		{
+			bs.bind(id.components().toArray());
+		}
+		catch(InvalidTypeException e)
+		{
+			throw new InvalidIdentifierException(e);
+		}
 	}
 
 	protected List<T> marshalAll(ResultSet rs)
