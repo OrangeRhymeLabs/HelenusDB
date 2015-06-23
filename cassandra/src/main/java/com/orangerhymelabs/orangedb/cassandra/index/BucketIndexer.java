@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.index.bucket;
+package com.orangerhymelabs.orangedb.cassandra.index;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -23,7 +23,7 @@ import com.orangerhymelabs.orangedb.cassandra.FieldType;
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public class BucketIndexRepository
+public class BucketIndexer
 {
 	public static class Schema
     {
