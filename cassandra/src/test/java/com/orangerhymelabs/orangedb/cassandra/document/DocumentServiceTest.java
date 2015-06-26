@@ -36,10 +36,11 @@ import org.junit.Test;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
-import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
+import com.orangerhymelabs.orangedb.cassandra.SchemaRegistry;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
+import com.orangerhymelabs.orangedb.cassandra.index.IndexRepository;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 import com.orangerhymelabs.orangedb.cassandra.table.TableService;
@@ -59,7 +60,6 @@ public class DocumentServiceTest
 	private static final int CALLBACK_TIMEOUT = 2000;
 	private static final BSONObject BSON = (BSONObject) JSON.parse("{'a':'some', 'b':1, 'c':'excitement'}");
 
-	private static KeyspaceSchema keyspace;
 	private static DocumentService allDocs;
 
 	@BeforeClass
@@ -67,12 +67,8 @@ public class DocumentServiceTest
 	throws ConfigurationException, TTransportException, IOException, InterruptedException
 	{
 		CassandraManager.start();
-		keyspace = new KeyspaceSchema();
-		keyspace.create(CassandraManager.session(), CassandraManager.keyspace());
-
-		new DatabaseRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
-		new TableRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
-
+		SchemaRegistry.instance().createAll(CassandraManager.session(), CassandraManager.keyspace());
+		
 		DatabaseRepository dbs = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
 		TableService tables = new TableService(dbs,
 			new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace()));
@@ -96,13 +92,14 @@ public class DocumentServiceTest
 		tables.create(dates);
 
 		allDocs = new DocumentService(tables,
-			new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace()));
+			new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace(),
+				new IndexRepository(CassandraManager.session(), CassandraManager.keyspace())));
 	}
 
 	@AfterClass
 	public static void afterClass()
 	{
-		keyspace.drop(CassandraManager.session(), CassandraManager.keyspace());		
+		SchemaRegistry.instance().dropAll(CassandraManager.session(), CassandraManager.keyspace());		
 	}
 
 	@Test

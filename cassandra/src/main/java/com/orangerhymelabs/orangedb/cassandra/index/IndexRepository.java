@@ -112,7 +112,7 @@ extends AbstractCassandraRepository<Index>
 	public IndexRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
-		readForTableStmt = prepare(String.format(READ_FOR_TABLE_CQL, keyspace, Tables.BY_ID));
+		readForTableStmt = prepare(String.format(READ_FOR_TABLE_CQL, keyspace(), Tables.BY_ID));
 	}
 
 	@Override
