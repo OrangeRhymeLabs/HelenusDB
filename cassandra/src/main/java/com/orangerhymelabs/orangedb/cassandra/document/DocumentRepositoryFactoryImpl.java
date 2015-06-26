@@ -16,6 +16,7 @@
 package com.orangerhymelabs.orangedb.cassandra.document;
 
 import com.datastax.driver.core.Session;
+import com.orangerhymelabs.orangedb.cassandra.index.IndexRepository;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 
 /**
@@ -27,17 +28,20 @@ implements DocumentRepositoryFactory
 {
 	private Session session;
 	private String keyspace;
+	private IndexRepository indexes;
 
-	public DocumentRepositoryFactoryImpl(Session session, String keyspace)
+	public DocumentRepositoryFactoryImpl(Session session, String keyspace, IndexRepository indexRepository)
 	{
 		super();
 		this.session = session;
 		this.keyspace = keyspace;
+		this.indexes = indexRepository;
 	}
 
 	@Override
 	public DocumentRepository newDocumentRepositoryFor(Table table)
 	{
+		table.indexes(indexes.readFor(table.databaseName(), table.name()));
 		return new DocumentRepository(session, keyspace, table);
 	}
 }
