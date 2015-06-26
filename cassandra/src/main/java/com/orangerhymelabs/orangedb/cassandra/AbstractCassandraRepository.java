@@ -70,6 +70,21 @@ public abstract class AbstractCassandraRepository<T>
 		deleteStmt = prepare(buildDeleteStatement());
 	}
 
+	protected PreparedStatement createStmt()
+	{
+		return createStmt;
+	}
+
+	protected PreparedStatement updateStmt()
+	{
+		return updateStmt;
+	}
+
+	protected PreparedStatement deleteStmt()
+	{
+		return deleteStmt;
+	}
+
 	public void createAsync(T entity, FutureCallback<T> callback)
 	{
 		ResultSetFuture future = null;
@@ -185,7 +200,7 @@ public abstract class AbstractCassandraRepository<T>
 		}
 	}
 
-	private ResultSetFuture _update(T entity)
+	protected ResultSetFuture _update(T entity)
 	{
 		BoundStatement bs = new BoundStatement(updateStmt);
 		bindUpdate(bs, entity);
@@ -228,7 +243,7 @@ public abstract class AbstractCassandraRepository<T>
 		}
 	}
 
-	private ResultSetFuture _delete(Identifier id)
+	protected ResultSetFuture _delete(Identifier id)
 	{
 		BoundStatement bs = new BoundStatement(deleteStmt);
 		bindIdentity(bs, id);
