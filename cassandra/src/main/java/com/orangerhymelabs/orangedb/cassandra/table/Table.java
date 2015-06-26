@@ -15,10 +15,13 @@
  */
 package com.orangerhymelabs.orangedb.cassandra.table;
 
+import java.util.List;
+
 import com.orangerhymelabs.orangedb.cassandra.Constants;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.database.Database;
 import com.orangerhymelabs.orangedb.cassandra.database.DatabaseReference;
+import com.orangerhymelabs.orangedb.cassandra.index.Index;
 import com.orangerhymelabs.orangedb.persistence.AbstractEntity;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -50,9 +53,21 @@ extends AbstractEntity
 	// How long should the table's data live?
 	private long ttl;
 
+	private transient List<Index> indexes;
+
 	public Table()
 	{
 		super();
+	}
+
+	public List<Index> indexes()
+	{
+		return indexes;
+	}
+
+	public void indexes(List<Index> indexes)
+	{
+		this.indexes = indexes;
 	}
 
 	public boolean hasDatabase()
