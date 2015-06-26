@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -226,6 +227,73 @@ public class IndexRepositoryTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
+	}
+
+	@Test
+	public void shouldReadForSynchronously()
+	{
+		Index index = new Index();
+		index.name("index1");
+		index.table("db6", "table1", FieldType.BIGINT);
+		index.fields(Arrays.asList("foo:text"));
+		index.isUnique(true);
+		Index createResult = indexes.create(index);
+		assertEquals(index, createResult);
+
+		index.name("index2");
+		index.fields(Arrays.asList("foo:text", "bar:text"));
+		indexes.create(index);
+		assertEquals(index, createResult);
+
+		index.name("index3");
+		index.fields(Arrays.asList("foo:text", "bar:text", "bat:timestamp"));
+		indexes.create(index);
+		assertEquals(index, createResult);
+
+		List<Index> list = indexes.readFor("db6", "table1");
+		assertNotNull(list);
+		assertEquals(3, list.size());
+		assertEquals("index1", list.get(0).name());
+		assertEquals("index2", list.get(1).name());
+		assertEquals("index3", list.get(2).name());
+	}
+
+	@Test
+	public void shouldReadForAynchronously()
+	throws InterruptedException
+	{
+		Index index = new Index();
+		index.name("index1");
+		index.table("db6", "table2", FieldType.BIGINT);
+		index.fields(Arrays.asList("foo:text"));
+		index.isUnique(true);
+		Index createResult = indexes.create(index);
+		assertEquals(index, createResult);
+
+		index.name("index2");
+		index.fields(Arrays.asList("foo:text", "bar:text"));
+		indexes.create(index);
+		assertEquals(index, createResult);
+
+		index.name("index3");
+		index.fields(Arrays.asList("foo:text", "-bar:text", "bat:timestamp"));
+		indexes.create(index);
+		assertEquals(index, createResult);
+
+		TestCallback<List<Index>> callback = new TestCallback<List<Index>>();
+		indexes.readForAsync("db6", "table2", callback);
+
+		synchronized(callback)
+		{
+			callback.wait(CALLBACK_TIMEOUT);
+		}
+
+		List<Index> list = callback.entity();
+		assertNotNull(list);
+		assertEquals(3, list.size());
+		assertEquals("index1", list.get(0).name());
+		assertEquals("index2", list.get(1).name());
+		assertEquals("index3", list.get(2).name());
 	}
 
 	@Test(expected=ItemNotFoundException.class)

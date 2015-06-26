@@ -16,13 +16,19 @@
 package com.orangerhymelabs.orangedb.cassandra.index;
 
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
@@ -95,14 +101,18 @@ extends AbstractCassandraRepository<Index>
 	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.DB_NAME + ", " + Columns.TBL_NAME + ", " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.FIELDS + ", " + Columns.ID_TYPE + ", " + Columns.IS_UNIQUE + ", " + Columns.ENGINE_TYPE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
 	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
+	private static final String READ_FOR_TABLE_CQL = "select * from %s.%s where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ?";
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 
 	private static final BucketIndexer.Schema BUCKET_SCHEMA = new BucketIndexer.Schema();
 
+	private PreparedStatement readForTableStmt;
+
 	public IndexRepository(Session session, String keyspace)
 	{
 		super(session, keyspace);
+		readForTableStmt = prepare(String.format(READ_FOR_TABLE_CQL, keyspace, Tables.BY_ID));
 	}
 
 	@Override
@@ -135,6 +145,59 @@ extends AbstractCassandraRepository<Index>
 		{
 			throw new DuplicateItemException(e);
 		}
+	}
+
+	/**
+	 * Read all the indexes for a given database table, returning the results as a list.
+	 * 
+	 * @param database the database name.
+	 * @param table the table name.
+	 * @return A list of Index instance. Possibly empty. Never null.
+	 */
+	public List<Index> readFor(String database, String table)
+	{
+		try
+		{
+			ResultSet rs = _readFor(database, table).get();
+			return marshalAll(rs);
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
+	}
+
+	/**
+	 * Read all the indexes for a given database table, calling the callback with the results as a list.
+	 * 
+	 * @param database the database name.
+	 * @param table the table name.
+	 * @param callback the callback to notify when results are available.
+	 */
+	public void readForAsync(String database, String table, FutureCallback<List<Index>> callback)
+	{
+		ResultSetFuture future = _readFor(database, table);
+		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		{
+			@Override
+			public void onSuccess(ResultSet result)
+			{
+				callback.onSuccess(marshalAll(result));
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+				callback.onFailure(t);
+			}
+		}, MoreExecutors.sameThreadExecutor());
+	}
+
+	private ResultSetFuture _readFor(String database, String table)
+	{
+		BoundStatement bs = new BoundStatement(readForTableStmt);
+		bs.bind(database, table);
+		return session().executeAsync(bs);
 	}
 
 	@Override
