@@ -20,15 +20,20 @@ import java.util.Date;
 
 import org.bson.BSON;
 
+import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.BatchStatement.Type;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.index.Index;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
+import com.orangerhymelabs.orangedb.persistence.Identifier;
 
 /**
  * Document repositories are unique per document/table and therefore must be cached by table.
@@ -96,11 +101,76 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected void initializeStatements()
 	{
+		// Do nothing.
 	}
 
 	public String tableName()
 	{
 		return table.toDbTable();
+	}
+
+	@Override
+	protected ResultSetFuture _create(Document entity)
+	{
+		BatchStatement batch = new BatchStatement(Type.LOGGED);
+		BoundStatement create = new BoundStatement(createStmt());
+		bindCreate(create, entity);
+		batch.add(create);
+
+		for (Index index : table.indexes())
+		{
+			BoundStatement idxStmt = acquireIndexCreateStatement(entity, index);
+
+			if (idxStmt != null)
+			{
+				batch.add(idxStmt);
+			}
+		}
+
+		return session().executeAsync(batch);
+	}
+
+	@Override
+	protected ResultSetFuture _update(Document entity)
+	{
+		BatchStatement batch = new BatchStatement(Type.LOGGED);
+		BoundStatement update = new BoundStatement(updateStmt());
+		bindUpdate(update, entity);
+		batch.add(update);
+
+		for (Index index : table.indexes())
+		{
+			BoundStatement idxStmt = acquireIndexUpdateStatement(entity, index);
+
+			if (idxStmt != null)
+			{
+				batch.add(idxStmt);
+			}
+		}
+
+		return session().executeAsync(batch);
+	}
+
+	@Override
+	protected ResultSetFuture _delete(Identifier id)
+	{
+		// TODO: need to lookup the entity so we can delete all the index entries.
+		BatchStatement batch = new BatchStatement(Type.LOGGED);
+		BoundStatement delete = new BoundStatement(deleteStmt());
+		bindIdentity(delete, id);
+		batch.add(delete);
+
+		for (Index index : table.indexes())
+		{
+			BoundStatement idxStmt = acquireIndexDeleteStatement(id, index);
+
+			if (idxStmt != null)
+			{
+				batch.add(idxStmt);
+			}
+		}
+
+		return session().executeAsync(batch);
 	}
 
 	@Override
@@ -228,5 +298,23 @@ extends AbstractCassandraRepository<Document>
     protected String buildDeleteStatement()
     {
 	    return String.format(DELETE_CQL, keyspace(), tableName());
+    }
+
+	private BoundStatement acquireIndexCreateStatement(Document entity, Index index)
+    {
+	    // TODO implement acquireIndexCreateStatement()
+	    return null;
+    }
+
+	private BoundStatement acquireIndexUpdateStatement(Document entity, Index index)
+    {
+	    // TODO implement acquireIndexCreateStatement()
+	    return null;
+    }
+
+	private BoundStatement acquireIndexDeleteStatement(Identifier id, Index index)
+    {
+	    // TODO implement acquireIndexCreateStatement()
+	    return null;
     }
 }
