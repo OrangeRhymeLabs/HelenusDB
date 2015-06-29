@@ -15,15 +15,23 @@
 */
 package com.orangerhymelabs.orangedb.cassandra.itable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
+import com.orangerhymelabs.orangedb.cassandra.document.Document;
+import com.orangerhymelabs.orangedb.cassandra.index.Index;
+import com.orangerhymelabs.orangedb.cassandra.table.Table;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public class BucketIndexer
+public class ItableStatementFactory
 {
 	public static class Schema
     {
@@ -52,4 +60,67 @@ public class BucketIndexer
 			return rs.wasApplied();
 		}
     }
+
+	private Table table;
+
+	public ItableStatementFactory(Table table)
+    {
+		super();
+		this.table = table;
+    }
+
+	public List<BoundStatement> createIndexCreateStatements(Document document)
+    {
+		if (!table.hasIndexes()) return Collections.emptyList();
+
+		List<BoundStatement> stmts = new ArrayList<BoundStatement>(table.indexes().size());
+
+		for (Index index : table.indexes())
+		{
+			BoundStatement stmt = createIndexCreateStatment(document, index);
+
+			if (stmt != null)
+			{
+				stmts.add(stmt);
+			}
+		}
+
+	    return stmts;
+    }
+
+	public List<BoundStatement> createIndexUpdateStatements(Document document, Document previous)
+    {
+		if (!table.hasIndexes()) return Collections.emptyList();
+
+	    return null;
+    }
+
+	public List<BoundStatement> createIndexDeleteStatements(Document document)
+    {
+		if (!table.hasIndexes()) return Collections.emptyList();
+
+		List<BoundStatement> stmts = new ArrayList<BoundStatement>(table.indexes().size());
+
+		for (Index index : table.indexes())
+		{
+			BoundStatement stmt = createIndexDeleteStatment(document, index);
+
+			if (stmt != null)
+			{
+				stmts.add(stmt);
+			}
+		}
+
+	    return stmts;
+    }
+
+	private BoundStatement createIndexCreateStatment(Document document, Index index)
+	{
+		return null;
+	}
+
+	private BoundStatement createIndexDeleteStatment(Document document, Index index)
+	{
+		return null;
+	}
 }

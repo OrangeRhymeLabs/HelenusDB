@@ -32,7 +32,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
-import com.orangerhymelabs.orangedb.cassandra.itable.BucketIndexer;
+import com.orangerhymelabs.orangedb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;
@@ -106,7 +106,7 @@ extends AbstractCassandraRepository<Index>
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 
-	private static final BucketIndexer.Schema BUCKET_SCHEMA = new BucketIndexer.Schema();
+	private static final ItableStatementFactory.Schema BUCKET_SCHEMA = new ItableStatementFactory.Schema();
 
 	private PreparedStatement readForTableStmt;
 

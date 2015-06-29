@@ -30,7 +30,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
-import com.orangerhymelabs.orangedb.cassandra.index.Index;
+import com.orangerhymelabs.orangedb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.orangedb.persistence.Identifier;
@@ -85,11 +85,13 @@ extends AbstractCassandraRepository<Document>
 	private static final String CREATE_CQL = "insert into %s.%s (id, object, created_at, updated_at) values (?, ?, ?, ?) if not exists";
 
 	private Table table;
+	private ItableStatementFactory iTableStmtFactory;
 
 	public DocumentRepository(Session session, String keyspace, Table table)
 	{
 		super(session, keyspace);
 		this.table = table;
+		this.iTableStmtFactory = new ItableStatementFactory(table);
 		init();
 	}
 
@@ -110,42 +112,34 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	@Override
-	protected ResultSetFuture _create(Document entity)
+	protected ResultSetFuture _create(Document document)
 	{
 		BatchStatement batch = new BatchStatement(Type.LOGGED);
 		BoundStatement create = new BoundStatement(createStmt());
-		bindCreate(create, entity);
+		bindCreate(create, document);
 		batch.add(create);
 
-		for (Index index : table.indexes())
+		if (table.hasIndexes())
 		{
-			BoundStatement idxStmt = acquireIndexCreateStatement(entity, index);
-
-			if (idxStmt != null)
-			{
-				batch.add(idxStmt);
-			}
+			batch.addAll(iTableStmtFactory.createIndexCreateStatements(document));
 		}
 
 		return session().executeAsync(batch);
 	}
 
 	@Override
-	protected ResultSetFuture _update(Document entity)
+	protected ResultSetFuture _update(Document document)
 	{
 		BatchStatement batch = new BatchStatement(Type.LOGGED);
 		BoundStatement update = new BoundStatement(updateStmt());
-		bindUpdate(update, entity);
+		bindUpdate(update, document);
 		batch.add(update);
 
-		for (Index index : table.indexes())
+		if (table.hasIndexes())
 		{
-			BoundStatement idxStmt = acquireIndexUpdateStatement(entity, index);
-
-			if (idxStmt != null)
-			{
-				batch.add(idxStmt);
-			}
+			// TODO: make this lookup non-blocking (asynchronous).
+			Document previous = read(document.getIdentifier());
+			batch.addAll(iTableStmtFactory.createIndexUpdateStatements(document, previous));
 		}
 
 		return session().executeAsync(batch);
@@ -154,20 +148,16 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected ResultSetFuture _delete(Identifier id)
 	{
-		// TODO: need to lookup the entity so we can delete all the index entries.
 		BatchStatement batch = new BatchStatement(Type.LOGGED);
 		BoundStatement delete = new BoundStatement(deleteStmt());
 		bindIdentity(delete, id);
 		batch.add(delete);
 
-		for (Index index : table.indexes())
+		if (table.hasIndexes())
 		{
-			BoundStatement idxStmt = acquireIndexDeleteStatement(id, index);
-
-			if (idxStmt != null)
-			{
-				batch.add(idxStmt);
-			}
+			// TODO: make this lookup non-blocking (asynchronous).
+			Document previous = read(id);
+			batch.addAll(iTableStmtFactory.createIndexDeleteStatements(previous));
 		}
 
 		return session().executeAsync(batch);
@@ -298,23 +288,5 @@ extends AbstractCassandraRepository<Document>
     protected String buildDeleteStatement()
     {
 	    return String.format(DELETE_CQL, keyspace(), tableName());
-    }
-
-	private BoundStatement acquireIndexCreateStatement(Document entity, Index index)
-    {
-	    // TODO implement acquireIndexCreateStatement()
-	    return null;
-    }
-
-	private BoundStatement acquireIndexUpdateStatement(Document entity, Index index)
-    {
-	    // TODO implement acquireIndexCreateStatement()
-	    return null;
-    }
-
-	private BoundStatement acquireIndexDeleteStatement(Identifier id, Index index)
-    {
-	    // TODO implement acquireIndexCreateStatement()
-	    return null;
     }
 }
