@@ -38,6 +38,7 @@ import com.orangerhymelabs.orangedb.cassandra.CassandraManager;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.orangedb.cassandra.TestCallback;
+import com.orangerhymelabs.orangedb.cassandra.index.IndexRepository;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
@@ -69,12 +70,16 @@ public class DocumentRepositoryTest
 		new TableRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		TableRepository tables = new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
 
+		new IndexRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
+		IndexRepository indexes = new IndexRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
+		DocumentRepositoryFactory factory = new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace(), indexes);
+
 		Table uuids = new Table();
 		uuids.name("uuids");
 		uuids.database("db1");
 		uuids.description("a test UUID-keyed table");
 		Table uuidTable = tables.create(uuids);
-		uuidDocs = new DocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), uuidTable);
+		uuidDocs = factory.newDocumentRepositoryFor(uuidTable);
 
 		Table dates = new Table();
 		dates.name("dates");
@@ -82,7 +87,7 @@ public class DocumentRepositoryTest
 		dates.idType(FieldType.TIMESTAMP);
 		dates.description("a test date-keyed table");
 		Table dateTable = tables.create(dates);
-		dateDocs = new DocumentRepository(CassandraManager.session(), CassandraManager.keyspace(), dateTable);
+		dateDocs = factory.newDocumentRepositoryFor(dateTable);
 	}
 
 	@AfterClass
