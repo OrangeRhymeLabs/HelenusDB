@@ -60,6 +60,11 @@ extends AbstractEntity
 		super();
 	}
 
+	public boolean hasIndexes()
+    {
+	    return (indexes() != null && !indexes().isEmpty());
+    }
+
 	public List<Index> indexes()
 	{
 		return indexes;
