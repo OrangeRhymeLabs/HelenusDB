@@ -32,6 +32,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.orangedb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.Schemaable;
+import com.orangerhymelabs.orangedb.cassandra.itable.BucketIndexer;
 import com.orangerhymelabs.orangedb.exception.DuplicateItemException;
 import com.orangerhymelabs.orangedb.exception.ItemNotFoundException;
 import com.orangerhymelabs.orangedb.exception.StorageException;

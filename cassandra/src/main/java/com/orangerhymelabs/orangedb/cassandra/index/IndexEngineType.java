@@ -6,6 +6,5 @@ package com.orangerhymelabs.orangedb.cassandra.index;
  */
 public enum IndexEngineType
 {
-	BUCKET_INDEXER,
-	GEOSPACIAL_INDEXER
+	BUCKET_INDEXER
 }

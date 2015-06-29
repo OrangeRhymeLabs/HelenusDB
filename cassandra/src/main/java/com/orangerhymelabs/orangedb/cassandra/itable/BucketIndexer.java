@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb.cassandra.index;
+package com.orangerhymelabs.orangedb.cassandra.itable;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
