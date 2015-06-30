@@ -25,9 +25,13 @@ import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
 import com.orangerhymelabs.orangedb.cassandra.document.Document;
 import com.orangerhymelabs.orangedb.cassandra.index.Index;
+import com.orangerhymelabs.orangedb.cassandra.index.IndexField;
 import com.orangerhymelabs.orangedb.cassandra.table.Table;
 
 /**
+ * Creates BoundStatements for maintaining index table (ITable) entries. There is one ItableStatementFactory per Table
+ * per keyspace.
+ * 
  * @author tfredrich
  * @since Jun 8, 2015
  */
@@ -61,15 +65,23 @@ public class ItableStatementFactory
 		}
     }
 
+	private String keyspace;
 	private Table table;
 
-	public ItableStatementFactory(Table table)
+	public ItableStatementFactory(String keyspace, Table table)
     {
 		super();
 		this.table = table;
+		this.keyspace = keyspace;
+		initializeStatements();
     }
 
-	public List<BoundStatement> createIndexCreateStatements(Document document)
+	private void initializeStatements()
+    {
+	    // TODO Auto-generated method stub
+    }
+
+	public List<BoundStatement> createIndexEntryCreateStatements(Document document)
     {
 		if (!table.hasIndexes()) return Collections.emptyList();
 
@@ -77,7 +89,7 @@ public class ItableStatementFactory
 
 		for (Index index : table.indexes())
 		{
-			BoundStatement stmt = createIndexCreateStatment(document, index);
+			BoundStatement stmt = createIndexEntryCreateStatment(document, index);
 
 			if (stmt != null)
 			{
@@ -88,14 +100,7 @@ public class ItableStatementFactory
 	    return stmts;
     }
 
-	public List<BoundStatement> createIndexUpdateStatements(Document document, Document previous)
-    {
-		if (!table.hasIndexes()) return Collections.emptyList();
-
-	    return null;
-    }
-
-	public List<BoundStatement> createIndexDeleteStatements(Document document)
+	public List<BoundStatement> createIndexEntryUpdateStatements(Document document, Document previous)
     {
 		if (!table.hasIndexes()) return Collections.emptyList();
 
@@ -103,7 +108,45 @@ public class ItableStatementFactory
 
 		for (Index index : table.indexes())
 		{
-			BoundStatement stmt = createIndexDeleteStatment(document, index);
+			if (isIndexKeyChanged(document, previous, index))
+			{
+				BoundStatement creStmt = createIndexEntryCreateStatment(document, index);
+	
+				if (creStmt != null)
+				{
+					stmts.add(creStmt);
+				}
+	
+				BoundStatement delStmt = createIndexEntryDeleteStatment(document, index);
+	
+				if (delStmt != null)
+				{
+					stmts.add(delStmt);
+				}
+			}
+			else
+			{
+				BoundStatement updStmt = createIndexEntryUpdateStatment(document, index);
+
+				if (updStmt != null)
+				{
+					stmts.add(updStmt);
+				}
+			}
+		}
+
+	    return stmts;
+    }
+
+	public List<BoundStatement> createIndexEntryDeleteStatements(Document document)
+    {
+		if (!table.hasIndexes()) return Collections.emptyList();
+
+		List<BoundStatement> stmts = new ArrayList<BoundStatement>(table.indexes().size());
+
+		for (Index index : table.indexes())
+		{
+			BoundStatement stmt = createIndexEntryDeleteStatment(document, index);
 
 			if (stmt != null)
 			{
@@ -114,13 +157,33 @@ public class ItableStatementFactory
 	    return stmts;
     }
 
-	private BoundStatement createIndexCreateStatment(Document document, Index index)
+	private BoundStatement createIndexEntryCreateStatment(Document document, Index index)
+	{
+		List<IndexField> fields = index.fieldSpecs();
+		return null;
+	}
+
+	private BoundStatement createIndexEntryUpdateStatment(Document document, Index index)
 	{
 		return null;
 	}
 
-	private BoundStatement createIndexDeleteStatment(Document document, Index index)
+	private BoundStatement createIndexEntryDeleteStatment(Document document, Index index)
 	{
 		return null;
 	}
+
+	/**
+	 * Determines if the key(s) for the index have changed in this version of the document.
+	 * If so, returns true. Otherwise, false.
+	 * 
+	 * @param document the new version of the document.
+	 * @param previous the previous version of the document.
+	 * @param index the Index that informs the key(s) to check for deltas.
+	 * @return True if the indexed key(s) have changed. Otherwise, false.
+	 */
+	private boolean isIndexKeyChanged(Document document, Document previous,Index index)
+    {
+	    return true;
+    }
 }

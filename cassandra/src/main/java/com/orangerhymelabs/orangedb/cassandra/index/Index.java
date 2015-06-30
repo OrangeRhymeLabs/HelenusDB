@@ -159,7 +159,7 @@ extends AbstractEntity
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : getFieldSpecs())
+		for (IndexField field : fieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -180,7 +180,7 @@ extends AbstractEntity
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : getFieldSpecs())
+		for (IndexField field : fieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -199,7 +199,7 @@ extends AbstractEntity
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
 
-		for (IndexField field : getFieldSpecs())
+		for (IndexField field : fieldSpecs())
 		{
 			if (!isFirst)
 			{
@@ -223,7 +223,7 @@ extends AbstractEntity
 		return sb.toString();
 	}
 
-    protected List<IndexField> getFieldSpecs()
+    public List<IndexField> fieldSpecs()
 	{
 		if (fields == null) return Collections.emptyList();
 

@@ -91,7 +91,7 @@ extends AbstractCassandraRepository<Document>
 	{
 		super(session, keyspace);
 		this.table = table;
-		this.iTableStmtFactory = new ItableStatementFactory(table);
+		this.iTableStmtFactory = new ItableStatementFactory(keyspace, table);
 		init();
 	}
 
@@ -121,7 +121,7 @@ extends AbstractCassandraRepository<Document>
 
 		if (table.hasIndexes())
 		{
-			batch.addAll(iTableStmtFactory.createIndexCreateStatements(document));
+			batch.addAll(iTableStmtFactory.createIndexEntryCreateStatements(document));
 		}
 
 		return session().executeAsync(batch);
@@ -139,7 +139,7 @@ extends AbstractCassandraRepository<Document>
 		{
 			// TODO: make this lookup non-blocking (asynchronous).
 			Document previous = read(document.getIdentifier());
-			batch.addAll(iTableStmtFactory.createIndexUpdateStatements(document, previous));
+			batch.addAll(iTableStmtFactory.createIndexEntryUpdateStatements(document, previous));
 		}
 
 		return session().executeAsync(batch);
@@ -157,7 +157,7 @@ extends AbstractCassandraRepository<Document>
 		{
 			// TODO: make this lookup non-blocking (asynchronous).
 			Document previous = read(id);
-			batch.addAll(iTableStmtFactory.createIndexDeleteStatements(previous));
+			batch.addAll(iTableStmtFactory.createIndexEntryDeleteStatements(previous));
 		}
 
 		return session().executeAsync(batch);
