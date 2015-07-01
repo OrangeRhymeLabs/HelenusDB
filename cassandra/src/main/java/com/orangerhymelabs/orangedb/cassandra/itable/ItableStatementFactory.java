@@ -17,9 +17,14 @@ package com.orangerhymelabs.orangedb.cassandra.itable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.bson.BSONObject;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.orangedb.cassandra.FieldType;
@@ -37,6 +42,8 @@ import com.orangerhymelabs.orangedb.cassandra.table.Table;
  */
 public class ItableStatementFactory
 {
+	private static final String QUESTION_MARKS = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,";
+
 	public static class Schema
     {
 		private static final String DROP_TABLE = "drop table if exists %s.%s";
@@ -65,21 +72,38 @@ public class ItableStatementFactory
 		}
     }
 
+	private class Columns
+	{
+		static final String BUCKET_ID = "bucket_id";
+		static final String OBJECT_ID = "object_id";
+		static final String OBJECT = "object";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
+
+	private static final String IDENTITY_CQL = " where " + Columns.BUCKET_ID + " = ? and %s";
+	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.BUCKET_ID + ", %s, " + Columns.OBJECT_ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT +") values (?, ?, ?, ?, ?, %s) if not exists";
+	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
+	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
+	private static final String UPDATE_CQL = "update %s.%s set " + Columns.OBJECT + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
+	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.BUCKET_ID + " = ?";
+
+	private Session session;
 	private String keyspace;
 	private Table table;
 
-	public ItableStatementFactory(String keyspace, Table table)
+	public ItableStatementFactory(Session session, String keyspace, Table table)
     {
 		super();
-		this.table = table;
+		this.session = session;
 		this.keyspace = keyspace;
-		initializeStatements();
+		this.table = table;
     }
 
-	private void initializeStatements()
-    {
-	    // TODO Auto-generated method stub
-    }
+	public Table table()
+	{
+		return table;
+	}
 
 	public List<BoundStatement> createIndexEntryCreateStatements(Document document)
     {
@@ -89,7 +113,7 @@ public class ItableStatementFactory
 
 		for (Index index : table.indexes())
 		{
-			BoundStatement stmt = createIndexEntryCreateStatment(document, index);
+			BoundStatement stmt = createIndexEntryCreateStatement(document, index);
 
 			if (stmt != null)
 			{
@@ -110,7 +134,7 @@ public class ItableStatementFactory
 		{
 			if (isIndexKeyChanged(document, previous, index))
 			{
-				BoundStatement creStmt = createIndexEntryCreateStatment(document, index);
+				BoundStatement creStmt = createIndexEntryCreateStatement(document, index);
 	
 				if (creStmt != null)
 				{
@@ -157,21 +181,59 @@ public class ItableStatementFactory
 	    return stmts;
     }
 
-	private BoundStatement createIndexEntryCreateStatment(Document document, Index index)
+	public BoundStatement createIndexEntryCreateStatement(Document document, Index index)
 	{
-		List<IndexField> fields = index.fieldSpecs();
+		Map<String, Object> bindings = new LinkedHashMap<String, Object>(index.size());
+		boolean isBound = extractBindings(document.object(), index, bindings);
+
+		if (isBound)
+		{
+			// TODO: cache prepared statements.
+			String cql = String.format(CREATE_CQL, keyspace, index.toDbTable(), index.toPkDefs(), getQuestionMarks(index));
+			PreparedStatement ps = session.prepare(cql);
+			BoundStatement bs = new BoundStatement(ps);
+			bs.bind(bindings.values().toArray());
+			return bs;
+		}
+
 		return null;
 	}
 
-	private BoundStatement createIndexEntryUpdateStatment(Document document, Index index)
+	private String getQuestionMarks(Index index)
+    {
+	    return QUESTION_MARKS.substring(0, (index.size() * 2) - 1);
+    }
+
+	public BoundStatement createIndexEntryUpdateStatment(Document document, Index index)
 	{
 		return null;
 	}
 
-	private BoundStatement createIndexEntryDeleteStatment(Document document, Index index)
+	public BoundStatement createIndexEntryDeleteStatment(Document document, Index index)
 	{
 		return null;
 	}
+
+	private boolean extractBindings(BSONObject bsonObject, Index index, Map<String, Object> bindings)
+    {
+	    boolean isBound = true;
+
+	    for (IndexField indexKey : index.fieldSpecs())
+		{
+			Object value = bsonObject.get(indexKey.name());
+
+			if (value != null)
+			{
+				bindings.put(indexKey.name(), value);
+			}
+			else
+			{
+				isBound = false;
+			}
+		}
+
+	    return isBound;
+    }
 
 	/**
 	 * Determines if the key(s) for the index have changed in this version of the document.

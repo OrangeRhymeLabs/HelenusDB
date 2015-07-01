@@ -91,7 +91,7 @@ extends AbstractCassandraRepository<Document>
 	{
 		super(session, keyspace);
 		this.table = table;
-		this.iTableStmtFactory = new ItableStatementFactory(keyspace, table);
+		this.iTableStmtFactory = new ItableStatementFactory(session, keyspace, table);
 		init();
 	}
 

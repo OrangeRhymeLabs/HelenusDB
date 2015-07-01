@@ -85,6 +85,11 @@ extends AbstractEntity
 		this.fields = new ArrayList<String>(fields);
 	}
 
+	public int size()
+	{
+		return (fields == null ? 0 : fields.size());
+	}
+
 	public boolean isUnique()
 	{
 		return isUnique;
