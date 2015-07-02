@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<name>OrangeDB Parent</name>
-	<description>OrangeDB Parent</description>
-	<url>https://github.com/OrangeRhymeLabs/OrangeDB</url>
-	<groupId>com.orangerhymelabs.orangedb</groupId>
-	<artifactId>OrangeDB-Parent</artifactId>
+	<name>HelenusDB Parent</name>
+	<description>HelenusDB Parent</description>
+	<url>https://github.com/OrangeRhymeLabs/HelenusDB</url>
+	<groupId>com.orangerhymelabs.helenusdb</groupId>
+	<artifactId>HelenusDB-Parent</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	
@@ -72,13 +72,13 @@
 
 	<issueManagement>
 		<system>GitHub.com</system>
-		<url>https://github.com/OrangeRhymeLabs/OrangeDB/issues</url>
+		<url>https://github.com/OrangeRhymeLabs/HelenusDB/issues</url>
 	</issueManagement>
 
 	<scm>
-		<url>git@github.com:OrangeRhymeLabs/OrangeDB.git</url>
-		<connection>scm:git:git@github.com:OrangeRhymeLabs/OrangeDB.git</connection>
-		<developerConnection>scm:git:git@github.com:OrangeRhymeLabs/OrangeDB.git</developerConnection>
+		<url>git@github.com:OrangeRhymeLabs/HelenusDB.git</url>
+		<connection>scm:git:git@github.com:OrangeRhymeLabs/HelenusDB.git</connection>
+		<developerConnection>scm:git:git@github.com:OrangeRhymeLabs/HelenusDB.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
