@@ -3,9 +3,14 @@
 #HelenusDB: A REST-based, Document-Oriented Cassandra
 ---
 
-**HelenusDB** marries MongoDB's simple data storage model with the horizontal scaling of Cassandra. It enables developers to store arbitrary payloads as
-BSON, as they would with MongoDB, in a Cassandra cluster. It supports indexing, filtering, sorting, querying and pagination
-(via familiar limit and offset semantics). Simple json document storage with effortless scaling exposed as a service - **that's HelenusDB**!
+**HelenusDB** marries a simple document storage model (like MongoDB) with the truly horizontal, global, multi-datacenter scalability of Cassandra. It enables developers to store arbitrary
+payloads as JSON/BSON, as they would with MongoDB, in a Cassandra cluster. It supports indexing, filtering, sorting, querying and pagination
+(via familiar 'limit' and 'offset' query semantics). Simple json document storage with effortless scaling, exposed as a REST API or embedded in your application - **that's HelenusDB**!
+
+## About the Name
+In Greek mythology, Helenus (/ˈhɛlənəs/; Ancient Greek: Ἕλενος) was the son of King Priam and Queen Hecuba of Troy, and the twin brother of the prophetess Cassandra. According to legend, Cassandra, having been given the power of prophecy by Apollo, taught it to her brother. He had the benefit, unlike Cassandra, that people believed him.
+
+HelenusDB makes Cassandra easier for developers to use, yet has the truly linear, global and multi-datacenter scalability of Cassandra, unlike any other 'document-oriented' storage technology. 
 
 ## Five Minute Quick Start
 Let's begin by starting a server and beginning to store data. 
