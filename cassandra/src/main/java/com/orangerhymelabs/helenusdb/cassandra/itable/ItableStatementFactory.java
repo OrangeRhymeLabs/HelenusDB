@@ -266,7 +266,9 @@ public class ItableStatementFactory
 
 	private boolean extractBindings(BSONObject bsonObject, Index index, Map<String, Object> bindings)
     {
-	    boolean isBound = true;
+		if (bsonObject == null || bsonObject.keySet().isEmpty()) return false;
+
+		boolean isBound = true;
 
 	    for (IndexField indexKey : index.fieldSpecs())
 		{
