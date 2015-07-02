@@ -71,5 +71,6 @@ public class ItableStatementFactoryTest
 
 		BoundStatement bs = factory.createIndexEntryCreateStatement(d, abcIndex);
 		assertNotNull(bs);
+		// TODO: verify bs is fully populated.
 	}
 }

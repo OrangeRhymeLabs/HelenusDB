@@ -222,16 +222,7 @@ public class ItableStatementFactory
 		bs.setLong(i++, bucketId);
 		i = bindKeys(bs, i, index.fieldSpecs(), keys);
 		bindDocumentId(bs, document.id(), i++);
-
-		if (document.hasObject())
-		{
-			bs.setBytes(i++, ByteBuffer.wrap(BSON.encode(document.object())));
-		}
-		else
-		{
-			i++;
-		}
-
+		bs.setBytes(i++, ByteBuffer.wrap(BSON.encode(document.object())));
 		bs.setDate(i++, document.createdAt());
 		bs.setDate(i++, document.updatedAt());
     }
