@@ -1,4 +1,10 @@
 package com.orangerhymelabs.helenusdb.cassandra;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.UUID;
+
+import com.datastax.driver.core.BoundStatement;
 /*
     Copyright 2015, Strategic Gains, Inc.
 
@@ -43,6 +49,30 @@ public enum FieldType
 	{
 		return cassandraType;
 	}
+
+	public void bindTo(BoundStatement bs, int bsIndex, Object value)
+    {
+		switch(this)
+		{
+			case BIGINT: bs.setLong(bsIndex, (Long) value);
+			break;
+			case DECIMAL: bs.setDecimal(bsIndex, (BigDecimal) value);
+			break;
+			case DOUBLE: bs.setDouble(bsIndex, (Double) value);
+			break;
+			case FLOAT: bs.setFloat(bsIndex, (Float) value);
+			break;
+			case INTEGER: bs.setInt(bsIndex, (Integer) value);
+			break;
+			case TEXT: bs.setString(bsIndex, (String) value);
+			break;
+			case TIMESTAMP: bs.setDate(bsIndex, (Date) value);
+			break;
+			case TIMEUUID:
+			case UUID: bs.setUUID(bsIndex, (UUID) value);
+			break;
+		}
+    }
 
 	public static FieldType from(String name)
     {

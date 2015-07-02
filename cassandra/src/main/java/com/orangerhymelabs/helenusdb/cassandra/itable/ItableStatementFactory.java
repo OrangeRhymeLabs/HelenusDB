@@ -15,12 +15,18 @@
 */
 package com.orangerhymelabs.helenusdb.cassandra.itable;
 
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.bson.BSON;
 import org.bson.BSONObject;
 
 import com.datastax.driver.core.BoundStatement;
@@ -192,17 +198,13 @@ public class ItableStatementFactory
 			String cql = String.format(CREATE_CQL, keyspace, index.toDbTable(), index.toPkDefs(), getQuestionMarks(index));
 			PreparedStatement ps = session.prepare(cql);
 			BoundStatement bs = new BoundStatement(ps);
-			bs.bind(bindings.values().toArray());
+			long bucketId = getBucketId(index, bindings.values());
+			bindAll(index, bs, bucketId, document, bindings.values().toArray());
 			return bs;
 		}
 
 		return null;
 	}
-
-	private String getQuestionMarks(Index index)
-    {
-	    return QUESTION_MARKS.substring(0, (index.size() * 2) - 1);
-    }
 
 	public BoundStatement createIndexEntryUpdateStatment(Document document, Index index)
 	{
@@ -213,6 +215,54 @@ public class ItableStatementFactory
 	{
 		return null;
 	}
+
+	private void bindAll(Index index, BoundStatement bs, long bucketId, Document document, Object[] keys)
+    {
+		int i = 0;
+		bs.setLong(i++, bucketId);
+		i = bindKeys(bs, i, index.fieldSpecs(), keys);
+		bindDocumentId(bs, document.id(), i++);
+
+		if (document.hasObject())
+		{
+			bs.setBytes(i++, ByteBuffer.wrap(BSON.encode(document.object())));
+		}
+		else
+		{
+			i++;
+		}
+
+		bs.setDate(i++, document.createdAt());
+		bs.setDate(i++, document.updatedAt());
+    }
+
+	private void bindDocumentId(BoundStatement bs, Object id, int i)
+    {
+	    table.idType().bindTo(bs, i, id);
+    }
+
+	private int bindKeys(BoundStatement bs, int i, List<IndexField> keySpecs, Object[] keys)
+    {
+	    int keyIndex = 0;
+
+		for (Object key : keys)
+		{
+			keySpecs.get(keyIndex++).type().bindTo(bs, i++, key);
+		}
+
+	    return i;
+    }
+
+	private long getBucketId(Index index, Collection<Object> values)
+    {
+		// TODO: Determine bucketId.
+	    return 0;
+    }
+
+	private String getQuestionMarks(Index index)
+    {
+	    return QUESTION_MARKS.substring(0, (index.size() * 2) - 1);
+    }
 
 	private boolean extractBindings(BSONObject bsonObject, Index index, Map<String, Object> bindings)
     {

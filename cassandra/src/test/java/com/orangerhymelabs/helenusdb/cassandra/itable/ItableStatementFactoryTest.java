@@ -16,6 +16,7 @@ import com.orangerhymelabs.helenusdb.cassandra.CassandraManager;
 import com.orangerhymelabs.helenusdb.cassandra.SchemaRegistry;
 import com.orangerhymelabs.helenusdb.cassandra.document.Document;
 import com.orangerhymelabs.helenusdb.cassandra.index.Index;
+import com.orangerhymelabs.helenusdb.cassandra.index.IndexRepository;
 import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.cassandra.table.TableRepository;
@@ -23,6 +24,7 @@ import com.orangerhymelabs.helenusdb.cassandra.table.TableRepository;
 public class ItableStatementFactoryTest
 {
 	private static ItableStatementFactory factory;
+	private static Index abcIndex;
 
 	@BeforeClass
 	public static void beforeClass()
@@ -31,12 +33,19 @@ public class ItableStatementFactoryTest
 		CassandraManager.start();
 		SchemaRegistry.instance().createAll(CassandraManager.session(), CassandraManager.keyspace());
 		TableRepository tables = new TableRepository(CassandraManager.session(), CassandraManager.keyspace());
+		IndexRepository indexes = new IndexRepository(CassandraManager.session(), CassandraManager.keyspace());
 
 		Table table = new Table();
 		table.database("dbItable1");
 		table.name("indexed1");
 		table.description("A sample indexed table");
 		table = tables.create(table);
+
+		abcIndex = new Index();
+		abcIndex.name("index_abc");
+		abcIndex.fields(Arrays.asList("a:text", "b:integer", "c:text"));
+		abcIndex.table(table);
+		abcIndex = indexes.create(abcIndex);
 
 		factory = new ItableStatementFactory(CassandraManager.session(), CassandraManager.keyspace(), table);
 	}
@@ -50,14 +59,9 @@ public class ItableStatementFactoryTest
 	@Test
 	public void shouldCreateMultiKeyStatement()
 	{
-		Index i = new Index();
-		i.name("index_abc");
-		i.fields(Arrays.asList("a:text", "b:text", "c:text"));
-		i.table(factory.table());
-
 		BSONObject bson = new BasicBSONObject();
 		bson.put("a", "textA");
-		bson.put("b", "textB");
+		bson.put("b", 42);
 		bson.put("c", "textC");
 		Document d = new Document();
 		d.object(bson);
@@ -65,7 +69,7 @@ public class ItableStatementFactoryTest
 		d.createdAt(now);
 		d.updatedAt(now);
 
-		BoundStatement bs = factory.createIndexEntryCreateStatement(d, i);
+		BoundStatement bs = factory.createIndexEntryCreateStatement(d, abcIndex);
 		assertNotNull(bs);
 	}
 }
