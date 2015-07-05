@@ -16,7 +16,7 @@
 package com.orangerhymelabs.helenusdb.cassandra.table;
 
 import com.orangerhymelabs.helenusdb.cassandra.Constants;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.strategicgains.syntaxe.annotation.RegexValidation;
 import com.strategicgains.syntaxe.annotation.Required;
 
@@ -35,9 +35,9 @@ public class TableReference
 	private String name;
 
 	@Required("ID Type")
-	private FieldType idType = FieldType.UUID;
+	private DataTypes idType = DataTypes.UUID;
 
-	public TableReference(String database, String table, FieldType idType)
+	public TableReference(String database, String table, DataTypes idType)
 	{
 		this.database = database;
 		this.name = table;
@@ -59,7 +59,7 @@ public class TableReference
 		return name;
 	}
 
-	public FieldType idType()
+	public DataTypes idType()
 	{
 		return idType;
 	}

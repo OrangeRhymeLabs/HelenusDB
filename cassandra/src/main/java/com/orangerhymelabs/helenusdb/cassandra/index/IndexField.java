@@ -3,7 +3,7 @@ package com.orangerhymelabs.helenusdb.cassandra.index;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.strategicgains.syntaxe.ValidationException;
 
 public class IndexField
@@ -11,7 +11,7 @@ public class IndexField
 	private static final Pattern FIELD_PATTERN = Pattern.compile("^[\\+-]?(\\w+):(\\w+)");
 
 	private String name;
-	private FieldType type;
+	private DataTypes type;
 	private boolean isAscending = true;
 
 	public IndexField(String field)
@@ -22,7 +22,7 @@ public class IndexField
 		if (m.matches())
 		{
 			name = m.group(1);
-			type = FieldType.from(m.group(2));
+			type = DataTypes.from(m.group(2));
 
 			if (field.trim().startsWith("-"))
 			{
@@ -40,7 +40,7 @@ public class IndexField
 		return name;
 	}
 
-	public FieldType type()
+	public DataTypes type()
 	{
 		return type;
 	}

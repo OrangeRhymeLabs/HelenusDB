@@ -32,7 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.orangerhymelabs.helenusdb.cassandra.CassandraManager;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenusdb.cassandra.TestCallback;
 import com.orangerhymelabs.helenusdb.cassandra.database.Database;
@@ -286,7 +286,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateNonExistentTableSynchronously()
 	{
 		Index entity = new Index();
-		entity.table(DATABASE_NAME, "doesnt_exist", FieldType.UUID);
+		entity.table(DATABASE_NAME, "doesnt_exist", DataTypes.UUID);
 		entity.name("index1");
 		entity.fields(Arrays.asList("foo:int"));
 		indexes.update(entity);
@@ -296,7 +296,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
 	{
 		Index entity = new Index();
-		entity.table("db9", TABLE_NAME, FieldType.UUID);
+		entity.table("db9", TABLE_NAME, DataTypes.UUID);
 		entity.name("index1");
 		entity.fields(Arrays.asList("foo:int"));
 		indexes.update(entity);
@@ -318,7 +318,7 @@ public class IndexServiceTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 
 		callback.clear();
-		entity.table("db9", TABLE_NAME, FieldType.UUID);
+		entity.table("db9", TABLE_NAME, DataTypes.UUID);
 		indexes.updateAsync(entity, callback);
 		waitFor(callback);
 
@@ -330,7 +330,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateInvalidDatabaseSynchronously()
 	{
 		Index entity = new Index();
-		entity.table("invalid db 9", TABLE_NAME, FieldType.UUID);
+		entity.table("invalid db 9", TABLE_NAME, DataTypes.UUID);
 		entity.name("doesnt_matter");
 		indexes.update(entity);
 	}
@@ -339,7 +339,7 @@ public class IndexServiceTest
 	public void shouldThrowOnUpdateInvalidTableSynchronously()
 	{
 		Index entity = new Index();
-		entity.table(DATABASE_NAME, "Isn't valid", FieldType.UUID);
+		entity.table(DATABASE_NAME, "Isn't valid", DataTypes.UUID);
 		entity.name("doesnt_matter");
 		indexes.update(entity);
 	}
@@ -350,7 +350,7 @@ public class IndexServiceTest
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
 		Index entity = new Index();
-		entity.table("invalid db 8", TABLE_NAME, FieldType.UUID);
+		entity.table("invalid db 8", TABLE_NAME, DataTypes.UUID);
 		entity.name("doesnt_matter");
 		indexes.updateAsync(entity, callback);
 		waitFor(callback);

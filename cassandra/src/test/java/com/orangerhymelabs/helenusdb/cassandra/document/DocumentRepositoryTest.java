@@ -35,7 +35,7 @@ import org.junit.Test;
 
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenusdb.cassandra.CassandraManager;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenusdb.cassandra.TestCallback;
 import com.orangerhymelabs.helenusdb.cassandra.document.Document;
@@ -88,7 +88,7 @@ public class DocumentRepositoryTest
 		Table dates = new Table();
 		dates.name("dates");
 		dates.database("db1");
-		dates.idType(FieldType.TIMESTAMP);
+		dates.idType(DataTypes.TIMESTAMP);
 		dates.description("a test date-keyed table");
 		Table dateTable = tables.create(dates);
 		dateDocs = factory.newDocumentRepositoryFor(dateTable);

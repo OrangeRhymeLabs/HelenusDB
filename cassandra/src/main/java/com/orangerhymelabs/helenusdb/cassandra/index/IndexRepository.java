@@ -30,7 +30,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
 import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
@@ -286,7 +286,7 @@ extends AbstractCassandraRepository<Index>
 		if (row == null) return null;
 
 		Index n = new Index();
-		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), FieldType.from(row.getString(Columns.ID_TYPE)));
+		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), DataTypes.from(row.getString(Columns.ID_TYPE)));
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
 		n.fields(row.getList(Columns.FIELDS, String.class));

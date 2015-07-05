@@ -26,7 +26,7 @@ import com.datastax.driver.core.BoundStatement;
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public enum FieldType
+public enum DataTypes
 {
 	TEXT("text"),
 	UUID("uuid"),
@@ -40,7 +40,7 @@ public enum FieldType
 
 	private String cassandraType;
 
-	FieldType(String typeName)
+	DataTypes(String typeName)
 	{
 		this.cassandraType = typeName;
 	}
@@ -74,7 +74,7 @@ public enum FieldType
 		}
     }
 
-	public static FieldType from(String name)
+	public static DataTypes from(String name)
     {
 		switch(name.toLowerCase())
 		{

@@ -24,7 +24,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
 import com.orangerhymelabs.helenusdb.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
@@ -201,7 +201,7 @@ extends AbstractCassandraRepository<Table>
 		t.schema(row.getString(Columns.SCHEMA));
 		t.ttl(row.getLong(Columns.TTL));
 		t.type(TableType.from(row.getString(Columns.TYPE)));
-		t.idType(FieldType.from(row.getString(Columns.ID_TYPE)));
+		t.idType(DataTypes.from(row.getString(Columns.ID_TYPE)));
 		t.createdAt(row.getDate(Columns.CREATED_AT));
 		t.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return t;

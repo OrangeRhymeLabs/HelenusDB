@@ -29,7 +29,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.exception.InvalidIdentifierException;
@@ -63,7 +63,7 @@ extends AbstractCassandraRepository<Document>
 	        return rs.wasApplied();
         }
 
-        public boolean create(Session session, String keyspace, String table, FieldType idType)
+        public boolean create(Session session, String keyspace, String table, DataTypes idType)
         {
 			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace, table, idType.cassandraType()));
 			return rs.wasApplied();

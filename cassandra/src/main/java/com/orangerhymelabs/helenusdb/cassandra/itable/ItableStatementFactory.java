@@ -33,7 +33,7 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.document.Document;
 import com.orangerhymelabs.helenusdb.cassandra.index.Index;
 import com.orangerhymelabs.helenusdb.cassandra.index.IndexField;
@@ -71,7 +71,7 @@ public class ItableStatementFactory
 			return rs.wasApplied();
 		}
 
-		public boolean create(Session session, String keyspace, String table, FieldType oidType, String columnDefs, String pkDefs, String ordering)
+		public boolean create(Session session, String keyspace, String table, DataTypes oidType, String columnDefs, String pkDefs, String ordering)
 		{
 			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, oidType.cassandraType(), pkDefs, ordering));
 			return rs.wasApplied();

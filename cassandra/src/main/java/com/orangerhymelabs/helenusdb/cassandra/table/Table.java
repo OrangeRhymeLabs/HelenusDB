@@ -18,7 +18,7 @@ package com.orangerhymelabs.helenusdb.cassandra.table;
 import java.util.List;
 
 import com.orangerhymelabs.helenusdb.cassandra.Constants;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.database.Database;
 import com.orangerhymelabs.helenusdb.cassandra.database.DatabaseReference;
 import com.orangerhymelabs.helenusdb.cassandra.index.Index;
@@ -48,7 +48,7 @@ extends AbstractEntity
 	private TableType type = TableType.DOCUMENT;
 
 	@Required("ID Type")
-	private FieldType idType = FieldType.UUID;
+	private DataTypes idType = DataTypes.UUID;
 
 	// How long should the table's data live?
 	private long ttl;
@@ -171,12 +171,12 @@ extends AbstractEntity
 	    return (hasDatabase() & hasName() ? new Identifier(database.name(), name) : null);
     }
 
-	public FieldType idType()
+	public DataTypes idType()
 	{
 		return idType;
 	}
 
-	public void idType(FieldType idType)
+	public void idType(DataTypes idType)
 	{
 		this.idType = idType;
 	}

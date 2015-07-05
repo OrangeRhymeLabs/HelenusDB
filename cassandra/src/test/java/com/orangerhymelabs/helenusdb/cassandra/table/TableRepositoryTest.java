@@ -33,7 +33,7 @@ import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
 import com.orangerhymelabs.helenusdb.cassandra.CassandraManager;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenusdb.cassandra.TestCallback;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
@@ -230,7 +230,7 @@ public class TableRepositoryTest
 		Table table = new Table();
 		table.name("table5");
 		table.database("db5");
-		table.idType(FieldType.BIGINT);
+		table.idType(DataTypes.BIGINT);
 		Table createResult = tables.create(table);
 		assertEquals(table, createResult);
 

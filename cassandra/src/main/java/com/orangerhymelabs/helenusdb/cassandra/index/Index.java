@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.orangerhymelabs.helenusdb.cassandra.Constants;
-import com.orangerhymelabs.helenusdb.cassandra.FieldType;
+import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.cassandra.table.TableReference;
 import com.orangerhymelabs.helenusdb.persistence.AbstractEntity;
@@ -116,7 +116,7 @@ extends AbstractEntity
 		return (table == null ? null : table.name());
 	}
 
-	public void table(String databaseName, String tableName, FieldType docIdType)
+	public void table(String databaseName, String tableName, DataTypes docIdType)
 	{
 		this.table = new TableReference(databaseName, tableName, docIdType);
 	}
@@ -135,7 +135,7 @@ extends AbstractEntity
 		this.table = new TableReference(table);
 	}
 
-	public FieldType idType()
+	public DataTypes idType()
 	{
 		return table.idType();
 	}
