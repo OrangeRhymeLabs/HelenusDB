@@ -50,13 +50,9 @@ extends AbstractEntity
 	@ChildValidation
 	private TableReference table;
 
-	@Required("Index Engine")
-	private IndexEngineType engineType;
-
 	public Index()
     {
 		super();
-		engineType(IndexEngineType.BUCKET_INDEXER);
     }
 
 	@Override
@@ -113,16 +109,6 @@ extends AbstractEntity
 	public String databaseName()
 	{
 		return (table == null ? null : table.database());
-	}
-
-	public IndexEngineType engineType()
-	{
-		return engineType;
-	}
-
-	protected void engineType(IndexEngineType engineType)
-	{
-		this.engineType = engineType;
 	}
 
 	public String tableName()
