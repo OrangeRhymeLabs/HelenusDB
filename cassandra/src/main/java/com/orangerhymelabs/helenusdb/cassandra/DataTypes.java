@@ -1,6 +1,7 @@
 package com.orangerhymelabs.helenusdb.cassandra;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.UUID;
 
@@ -72,6 +73,48 @@ public enum DataTypes
 			case UUID: bs.setUUID(bsIndex, (UUID) value);
 			break;
 		}
+    }
+
+	public ByteBuffer toByteBuffer(Object value)
+    {
+		ByteBuffer bb;
+
+		switch(this)
+		{
+			case BIGINT: 
+				bb = ByteBuffer.allocate(Long.SIZE).putLong((Long) value);
+			break;
+			case DECIMAL:
+				bb = ByteBuffer.wrap(((BigDecimal) value).toString().getBytes());
+			break;
+			case DOUBLE:
+				bb = ByteBuffer.allocate(Double.SIZE).putDouble((Double) value);
+			break;
+			case FLOAT:
+				bb = ByteBuffer.allocate(Float.SIZE).putFloat((Float) value);
+			break;
+			case INTEGER:
+				bb = ByteBuffer.allocate(Integer.SIZE).putInt((Integer) value);
+			break;
+			case TEXT:
+				bb = ByteBuffer.wrap(((String) value).getBytes());
+			break;
+			case TIMESTAMP:
+				bb = ByteBuffer.allocate(Long.SIZE).putLong(((Date) value).getTime());
+			break;
+			case TIMEUUID:
+			case UUID:
+				UUID uuid = (UUID) value;
+				bb = ByteBuffer.allocate(Long.SIZE * 2)
+					.putLong(uuid.getMostSignificantBits())
+					.putLong(uuid.getLeastSignificantBits());
+			break;
+			default:
+				return null;
+		}
+
+		bb.rewind();
+		return bb;
     }
 
 	public static DataTypes from(String name)
