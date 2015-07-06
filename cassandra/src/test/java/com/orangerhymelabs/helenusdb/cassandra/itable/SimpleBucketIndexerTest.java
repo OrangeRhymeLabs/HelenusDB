@@ -104,26 +104,42 @@ public class SimpleBucketIndexerTest
 	public void testShortStringKeysDifferent()
 	{
 		SimpleBucketIndexer indexer = new SimpleBucketIndexer();
-		long aValue = indexer.getBucketFor("aaaaa", DataTypes.TEXT);
-		long zValue = indexer.getBucketFor("zzzzz", DataTypes.TEXT);
-		assertNotEquals(zValue, aValue);
+		Long bucket1 = indexer.getBucketFor("aaaaa", DataTypes.TEXT);
+		assertNotEquals(Long.valueOf(0), bucket1);
+		Long bucket2 = indexer.getBucketFor("zzzzz", DataTypes.TEXT);
+		assertNotEquals(Long.valueOf(0), bucket2);
+		assertNotEquals(bucket2, bucket1);
 	}
 
 	@Test
 	public void testLongStringKeysEqual()
 	{
 		SimpleBucketIndexer indexer = new SimpleBucketIndexer();
-		long aValue = indexer.getBucketFor("aaaaazzz", DataTypes.TEXT);
-		long zValue = indexer.getBucketFor("aaaaazzzzzzz", DataTypes.TEXT);
-		assertEquals(zValue, aValue);
+		Long bucket1 = indexer.getBucketFor("aaaaazzz", DataTypes.TEXT);
+		assertNotEquals(Long.valueOf(0), bucket1);
+		Long bucket2 = indexer.getBucketFor("aaaaazzzzzzz", DataTypes.TEXT);
+		assertNotEquals(Long.valueOf(0), bucket2);
+		assertEquals(bucket2, bucket1);
 	}
 
 	@Test
 	public void testShortStringKeysEquals()
 	{
 		SimpleBucketIndexer indexer = new SimpleBucketIndexer();
-		long aValue = indexer.getBucketFor("a", DataTypes.TEXT);
-		long zValue = indexer.getBucketFor("a", DataTypes.TEXT);
-		assertEquals(zValue, aValue);
+		Long bucket1 = indexer.getBucketFor("a", DataTypes.TEXT);
+		assertNotEquals(Long.valueOf(0), bucket1);
+		Long bucket2 = indexer.getBucketFor("a", DataTypes.TEXT);
+		assertNotEquals(Long.valueOf(0), bucket2);
+		assertEquals(bucket2, bucket1);
+	}
+
+	@Test
+	public void testEmptyStringKeysEquals()
+	{
+		SimpleBucketIndexer indexer = new SimpleBucketIndexer();
+		Long bucket1 = indexer.getBucketFor("", DataTypes.TEXT);
+		assertEquals(Long.valueOf(0), bucket1);
+		Long bucket2 = indexer.getBucketFor("", DataTypes.TEXT);
+		assertEquals(Long.valueOf(0), bucket2);
 	}
 }
