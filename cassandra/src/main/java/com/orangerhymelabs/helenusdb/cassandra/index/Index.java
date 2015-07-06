@@ -17,7 +17,11 @@ package com.orangerhymelabs.helenusdb.cassandra.index;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.bson.BSONObject;
 
 import com.orangerhymelabs.helenusdb.cassandra.Constants;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
@@ -230,4 +234,23 @@ extends AbstractEntity
 
 		return fieldSpecs;
 	}
+
+	public Map<String, Object> extractBindings(BSONObject bsonObject)
+    {
+		if (bsonObject == null || bsonObject.keySet().isEmpty()) return Collections.emptyMap();
+
+		Map<String, Object> bindings = new LinkedHashMap<String, Object>(size());
+
+	    for (IndexField indexKey : fieldSpecs())
+		{
+			Object value = bsonObject.get(indexKey.name());
+
+			if (value != null)
+			{
+				bindings.put(indexKey.name(), value);
+			}
+		}
+
+	    return bindings;
+    }
 }

@@ -15,19 +15,14 @@
 */
 package com.orangerhymelabs.helenusdb.cassandra.itable;
 
-import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bson.BSON;
-import org.bson.BSONObject;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -189,10 +184,9 @@ public class ItableStatementFactory
 
 	public BoundStatement createIndexEntryCreateStatement(Document document, Index index)
 	{
-		Map<String, Object> bindings = new LinkedHashMap<String, Object>(index.size());
-		boolean isBound = extractBindings(document.object(), index, bindings);
+		Map<String, Object> bindings = index.extractBindings(document.object());
 
-		if (isBound)
+		if (bindings.size() == index.size()) // is everything bound?
 		{
 			// TODO: cache prepared statements.
 			String cql = String.format(CREATE_CQL, keyspace, index.toDbTable(), index.toPkDefs(), getQuestionMarks(index));
@@ -253,29 +247,6 @@ public class ItableStatementFactory
 	private String getQuestionMarks(Index index)
     {
 	    return QUESTION_MARKS.substring(0, (index.size() * 2) - 1);
-    }
-
-	private boolean extractBindings(BSONObject bsonObject, Index index, Map<String, Object> bindings)
-    {
-		if (bsonObject == null || bsonObject.keySet().isEmpty()) return false;
-
-		boolean isBound = true;
-
-	    for (IndexField indexKey : index.fieldSpecs())
-		{
-			Object value = bsonObject.get(indexKey.name());
-
-			if (value != null)
-			{
-				bindings.put(indexKey.name(), value);
-			}
-			else
-			{
-				isBound = false;
-			}
-		}
-
-	    return isBound;
     }
 
 	/**
