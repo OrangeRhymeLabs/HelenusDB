@@ -82,19 +82,23 @@ public enum DataTypes
 		switch(this)
 		{
 			case BIGINT: 
-				bb = ByteBuffer.allocate(Long.SIZE).putLong((Long) value);
+				bb = ByteBuffer.allocate(Long.BYTES).putLong((Long) value);
 			break;
-			case DECIMAL:
-				bb = ByteBuffer.wrap(((BigDecimal) value).toString().getBytes());
+			case DECIMAL: // This puts the unscaled value first into the ByteBuffer and the scale as the last 4 bytes.
+				BigDecimal bd = (BigDecimal) value;
+				byte[] bytes = bd.unscaledValue().toByteArray();
+				bb = ByteBuffer.allocate(Integer.BYTES + bytes.length);
+				bb.put(bytes);
+				bb.putInt(bd.scale());
 			break;
 			case DOUBLE:
-				bb = ByteBuffer.allocate(Double.SIZE).putDouble((Double) value);
+				bb = ByteBuffer.allocate(Double.BYTES).putDouble((Double) value);
 			break;
 			case FLOAT:
-				bb = ByteBuffer.allocate(Float.SIZE).putFloat((Float) value);
+				bb = ByteBuffer.allocate(Float.BYTES).putFloat((Float) value);
 			break;
 			case INTEGER:
-				bb = ByteBuffer.allocate(Integer.SIZE).putInt((Integer) value);
+				bb = ByteBuffer.allocate(Integer.BYTES).putInt((Integer) value);
 			break;
 			case TEXT:
 				bb = ByteBuffer.wrap(((String) value).getBytes());
@@ -105,7 +109,7 @@ public enum DataTypes
 			case TIMEUUID:
 			case UUID:
 				UUID uuid = (UUID) value;
-				bb = ByteBuffer.allocate(Long.SIZE * 2)
+				bb = ByteBuffer.allocate(Long.BYTES * 2)
 					.putLong(uuid.getMostSignificantBits())
 					.putLong(uuid.getLeastSignificantBits());
 			break;
