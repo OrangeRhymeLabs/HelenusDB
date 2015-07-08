@@ -215,13 +215,13 @@ public class ItableStatementFactory
 		int i = 0;
 		bs.setLong(i++, bucketId);
 		i = bindKeys(bs, i, index.fieldSpecs(), keys);
-		bindDocumentId(bs, document.id(), i++);
+		bindDocumentId(bs, i++, document.id());
 		bs.setBytes(i++, ByteBuffer.wrap(BSON.encode(document.object())));
 		bs.setDate(i++, document.createdAt());
 		bs.setDate(i++, document.updatedAt());
     }
 
-	private void bindDocumentId(BoundStatement bs, Object id, int i)
+	private void bindDocumentId(BoundStatement bs, int i, Object id)
     {
 	    table.idType().bindTo(bs, i, id);
     }
