@@ -1,11 +1,3 @@
-package com.orangerhymelabs.helenusdb.cassandra;
-
-import java.math.BigDecimal;
-import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.UUID;
-
-import com.datastax.driver.core.BoundStatement;
 /*
     Copyright 2015, Strategic Gains, Inc.
 
@@ -21,7 +13,15 @@ import com.datastax.driver.core.BoundStatement;
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
+package com.orangerhymelabs.helenusdb.cassandra;
 
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.UUID;
+
+import com.datastax.driver.core.BoundStatement;
 
 /**
  * @author tfredrich
@@ -37,7 +37,8 @@ public enum DataTypes
 	BIGINT("bigint"),
 	FLOAT("float"),
 	DOUBLE("double"),
-	DECIMAL("decimal");
+	DECIMAL("decimal"),
+	BOOLEAN("boolean");
 
 	private String cassandraType;
 
@@ -57,6 +58,8 @@ public enum DataTypes
 		{
 			case BIGINT: bs.setLong(bsIndex, (Long) value);
 			break;
+			case BOOLEAN: bs.setBool(bsIndex, (Boolean) value);
+			break;
 			case DECIMAL: bs.setDecimal(bsIndex, (BigDecimal) value);
 			break;
 			case DOUBLE: bs.setDouble(bsIndex, (Double) value);
@@ -75,51 +78,42 @@ public enum DataTypes
 		}
     }
 
-	public ByteBuffer toByteBuffer(Object value)
-    {
-		ByteBuffer bb;
-
+	public Long asLong(Object value)
+	{
 		switch(this)
 		{
-			case BIGINT: 
-				bb = ByteBuffer.allocate(Long.BYTES).putLong((Long) value);
-			break;
-			case DECIMAL: // This puts the unscaled value first into the ByteBuffer and the scale as the last 4 bytes.
-				BigDecimal bd = (BigDecimal) value;
-				byte[] bytes = bd.unscaledValue().toByteArray();
-				bb = ByteBuffer.allocate(Integer.BYTES + bytes.length);
-				bb.put(bytes);
-				bb.putInt(bd.scale());
-			break;
+			case BIGINT:
+				return (Long) value;
+			case BOOLEAN:
+				return (((Boolean) value).booleanValue() ? 1L : 0L);
+			case DECIMAL:
+				return ((BigDecimal) value).longValue();
 			case DOUBLE:
-				bb = ByteBuffer.allocate(Double.BYTES).putDouble((Double) value);
-			break;
+				return ((Double) value).longValue();
 			case FLOAT:
-				bb = ByteBuffer.allocate(Float.BYTES).putFloat((Float) value);
-			break;
+				return ((Float) value).longValue();
 			case INTEGER:
-				bb = ByteBuffer.allocate(Integer.BYTES).putInt((Integer) value);
-			break;
+				return ((Integer) value).longValue();
 			case TEXT:
-				bb = ByteBuffer.wrap(((String) value).getBytes());
-			break;
+				String s = (String) value;
+				byte[] b = s.substring(0, Math.min(8, s.length())).getBytes();
+
+				if (b.length < 8)
+				{
+					b = Arrays.copyOf(b, 8);
+				}
+
+				return ByteBuffer.wrap(b).getLong();
 			case TIMESTAMP:
-				bb = ByteBuffer.allocate(Long.SIZE).putLong(((Date) value).getTime());
-			break;
+				return ((Date) value).getTime();
 			case TIMEUUID:
+				return ((UUID) value).timestamp();
 			case UUID:
-				UUID uuid = (UUID) value;
-				bb = ByteBuffer.allocate(Long.BYTES * 2)
-					.putLong(uuid.getMostSignificantBits())
-					.putLong(uuid.getLeastSignificantBits());
-			break;
+				return ((UUID) value).getMostSignificantBits();
 			default:
 				return null;
 		}
-
-		bb.rewind();
-		return bb;
-    }
+	}
 
 	public static DataTypes from(String name)
     {
@@ -132,7 +126,10 @@ public enum DataTypes
 			case "timestamp": return TIMESTAMP;
 			case "int":
 			case "integer": return INTEGER;
+			case "long":
 			case "bigint": return BIGINT;
+			case "bool":
+			case "boolean": return BOOLEAN;
 			case "float": return FLOAT;
 			case "double": return DOUBLE;
 			case "decimal": return DECIMAL;

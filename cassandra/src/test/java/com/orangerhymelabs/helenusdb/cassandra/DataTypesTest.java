@@ -38,15 +38,15 @@ public class DataTypesTest
 	{
 		assertEquals("timestamp", DataTypes.TIMESTAMP.cassandraType());
 		Date now = new Date();
-		assertEquals(now.getTime(), ByteBuffer.wrap(DataTypes.TIMESTAMP.toByteBuffer(now).array()).getLong());
+		assertEquals(now.getTime(), DataTypes.TIMESTAMP.byteBuffer(now).getLong());
 	}
 
 	@Test
 	public void testBigInt()
 	{
 		assertEquals("bigint", DataTypes.BIGINT.cassandraType());
-		assertEquals(Long.MAX_VALUE, ByteBuffer.wrap(DataTypes.BIGINT.toByteBuffer(Long.MAX_VALUE).array()).getLong());
-		assertEquals(Long.MIN_VALUE, ByteBuffer.wrap(DataTypes.BIGINT.toByteBuffer(Long.MIN_VALUE).array()).getLong());
+		assertEquals(Long.MAX_VALUE, DataTypes.BIGINT.byteBuffer(Long.MAX_VALUE).getLong());
+		assertEquals(Long.MIN_VALUE, DataTypes.BIGINT.byteBuffer(Long.MIN_VALUE).getLong());
 	}
 
 	@Test
@@ -54,34 +54,34 @@ public class DataTypesTest
 	{
 		assertEquals("decimal", DataTypes.DECIMAL.cassandraType());
 		BigDecimal max = new BigDecimal(Double.MAX_VALUE);
-		assertEquals(max, newBigDecimal(DataTypes.DECIMAL.toByteBuffer(max)));
+		assertEquals(max, newBigDecimal(DataTypes.DECIMAL.byteBuffer(max)));
 
 		BigDecimal min = new BigDecimal(Double.MIN_VALUE);
-		assertEquals(min, newBigDecimal(DataTypes.DECIMAL.toByteBuffer(min)));
+		assertEquals(min, newBigDecimal(DataTypes.DECIMAL.byteBuffer(min)));
 	}
 
 	@Test
 	public void testDouble()
 	{
 		assertEquals("double", DataTypes.DOUBLE.cassandraType());
-		assertEquals(Double.MAX_VALUE, ByteBuffer.wrap(DataTypes.DOUBLE.toByteBuffer(Double.MAX_VALUE).array()).getDouble(), 0.0d);
-		assertEquals(Double.MIN_VALUE, ByteBuffer.wrap(DataTypes.DOUBLE.toByteBuffer(Double.MIN_VALUE).array()).getDouble(), 0.0d);
+		assertEquals(Double.MAX_VALUE, DataTypes.DOUBLE.byteBuffer(Double.MAX_VALUE).getDouble(), 0.0d);
+		assertEquals(Double.MIN_VALUE, DataTypes.DOUBLE.byteBuffer(Double.MIN_VALUE).getDouble(), 0.0d);
 	}
 
 	@Test
 	public void testFloat()
 	{
 		assertEquals("float", DataTypes.FLOAT.cassandraType());
-		assertEquals(Float.MAX_VALUE, ByteBuffer.wrap(DataTypes.FLOAT.toByteBuffer(Float.MAX_VALUE).array()).getFloat(), 0.0d);
-		assertEquals(Float.MIN_VALUE, ByteBuffer.wrap(DataTypes.FLOAT.toByteBuffer(Float.MIN_VALUE).array()).getFloat(), 0.0d);
+		assertEquals(Float.MAX_VALUE, DataTypes.FLOAT.byteBuffer(Float.MAX_VALUE).getFloat(), 0.0d);
+		assertEquals(Float.MIN_VALUE, DataTypes.FLOAT.byteBuffer(Float.MIN_VALUE).getFloat(), 0.0d);
 	}
 
 	@Test
 	public void testInteger()
 	{
 		assertEquals("int", DataTypes.INTEGER.cassandraType());
-		assertEquals(Integer.MAX_VALUE, ByteBuffer.wrap(DataTypes.INTEGER.toByteBuffer(Integer.MAX_VALUE).array()).getInt());
-		assertEquals(Integer.MIN_VALUE, ByteBuffer.wrap(DataTypes.INTEGER.toByteBuffer(Integer.MIN_VALUE).array()).getInt());
+		assertEquals(Integer.MAX_VALUE, DataTypes.INTEGER.byteBuffer(Integer.MAX_VALUE).getInt());
+		assertEquals(Integer.MIN_VALUE, DataTypes.INTEGER.byteBuffer(Integer.MIN_VALUE).getInt());
 	}
 
 	@Test
@@ -89,7 +89,8 @@ public class DataTypesTest
 	{
 		assertEquals("text", DataTypes.TEXT.cassandraType());
 		String text = "The quick, brown fox jumped over the lazy ol' dog!";
-		assertEquals(text, new String(DataTypes.TEXT.toByteBuffer(text).array()));
+		assertEquals(text, new String(DataTypes.TEXT.bytes(text)));
+		assertEquals(text, new String(DataTypes.TEXT.byteBuffer(text).array()));
 	}
 
 	@Test
@@ -97,7 +98,7 @@ public class DataTypesTest
 	{
 		assertEquals("timeuuid", DataTypes.TIMEUUID.cassandraType());
 		UUID uuid = UUIDs.timeBased();
-		ByteBuffer bb = DataTypes.UUID.toByteBuffer(uuid);
+		ByteBuffer bb = DataTypes.UUID.byteBuffer(uuid);
 		assertEquals(uuid, new UUID(bb.getLong(), bb.getLong()));
 	}
 
@@ -106,7 +107,7 @@ public class DataTypesTest
 	{
 		assertEquals("uuid", DataTypes.UUID.cassandraType());
 		UUID uuid = UUIDs.random();
-		ByteBuffer bb = DataTypes.UUID.toByteBuffer(uuid);
+		ByteBuffer bb = DataTypes.UUID.byteBuffer(uuid);
 		assertEquals(uuid, new UUID(bb.getLong(), bb.getLong()));
 	}
 
