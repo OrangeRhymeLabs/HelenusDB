@@ -18,8 +18,6 @@ package com.orangerhymelabs.helenusdb.cassandra;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.UUID;
 
@@ -38,15 +36,15 @@ public class DataTypesTest
 	{
 		assertEquals("timestamp", DataTypes.TIMESTAMP.cassandraType());
 		Date now = new Date();
-		assertEquals(now.getTime(), DataTypes.TIMESTAMP.byteBuffer(now).getLong());
+		assertEquals((Long) now.getTime(), DataTypes.TIMESTAMP.asLong(now));
 	}
 
 	@Test
 	public void testBigInt()
 	{
 		assertEquals("bigint", DataTypes.BIGINT.cassandraType());
-		assertEquals(Long.MAX_VALUE, DataTypes.BIGINT.byteBuffer(Long.MAX_VALUE).getLong());
-		assertEquals(Long.MIN_VALUE, DataTypes.BIGINT.byteBuffer(Long.MIN_VALUE).getLong());
+		assertEquals((Long) Long.MAX_VALUE, DataTypes.BIGINT.asLong(Long.MAX_VALUE));
+		assertEquals((Long) Long.MIN_VALUE, DataTypes.BIGINT.asLong(Long.MIN_VALUE));
 	}
 
 	@Test
@@ -54,34 +52,34 @@ public class DataTypesTest
 	{
 		assertEquals("decimal", DataTypes.DECIMAL.cassandraType());
 		BigDecimal max = new BigDecimal(Double.MAX_VALUE);
-		assertEquals(max, newBigDecimal(DataTypes.DECIMAL.byteBuffer(max)));
+		assertEquals((Long) max.unscaledValue().longValue(), DataTypes.DECIMAL.asLong(max));
 
 		BigDecimal min = new BigDecimal(Double.MIN_VALUE);
-		assertEquals(min, newBigDecimal(DataTypes.DECIMAL.byteBuffer(min)));
+		assertEquals((Long) min.unscaledValue().longValue(), DataTypes.DECIMAL.asLong(min));
 	}
 
 	@Test
 	public void testDouble()
 	{
 		assertEquals("double", DataTypes.DOUBLE.cassandraType());
-		assertEquals(Double.MAX_VALUE, DataTypes.DOUBLE.byteBuffer(Double.MAX_VALUE).getDouble(), 0.0d);
-		assertEquals(Double.MIN_VALUE, DataTypes.DOUBLE.byteBuffer(Double.MIN_VALUE).getDouble(), 0.0d);
+		assertEquals(Double.MAX_VALUE, DataTypes.DOUBLE.asLong(Double.MAX_VALUE).doubleValue(), 0.0d);
+		assertEquals(Double.MIN_VALUE, DataTypes.DOUBLE.asLong(Double.MIN_VALUE).doubleValue(), 0.0d);
 	}
 
 	@Test
 	public void testFloat()
 	{
 		assertEquals("float", DataTypes.FLOAT.cassandraType());
-		assertEquals(Float.MAX_VALUE, DataTypes.FLOAT.byteBuffer(Float.MAX_VALUE).getFloat(), 0.0d);
-		assertEquals(Float.MIN_VALUE, DataTypes.FLOAT.byteBuffer(Float.MIN_VALUE).getFloat(), 0.0d);
+		assertEquals(Float.MAX_VALUE, DataTypes.FLOAT.asLong(Float.MAX_VALUE).floatValue(), 0.0d);
+		assertEquals(Float.MIN_VALUE, DataTypes.FLOAT.asLong(Float.MIN_VALUE).floatValue(), 0.0d);
 	}
 
 	@Test
 	public void testInteger()
 	{
 		assertEquals("int", DataTypes.INTEGER.cassandraType());
-		assertEquals(Integer.MAX_VALUE, DataTypes.INTEGER.byteBuffer(Integer.MAX_VALUE).getInt());
-		assertEquals(Integer.MIN_VALUE, DataTypes.INTEGER.byteBuffer(Integer.MIN_VALUE).getInt());
+		assertEquals(Integer.MAX_VALUE, DataTypes.INTEGER.asLong(Integer.MAX_VALUE).intValue());
+		assertEquals(Integer.MIN_VALUE, DataTypes.INTEGER.asLong(Integer.MIN_VALUE).intValue());
 	}
 
 	@Test
@@ -89,8 +87,7 @@ public class DataTypesTest
 	{
 		assertEquals("text", DataTypes.TEXT.cassandraType());
 		String text = "The quick, brown fox jumped over the lazy ol' dog!";
-		assertEquals(text, new String(DataTypes.TEXT.bytes(text)));
-		assertEquals(text, new String(DataTypes.TEXT.byteBuffer(text).array()));
+		assertEquals(text.substring(0, 8).getBytes(), DataTypes.TEXT.asLong(text));
 	}
 
 	@Test
@@ -98,8 +95,7 @@ public class DataTypesTest
 	{
 		assertEquals("timeuuid", DataTypes.TIMEUUID.cassandraType());
 		UUID uuid = UUIDs.timeBased();
-		ByteBuffer bb = DataTypes.UUID.byteBuffer(uuid);
-		assertEquals(uuid, new UUID(bb.getLong(), bb.getLong()));
+		assertEquals((Long) uuid.timestamp(), DataTypes.TIMEUUID.asLong(uuid));
 	}
 
 	@Test
@@ -107,16 +103,6 @@ public class DataTypesTest
 	{
 		assertEquals("uuid", DataTypes.UUID.cassandraType());
 		UUID uuid = UUIDs.random();
-		ByteBuffer bb = DataTypes.UUID.byteBuffer(uuid);
-		assertEquals(uuid, new UUID(bb.getLong(), bb.getLong()));
-	}
-
-	private BigDecimal newBigDecimal(ByteBuffer bb)
-	{
-		byte[] bytes = new byte[bb.capacity() - Integer.BYTES];
-		bb.get(bytes);
-		int scale = bb.getInt();
-		BigInteger unscaled = new BigInteger(bytes);
-		return new BigDecimal(unscaled, scale);
+		assertEquals((Long) uuid.getMostSignificantBits(), DataTypes.UUID.asLong(uuid));
 	}
 }
