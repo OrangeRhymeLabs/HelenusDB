@@ -30,7 +30,6 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
-import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenusdb.persistence.Identifier;
@@ -85,13 +84,11 @@ extends AbstractCassandraRepository<Document>
 	private static final String CREATE_CQL = "insert into %s.%s (id, object, created_at, updated_at) values (?, ?, ?, ?) if not exists";
 
 	private Table table;
-	private ItableStatementFactory iTableStmtFactory;
 
 	public DocumentRepository(Session session, String keyspace, Table table)
 	{
 		super(session, keyspace);
 		this.table = table;
-		this.iTableStmtFactory = new ItableStatementFactory(session, keyspace, table);
 		init();
 	}
 
@@ -121,7 +118,7 @@ extends AbstractCassandraRepository<Document>
 
 		if (table.hasIndexes())
 		{
-			batch.addAll(iTableStmtFactory.createIndexEntryCreateStatements(document));
+			// TODO: Create index entries.
 		}
 
 		return session().executeAsync(batch);
@@ -139,7 +136,8 @@ extends AbstractCassandraRepository<Document>
 		{
 			// TODO: make this lookup non-blocking (asynchronous).
 			Document previous = read(document.getIdentifier());
-			batch.addAll(iTableStmtFactory.createIndexEntryUpdateStatements(document, previous));
+
+			// TODO: update index entries.
 		}
 
 		return session().executeAsync(batch);
@@ -157,7 +155,8 @@ extends AbstractCassandraRepository<Document>
 		{
 			// TODO: make this lookup non-blocking (asynchronous).
 			Document previous = read(id);
-			batch.addAll(iTableStmtFactory.createIndexEntryDeleteStatements(previous));
+
+			// TODO: update index entries.
 		}
 
 		return session().executeAsync(batch);

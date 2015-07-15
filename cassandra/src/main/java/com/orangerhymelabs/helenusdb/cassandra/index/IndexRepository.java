@@ -25,16 +25,12 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
-import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
-import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
-import com.orangerhymelabs.helenusdb.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenusdb.exception.StorageException;
 import com.orangerhymelabs.helenusdb.persistence.Identifier;
 
@@ -105,8 +101,6 @@ extends AbstractCassandraRepository<Index>
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 
-	private static final ItableStatementFactory.Schema BUCKET_SCHEMA = new ItableStatementFactory.Schema();
-
 	private PreparedStatement readForTableStmt;
 
 	public IndexRepository(Session session, String keyspace)
@@ -118,33 +112,13 @@ extends AbstractCassandraRepository<Index>
 	@Override
 	public void createAsync(Index index, FutureCallback<Index> callback)
 	{
-		try
-		{
-			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs(), index.toClusterOrderings());
-			super.createAsync(index, callback);
-		}
-		catch(AlreadyExistsException e)
-		{
-			callback.onFailure(new DuplicateItemException(e));
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(new StorageException(e));
-		}
+		super.createAsync(index, callback);
 	}
 
 	@Override
 	public Index create(Index index)
 	{
-		try
-		{
-			BUCKET_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs(), index.toClusterOrderings());
-			return super.create(index);
-		}
-		catch(AlreadyExistsException e)
-		{
-			throw new DuplicateItemException(e);
-		}
+		return super.create(index);
 	}
 
 	/**
@@ -203,26 +177,13 @@ extends AbstractCassandraRepository<Index>
 	@Override
 	public void delete(Identifier id)
 	{
-		BUCKET_SCHEMA.drop(session(), keyspace(), id.toDbName());
 		super.delete(id);
 	}
 
 	@Override
 	public void deleteAsync(Identifier id, FutureCallback<Index> callback)
 	{
-		try
-		{
-			BUCKET_SCHEMA.drop(session(), keyspace(), id.toDbName());
-			super.deleteAsync(id, callback);
-		}
-		catch(AlreadyExistsException e)
-		{
-			callback.onFailure(new ItemNotFoundException(e));
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(new StorageException(e));
-		}
+		super.deleteAsync(id, callback);
 	}
 
 	@Override
