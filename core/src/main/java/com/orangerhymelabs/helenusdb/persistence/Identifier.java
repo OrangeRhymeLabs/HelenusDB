@@ -13,7 +13,7 @@ import java.util.List;
  * @since Aug 29, 2013
  */
 public class Identifier
-//implements Comparable<Identifier>
+implements Comparable<Identifier>
 {
 	private static final String DB_NAME_SEPARATOR = "_";
 	private static final String TO_STRING_SEPARATOR = ", ";
@@ -116,11 +116,11 @@ public class Identifier
 	 * 
 	 * @return true if the identifiers are equivalent.
 	 */
-//	@Override
-//	public boolean equals(Object that)
-//	{
-//		return (compareTo((Identifier) that) == 0);
-//	}
+	@Override
+	public boolean equals(Object that)
+	{
+		return (compareTo((Identifier) that) == 0);
+	}
 
 	/**
 	 * Returns a hash code for this identifier.
@@ -140,40 +140,40 @@ public class Identifier
 	 * 
 	 * @return -1, 0, 1 to indicate less-than, equal-to, or greater-than, respectively.
 	 */
-//    @SuppressWarnings({
-//        "unchecked", "rawtypes"
-//    })
-//    @Override
-//    public int compareTo(Identifier that)
-//    {
-//		if (that == null) return 1;
-//		if (this.size() < that.size()) return -1;
-//		if (this.size() > that.size()) return 1;
-//
-//		int i = 0;
-//		int result = 0;
-//
-//		while (result == 0 && i < size())
-//		{
-//			Object cThis = this.components.get(i);
-//			Object cThat = that.components.get(i);
-//
-//			if (ObjectUtils.areComparable(cThis, cThat))
-//			{
-//				result = ((Comparable) cThis).compareTo(((Comparable) cThat));
-//			}
-//			else
-//			{
-//				result = (cThis.toString().compareTo(cThat.toString()));
-//			}
-//			
-//			++i;
-//		}
-//
-//	    return result;
-//    }
+    @SuppressWarnings({
+        "unchecked", "rawtypes"
+    })
+    @Override
+    public int compareTo(Identifier that)
+    {
+		if (that == null) return 1;
+		if (this.size() < that.size()) return -1;
+		if (this.size() > that.size()) return 1;
 
-    /**
+		int i = 0;
+		int result = 0;
+
+		while (result == 0 && i < size())
+		{
+			Object cThis = this.components.get(i);
+			Object cThat = that.components.get(i);
+
+			if (areComparable(cThis, cThat))
+			{
+				result = ((Comparable) cThis).compareTo(((Comparable) cThat));
+			}
+			else
+			{
+				result = (cThis.toString().compareTo(cThat.toString()));
+			}
+			
+			++i;
+		}
+
+	    return result;
+    }
+
+	/**
      * Returns a string representation of this identifier.
      * 
      * @return a string representation of the identifier.
@@ -234,4 +234,29 @@ public class Identifier
 
 		return sb.toString();
 	}
+
+    private boolean areComparable(Object o1, Object o2)
+    {
+		if ((isComparable(o1) && isComparable(o2)) &&
+			(o1.getClass().isAssignableFrom(o2.getClass()) ||
+			o2.getClass().isAssignableFrom(o1.getClass())))
+		{
+			return true;
+		}
+	
+	return false;
+	}
+
+    /**
+	 * Returns true if the object implements Comparable.
+	 * Otherwise, false.
+	 * 
+	 * @param object an instance
+	 * @return true if the instance implements Comparable.
+	 */
+	private boolean isComparable(Object object)
+    {
+	    return (object instanceof Comparable);
+    }
+
 }
