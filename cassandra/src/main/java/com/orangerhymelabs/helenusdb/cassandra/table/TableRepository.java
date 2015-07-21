@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
+import com.orangerhymelabs.helenusdb.cassandra.counter.CounterRepository;
 import com.orangerhymelabs.helenusdb.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
 import com.orangerhymelabs.helenusdb.exception.ItemNotFoundException;
@@ -95,7 +96,7 @@ extends AbstractCassandraRepository<Table>
 	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
 
-	private static final  DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
+	private static final DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
 	private static final CounterRepository.Schema COUNTER_SCHEMA = new CounterRepository.Schema();
 
 	public TableRepository(Session session, String keyspace)
@@ -235,11 +236,22 @@ extends AbstractCassandraRepository<Table>
 
 	private void createDocumentSchema(Table table)
     {
-    	DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+		switch(table.type())
+		{
+			case DOCUMENT:
+				DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+			break;
+			case COUNTER:
+				COUNTER_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+			break;
+			default:
+				throw new StorageException("Unsupported Table Type: " + table.type().name());
+		}
     }
 
 	private void dropDocumentSchema(Identifier id)
     {
+		// Day's all da same...
 		DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
     }
 }
