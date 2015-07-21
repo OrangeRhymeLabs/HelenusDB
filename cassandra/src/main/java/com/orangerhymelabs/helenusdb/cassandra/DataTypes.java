@@ -41,9 +41,9 @@ public enum DataTypes
 
 	private String cassandraType;
 
-	DataTypes(String typeName)
+	DataTypes(String casandraTypeName)
 	{
-		this.cassandraType = typeName;
+		this.cassandraType = casandraTypeName;
 	}
 
 	public String cassandraType()
