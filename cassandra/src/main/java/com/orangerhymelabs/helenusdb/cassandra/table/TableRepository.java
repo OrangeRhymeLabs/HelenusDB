@@ -53,7 +53,6 @@ extends AbstractCassandraRepository<Table>
 				"db_name text," +
 				"tbl_name text," +
 				"description text," +
-				"tbl_schema text," +
 				"tbl_type text," +
 				"tbl_ttl bigint," +
 				"id_type text," +
@@ -82,7 +81,6 @@ extends AbstractCassandraRepository<Table>
 		static final String NAME = "tbl_name";
 		static final String DATABASE = "db_name";
 		static final String DESCRIPTION = "description";
-		static final String SCHEMA = "tbl_schema";
 		static final String TYPE = "tbl_type";
 		static final String TTL = "tbl_ttl";
 		static final String ID_TYPE = "id_type";
@@ -91,13 +89,14 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.DATABASE + " = ? and " + Columns.NAME + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.NAME + ", " + Columns.DATABASE + ", " + Columns.DESCRIPTION + ", " + Columns.SCHEMA + ", " + Columns.TYPE + ", " + Columns.TTL + ", " + Columns.ID_TYPE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT +") values (?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
+	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.NAME + ", " + Columns.DATABASE + ", " + Columns.DESCRIPTION + ", " + Columns.TYPE + ", " + Columns.TTL + ", " + Columns.ID_TYPE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT +") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
-	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.SCHEMA + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
+	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
 	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
 
 	private static final  DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
+	private static final CounterRepository.Schema COUNTER_SCHEMA = new CounterRepository.Schema();
 
 	public TableRepository(Session session, String keyspace)
 	{
@@ -170,7 +169,6 @@ extends AbstractCassandraRepository<Table>
 		bs.bind(table.name(),
 			table.database().name(),
 			table.description(),
-			table.schema(),
 			table.type().name(),
 			table.ttl(),
 			table.idType().name(),
@@ -183,7 +181,6 @@ extends AbstractCassandraRepository<Table>
 	{
 		table.updatedAt(new Date());
 		bs.bind(table.description(),
-			table.schema(),
 			table.ttl(),
 			table.updatedAt(),
 			table.database().name(),
@@ -198,7 +195,6 @@ extends AbstractCassandraRepository<Table>
 		t.name(row.getString(Columns.NAME));
 		t.database(row.getString(Columns.DATABASE));
 		t.description(row.getString(Columns.DESCRIPTION));
-		t.schema(row.getString(Columns.SCHEMA));
 		t.ttl(row.getLong(Columns.TTL));
 		t.type(TableType.from(row.getString(Columns.TYPE)));
 		t.idType(DataTypes.from(row.getString(Columns.ID_TYPE)));

@@ -42,7 +42,6 @@ extends AbstractEntity
 	@RegexValidation(name = "Table Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 	private String description;
-	private String schema;
 
 	@Required("Table Type")
 	private TableType type = TableType.DOCUMENT;
@@ -138,21 +137,6 @@ extends AbstractEntity
 	public void type(TableType type)
 	{
 		this.type = type;
-	}
-
-	public String schema()
-	{
-		return schema;
-	}
-
-	public boolean hasSchema()
-	{
-		return (schema != null);
-	}
-
-	public void schema(String schema)
-	{
-		this.schema = schema;
 	}
 
 	public long ttl()
