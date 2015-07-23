@@ -241,7 +241,6 @@ public class TableRepositoryTest
 		assertEquals(table.description(), sync.description());
 		assertEquals(table.idType(), sync.idType());
 		assertEquals(table.name(), sync.name());
-		assertEquals(table.schema(), sync.schema());
 		assertEquals(table.ttl(), sync.ttl());
 
 		TestCallback<Table> callback = new TestCallback<Table>();
@@ -256,7 +255,6 @@ public class TableRepositoryTest
 		assertEquals(table.description(), async.description());
 		assertEquals(table.idType(), async.idType());
 		assertEquals(table.name(), async.name());
-		assertEquals(table.schema(), async.schema());
 		assertEquals(table.ttl(), async.ttl());
 	}
 

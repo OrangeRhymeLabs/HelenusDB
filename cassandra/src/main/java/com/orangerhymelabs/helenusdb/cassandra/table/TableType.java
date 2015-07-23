@@ -19,7 +19,7 @@ package com.orangerhymelabs.helenusdb.cassandra.table;
 /**
  * MegaDoc supports four table types:
  * DOCUMENT (default, if not specified) - indexable schema-less BSON documents.
- * SCHEMA - indexable schema-oriented tables.
+ * SCHEMA - indexable schema-oriented (Avro) tables.
  * COUNTER - Cassandra-based named counters.
  * TIME_SERIES - Cassandra-based time-series data.
  * 
