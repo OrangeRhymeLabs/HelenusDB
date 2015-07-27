@@ -60,6 +60,8 @@ public class ItableStatementFactory
 			")" +
 			"WITH CLUSTERING ORDER BY (%s)";
 
+		// TODO: For non-unique indexes, we need to add a discriminator that is a timeUUID and order by that as the last key in the index.
+
 		public boolean drop(Session session, String keyspace, String table)
 		{
 			ResultSet rs = session.execute(String.format(Schema.DROP_TABLE, keyspace, table));
