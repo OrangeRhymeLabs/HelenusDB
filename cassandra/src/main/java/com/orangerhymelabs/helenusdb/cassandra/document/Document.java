@@ -19,7 +19,6 @@ import org.bson.BSONObject;
 
 import com.orangerhymelabs.helenusdb.persistence.AbstractEntity;
 import com.orangerhymelabs.helenusdb.persistence.Identifier;
-import com.strategicgains.syntaxe.annotation.ChildValidation;
 import com.strategicgains.syntaxe.annotation.Required;
 
 /**
@@ -34,10 +33,6 @@ extends AbstractEntity
 
 	// The BSON document.
 	private BSONObject bson;
-
-	// Optional location information.
-	@ChildValidation
-	private Location location;
 
 	public Document()
 	{
