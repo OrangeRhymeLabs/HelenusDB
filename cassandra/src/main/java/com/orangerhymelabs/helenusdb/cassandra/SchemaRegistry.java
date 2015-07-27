@@ -21,6 +21,7 @@ import java.util.List;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenusdb.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenusdb.cassandra.index.IndexRepository;
+import com.orangerhymelabs.helenusdb.cassandra.itable.IndexControlRepository;
 import com.orangerhymelabs.helenusdb.cassandra.meta.MetadataRepository;
 import com.orangerhymelabs.helenusdb.cassandra.table.TableRepository;
 
@@ -41,6 +42,7 @@ public class SchemaRegistry
 		INSTANCE.register(new DatabaseRepository.Schema());
 		INSTANCE.register(new TableRepository.Schema());
 		INSTANCE.register(new IndexRepository.Schema());
+		INSTANCE.register(new IndexControlRepository.Schema());
 	}
 
 	private List<Schemaable> schemas = new ArrayList<Schemaable>();
