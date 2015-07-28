@@ -49,6 +49,7 @@ extends AbstractEntity
 	private List<String> fields;
 	private transient List<IndexField> fieldSpecs;
 	private boolean isUnique;
+	private boolean isCaseSensitive = true;
 
 	@Required
 	@ChildValidation
@@ -98,6 +99,16 @@ extends AbstractEntity
 	public void isUnique(boolean isUnique)
 	{
 		this.isUnique = isUnique;
+	}
+
+	public boolean isCaseSensitive()
+	{
+		return isCaseSensitive;
+	}
+
+	public void isCaseSensitive(boolean isCaseSensitive)
+	{
+		this.isCaseSensitive = isCaseSensitive;
 	}
 
 	public String name()
