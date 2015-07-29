@@ -10,7 +10,6 @@
 	<packaging>pom</packaging>
 	
 	<modules>
-		<module>core</module>
 		<module>cassandra</module>
 		<!-- module>cli</module>
 		<module>rest</module -->

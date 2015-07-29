@@ -34,19 +34,19 @@ public class IndexControlRepository
 		private static final String CREATE_TABLE = "create table %s." + TABLE_NAME +
 		"(" +
 			"tbl_name text," +
-			"doc_id %s," +
+			// TODO: figure out the type of the doc_id
+			"doc_id uuid," +
 			"property text," +  // the name of the indexed property component
 
 		    //"value %s," + // the actual value of the property, which could be any type.
-		    "inserted_at timestamp," +
-		    "primary key ((tbl_name), object_id, field)" +
+		    "inserted_at timeuuid," +
+		    "primary key ((tbl_name), doc_id, property)" +
 		")";
 
 		@Override
 		public boolean drop(Session session, String keyspace)
 		{
-			ResultSet rs = session.execute(String.format(Schema.DROP_TABLE,
-			    keyspace));
+			ResultSet rs = session.execute(String.format(Schema.DROP_TABLE, keyspace));
 			return rs.wasApplied();
 		}
 
