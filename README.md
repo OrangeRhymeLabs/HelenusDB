@@ -5,7 +5,17 @@
 
 **HelenusDB** marries a simple document storage model (like MongoDB) with the truly horizontal, global, multi-datacenter scalability of Cassandra. It enables developers to store arbitrary
 payloads as JSON/BSON, as they would with MongoDB, in a Cassandra cluster. It supports indexing, filtering, sorting, querying and pagination
-(via familiar 'limit' and 'offset' query semantics). Simple json document storage with effortless scaling, exposed as a REST API or embedded in your application - **that's HelenusDB**!
+(via familiar 'limit' and 'offset' query semantics). Simple json document storage with effortless scaling, exposed as a REST API or embedded in your application.
+
+**HelenusDB** embraces Cassandra best practices for indexes or 'materialized views' for your documents, by creating a new column family for each new index. Unlike, native Cassandra
+indexes, **HelenusDB** can index more-than a single field and supports high-uniqueness in its indexes (you can query for a single document).
+
+Additionally, **HelenusDB** enables Lucene indexing of document tables (using a modified version of [Stratio's Cassandra Lucene Index](https://github.com/Stratio/cassandra-lucene-index)), allowing you to perform:
+
+* Full-text searching of BSON documents.
+* GEO-location / Geo-spacial searching.
+* Relevance searching, scoring and sorting.
+* Boolean (and, or, not) searching.
 
 ## About the Name
 In Greek mythology, Helenus (/ˈhɛlənəs/; Ancient Greek: Ἕλενος) was the son of King Priam and Queen Hecuba of Troy, and the **twin brother of the prophetess Cassandra.** According to legend, Cassandra, having been given the power of prophecy by Apollo, taught it to her brother. He had the benefit, unlike Cassandra, that people believed him.
@@ -16,7 +26,9 @@ HelenusDB makes Cassandra easier for developers to use, yet has the truly linear
 Let's begin by starting a server and beginning to store data. 
 
 ### Prerequisites 
-A running Cassandra instance and maven (for building Java packages). 
+
+* For Lucene index support, copy the HelenusDB Cassandra Lucene Index plugin to your <CASSANDRA_HOME>/lib/ directory.
+* Start / restart Cassandra (as you normally do).
 
 ### Starting the HelenusDB API
 
@@ -42,17 +54,18 @@ Naming restrictions on the table name are similar to the database: unique *to th
 
 ##Additional Notes
 
-### To create a project deployable assembly (zip file):
+### To create a project deployable assembly ('fat' jar file):
 
 * mvn clean package
-* mvn assembly:single
 
-### To run the project via the assembly (zip file):
+### To run the project via the assembly (jar file):
 
-* unzip 'assembly file created in above step'
-* cd 'artifact sub-directory'
-* java -jar 'artifact jar file' [environment name]
+* cd target/
+* java -server -jar HelenusDB-1.0-SNAPSHOT.jar [environment name]
 
-To run the integration tests:
+### Default configuration is embedded in the 'fat' jar file.
 
-*mvn clean install -P integration
+To override defaults, create a file 'config/[environment name]/environment.properties'
+
+* where [environment name] is the same name as the [environment name] used to start the server (above).
+* the default is 'dev' so if no [environment name] parameter is supplied on the command line, the server will look for a file config/dev/environment.properties on disk to override any defaults.
