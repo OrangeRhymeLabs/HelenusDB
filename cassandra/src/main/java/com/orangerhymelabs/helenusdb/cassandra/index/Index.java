@@ -51,6 +51,12 @@ extends AbstractEntity
 	private boolean isUnique;
 	private boolean isCaseSensitive = true;
 
+	/**
+	 *  Optional. If present, defines a subset of the fields in the primary table that are carried in the index.
+	 *  If absent, all data elements from the primary table are carried in the index.
+	 */
+	private List<String> containsOnly;
+
 	@Required
 	@ChildValidation
 	private TableReference table;
@@ -89,6 +95,16 @@ extends AbstractEntity
 	public int size()
 	{
 		return (fields == null ? 0 : fields.size());
+	}
+
+	public List<String> containsOnly()
+	{
+		return containsOnly;
+	}
+
+	public void containsOnly(List<String> containsProperties)
+	{
+		this.containsOnly = (containsProperties == null ? null : new ArrayList<String>(containsProperties));
 	}
 
 	public boolean isUnique()
