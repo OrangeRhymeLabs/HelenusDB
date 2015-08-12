@@ -35,15 +35,21 @@ extends AbstractCassandraRepository<KeyValuePair>
 		static final String BY_ID = "sys_meta";
 	}
 
+	private class Columns
+	{
+		static final String ID = "id";
+		static final String VALUE = "value";
+	}
+
 	public static class Schema
 	implements Schemaable
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table if not exists %s." + Tables.BY_ID +
 			"(" +
-				"id text," +
-				"value text," +
-				"primary key (id)" +
+				Columns.ID + " text," +
+				Columns.VALUE + " text," +
+				"primary key (" + Columns.ID + ")" +
 			")";
 
 		@Override
@@ -59,12 +65,6 @@ extends AbstractCassandraRepository<KeyValuePair>
 			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
 			return rs.wasApplied();
 		}
-	}
-
-	private class Columns
-	{
-		static final String ID = "id";
-		static final String VALUE = "value";
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.ID + " = ?";

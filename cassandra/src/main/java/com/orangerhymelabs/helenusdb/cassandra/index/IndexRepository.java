@@ -50,23 +50,41 @@ extends AbstractCassandraRepository<Index>
 		static final String BY_ID = "sys_idx";
 	}
 
+	private class Columns
+	{
+		static final String DB_NAME = "db_name";
+		static final String TBL_NAME = "tbl_name";
+		static final String NAME = "name";
+		static final String DESCRIPTION = "description";
+		static final String IS_UNIQUE = "is_unique";
+		static final String IS_CASE_SENSISTIVE = "is_case_sensitive";
+		static final String FIELDS = "fields";
+		static final String CONTAINS_ONLY = "contains_only";
+		static final String ID_TYPE = "id_type";
+		static final String ENGINE = "engine";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
+
 	public static class Schema
 	implements Schemaable
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table if not exists %s." + Tables.BY_ID +
 			"(" +
-				"db_name text," +
-				"tbl_name text," +
-				"name text," +
-				"description text," +
-				"is_unique boolean," +
-				"fields list<text>," +
-				"id_type text," +
-				"engine text," +
-				"created_at timestamp," +
-				"updated_at timestamp," +
-				"primary key ((db_name), tbl_name, name)" +
+				Columns.DB_NAME +				" text," +
+				Columns.TBL_NAME +				" text," +
+				Columns.NAME +					" text," +
+				Columns.DESCRIPTION +			" text," +
+				Columns.FIELDS +				" list<text>," +
+				Columns.CONTAINS_ONLY +			" list<text>," +
+				Columns.ID_TYPE +				" text," +
+				Columns.IS_UNIQUE +				" boolean," +
+				Columns.IS_CASE_SENSISTIVE +	" boolean," +
+				Columns.ENGINE +				" text," +
+				Columns.CREATED_AT +			" timestamp," +
+				Columns.UPDATED_AT +			" timestamp," +
+				"primary key ((" + Columns.DB_NAME + "), " + Columns.TBL_NAME + ", " + Columns.NAME + ")" +
 			")";
 
 		@Override
@@ -84,22 +102,25 @@ extends AbstractCassandraRepository<Index>
 		}
 	}
 
-	private class Columns
-	{
-		static final String DB_NAME = "db_name";
-		static final String TBL_NAME = "tbl_name";
-		static final String NAME = "name";
-		static final String DESCRIPTION = "description";
-		static final String IS_UNIQUE = "is_unique";
-		static final String FIELDS = "fields";
-		static final String ID_TYPE = "id_type";
-		static final String CREATED_AT = "created_at";
-		static final String UPDATED_AT = "updated_at";
-	}
-
 	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.DB_NAME + ", " + Columns.TBL_NAME + ", " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.FIELDS + ", " + Columns.ID_TYPE + ", " + Columns.IS_UNIQUE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
-	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
+	private static final String CREATE_CQL = "insert into %s.%s ("
+		+ Columns.DB_NAME + ", "
+		+ Columns.TBL_NAME + ", "
+		+ Columns.NAME + ", "
+		+ Columns.DESCRIPTION + ", "
+		+ Columns.FIELDS + ", "
+		+ Columns.CONTAINS_ONLY + ", "
+		+ Columns.ID_TYPE + ", "
+		+ Columns.IS_UNIQUE + ", "
+		+ Columns.IS_CASE_SENSISTIVE + ", "
+		+ Columns.CREATED_AT + ", "
+		+ Columns.UPDATED_AT
+		+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
+	private static final String UPDATE_CQL = "update %s.%s set "
+		+ Columns.DESCRIPTION + " = ?, "
+		+ Columns.UPDATED_AT + " = ?"
+		+ IDENTITY_CQL
+		+ " if exists";
 	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
 	private static final String READ_FOR_TABLE_CQL = "select * from %s.%s where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ?";
 	private static final String READ_ALL_CQL = "select * from %s.%s";
@@ -264,8 +285,10 @@ extends AbstractCassandraRepository<Index>
 			index.name(),
 			index.description(),
 			index.fields(),
+			index.containsOnly(),
 			index.idType().name(),
 			index.isUnique(),
+			index.isCaseSensitive(),
 			index.createdAt(),
 		    index.updatedAt());
 	}
@@ -290,7 +313,9 @@ extends AbstractCassandraRepository<Index>
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
 		n.fields(row.getList(Columns.FIELDS, String.class));
+		n.containsOnly(row.getList(Columns.CONTAINS_ONLY, String.class));
 		n.isUnique(row.getBool(Columns.IS_UNIQUE));
+		n.isCaseSensitive(row.getBool(Columns.IS_CASE_SENSISTIVE));
 		n.createdAt(row.getDate(Columns.CREATED_AT));
 		n.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return n;

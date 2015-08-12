@@ -44,21 +44,33 @@ extends AbstractCassandraRepository<Table>
 		static final String BY_ID = "sys_tbl";
 	}
 
+	private class Columns
+	{
+		static final String NAME = "tbl_name";
+		static final String DATABASE = "db_name";
+		static final String DESCRIPTION = "description";
+		static final String TYPE = "tbl_type";
+		static final String TTL = "tbl_ttl";
+		static final String ID_TYPE = "id_type";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
+
 	public static class Schema
 	implements Schemaable
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +
 			"(" +
-				"db_name text," +
-				"tbl_name text," +
-				"description text," +
-				"tbl_type text," +
-				"tbl_ttl bigint," +
-				"id_type text," +
-				"created_at timestamp," +
-				"updated_at timestamp," +
-				"primary key ((db_name), tbl_name)" +
+				Columns.DATABASE + " text," +
+				Columns.NAME + " text," +
+				Columns.DESCRIPTION + " text," +
+				Columns.TYPE + " text," +
+				Columns.TTL + " bigint," +
+				Columns.ID_TYPE + " text," +
+				Columns.CREATED_AT + " timestamp," +
+				Columns.UPDATED_AT + " timestamp," +
+				"primary key ((" + Columns.DATABASE + "), " + Columns.NAME + ")" +
 			")";
 
 		@Override
@@ -74,18 +86,6 @@ extends AbstractCassandraRepository<Table>
 			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace));
 		    return rs.wasApplied();
 	    }
-	}
-
-	private class Columns
-	{
-		static final String NAME = "tbl_name";
-		static final String DATABASE = "db_name";
-		static final String DESCRIPTION = "description";
-		static final String TYPE = "tbl_type";
-		static final String TTL = "tbl_ttl";
-		static final String ID_TYPE = "id_type";
-		static final String CREATED_AT = "created_at";
-		static final String UPDATED_AT = "updated_at";
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.DATABASE + " = ? and " + Columns.NAME + " = ?";

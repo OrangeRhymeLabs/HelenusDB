@@ -45,17 +45,25 @@ extends AbstractCassandraRepository<Database>
 		static final String BY_ID = "sys_db";
 	}
 
+	private class Columns
+	{
+		static final String NAME = "db_name";
+		static final String DESCRIPTION = "description";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
+
 	public static class Schema
 	implements Schemaable
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table if not exists %s." + Tables.BY_ID +
 			"(" +
-				"db_name text," +
-				"description text," +
-				"created_at timestamp," +
-				"updated_at timestamp," +
-				"primary key (db_name)" +
+				Columns.NAME + " text," +
+				Columns.DESCRIPTION + " text," +
+				Columns.CREATED_AT + " timestamp," +
+				Columns.UPDATED_AT + " timestamp," +
+				"primary key (" + Columns.NAME + ")" +
 			")";
 
 		@Override
@@ -71,14 +79,6 @@ extends AbstractCassandraRepository<Database>
 			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
 			return rs.wasApplied();
 		}
-	}
-
-	private class Columns
-	{
-		static final String NAME = "db_name";
-		static final String DESCRIPTION = "description";
-		static final String CREATED_AT = "created_at";
-		static final String UPDATED_AT = "updated_at";
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.NAME + " = ?";

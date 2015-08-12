@@ -27,20 +27,29 @@ public class IndexControlRepository
 {
 	private static final String TABLE_NAME = "sys_ctrl";
 
+	private class Columns
+	{
+		static final String TABLE_NAME = "tbl_name";
+		static final String DOCUMENT_ID = "doc_id";
+		static final String PROPERTY = "property";
+		// static final String VALUE = "value";
+		static final String INSERTED_AT = "inserted_at";
+	}
+
 	public static class Schema
 	implements Schemaable
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + TABLE_NAME;
 		private static final String CREATE_TABLE = "create table %s." + TABLE_NAME +
 		"(" +
-			"tbl_name text," +
+			Columns.TABLE_NAME + " text," +
 			// TODO: figure out the type of the doc_id
-			"doc_id uuid," +
-			"property text," +  // the name of the indexed property component
+			Columns.DOCUMENT_ID + " uuid," +
+			Columns.PROPERTY + " text," +  // the name of the indexed property component
 
 		    //"value %s," + // the actual value of the property, which could be any type.
-		    "inserted_at timeuuid," +
-		    "primary key ((tbl_name), doc_id, property)" +
+		    Columns.INSERTED_AT + " timeuuid," +
+		    "primary key ((" + Columns.TABLE_NAME + "), " + Columns.DOCUMENT_ID + ", " + Columns.PROPERTY + ")" +
 		")";
 
 		@Override
@@ -56,14 +65,5 @@ public class IndexControlRepository
 			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
 			return rs.wasApplied();
 		}
-	}
-
-	private class Columns
-	{
-		static final String TABLE_NAME = "tbl_name";
-		static final String DOCUMENT_ID = "doc_id";
-		static final String PROPERTY = "property";
-		// static final String VALUE = "value";
-		static final String INSERTED_AT = "inserted_at";
 	}
 }
