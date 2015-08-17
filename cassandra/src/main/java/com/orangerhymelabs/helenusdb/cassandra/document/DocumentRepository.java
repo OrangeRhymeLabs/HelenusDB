@@ -44,17 +44,27 @@ import com.orangerhymelabs.helenusdb.persistence.Identifier;
 public class DocumentRepository
 extends AbstractCassandraRepository<Document>
 {
+	private class Columns
+	{
+		static final String ID = "id";
+		static final String OBJECT = "object";
+		static final String LUCENE = "lucene";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
+
 	public static class Schema
 	{
 		private static final String DROP_TABLE = "drop table if exists %s.%s;";
 		private static final String CREATE_TABLE = "create table if not exists %s.%s" +
 		"(" +
-			"id %s," +
-		    "object blob," +
+			Columns.ID + " %s," +
+		    Columns.OBJECT + " blob," +
 		    // TODO: Add Location details to Document.
-			"created_at timestamp," +
-		    "updated_at timestamp," +
-			"primary key (id)" +
+		    Columns.LUCENE + " text," + 			// Empty, but facilitates Lucene indexing / searches.
+			Columns.CREATED_AT + " timestamp," +
+		    Columns.UPDATED_AT + " timestamp," +
+			"primary key (" + Columns.ID + ")" +
 		")";
 
 		public boolean drop(Session session, String keyspace, String table)
@@ -70,19 +80,10 @@ extends AbstractCassandraRepository<Document>
         }
 	}
 
-	private class Columns
-	{
-
-		static final String ID = "id";
-		static final String OBJECT = "object";
-		static final String CREATED_AT = "created_at";
-		static final String UPDATED_AT = "updated_at";
-	}
-
-	private static final String READ_CQL = "select * from %s.%s where id = ?";
-	private static final String DELETE_CQL = "delete from %s.%s where id = ?";
-	private static final String UPDATE_CQL = "update %s.%s set object = ?, updated_at = ? where id = ? if exists";
-	private static final String CREATE_CQL = "insert into %s.%s (id, object, created_at, updated_at) values (?, ?, ?, ?) if not exists";
+	private static final String READ_CQL = "select * from %s.%s where " + Columns.ID + " = ?";
+	private static final String DELETE_CQL = "delete from %s.%s where " + Columns.ID + " = ?";
+	private static final String UPDATE_CQL = "update %s.%s set " + Columns.OBJECT + " = ?, " + Columns.UPDATED_AT + " = ? where " + Columns.ID + " = ? if exists";
+	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists";
 
 	private Table table;
 	private ItableStatementFactory iTableStmtFactory;
