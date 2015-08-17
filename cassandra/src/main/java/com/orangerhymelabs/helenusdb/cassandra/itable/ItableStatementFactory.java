@@ -45,18 +45,27 @@ public class ItableStatementFactory
 {
 	private static final String QUESTION_MARKS = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,";
 
+	private class Columns
+	{
+		static final String BUCKET_ID = "bucket_id";
+		static final String OBJECT_ID = "object_id";
+		static final String OBJECT = "object";
+		static final String CREATED_AT = "created_at";
+		static final String UPDATED_AT = "updated_at";
+	}
+
 	public static class Schema
     {
 		private static final String DROP_TABLE = "drop table if exists %s.%s";
 		private static final String CREATE_TABLE = "create table %s.%s" +
 			"(" +
-				"bucket_id bigint," +
+				Columns.BUCKET_ID + " bigint," +
 				"%s," + // arbitrary blank area for creating the actual fields that are indexed.
-				"object_id %s," +
-				"object blob," +
-				"created_at timestamp," +
-				"updated_at timestamp," +
-				"primary key ((bucket_id), %s)" +
+				Columns.OBJECT_ID + " %s," +
+				Columns.OBJECT + " blob," +
+				Columns.CREATED_AT + " timestamp," +
+				Columns.UPDATED_AT + " timestamp," +
+				"primary key ((" + Columns.BUCKET_ID + "), %s)" +
 			")" +
 			"WITH CLUSTERING ORDER BY (%s)";
 
@@ -74,15 +83,6 @@ public class ItableStatementFactory
 			return rs.wasApplied();
 		}
     }
-
-	private class Columns
-	{
-		static final String BUCKET_ID = "bucket_id";
-		static final String OBJECT_ID = "object_id";
-		static final String OBJECT = "object";
-		static final String CREATED_AT = "created_at";
-		static final String UPDATED_AT = "updated_at";
-	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.BUCKET_ID + " = ? and %s";
 	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.BUCKET_ID + ", %s, " + Columns.OBJECT_ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT +") values (?, ?, ?, ?, ?, %s) if not exists";
