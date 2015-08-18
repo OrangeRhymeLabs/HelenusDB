@@ -96,7 +96,7 @@ public class IndexServiceTest
 	throws Exception
 	{
 		// Create
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table(tbl);
 		index.description("a test index");
@@ -142,7 +142,7 @@ public class IndexServiceTest
 	public void shouldCRUDAsync()
 	throws InterruptedException
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.table(tbl);
 		index.name("index2");
 		index.description("another test index");
@@ -201,7 +201,7 @@ public class IndexServiceTest
 	public void shouldThrowOnDuplicateSynchronously()
 	{
 		// Create
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index3");
 		index.table(tbl);
 		index.fields(Arrays.asList("foo:int"));
@@ -215,7 +215,7 @@ public class IndexServiceTest
 	public void shouldThrowOnDuplicateAsync()
 	throws InterruptedException
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.table(tbl);
 		index.name("index4");
 		index.fields(Arrays.asList("foo:int"));
@@ -285,7 +285,7 @@ public class IndexServiceTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentTableSynchronously()
 	{
-		Index entity = new Index();
+		BucketedViewIndex entity = new BucketedViewIndex();
 		entity.table(DATABASE_NAME, "doesnt_exist", DataTypes.UUID);
 		entity.name("index1");
 		entity.fields(Arrays.asList("foo:int"));
@@ -295,7 +295,7 @@ public class IndexServiceTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
 	{
-		Index entity = new Index();
+		BucketedViewIndex entity = new BucketedViewIndex();
 		entity.table("db9", TABLE_NAME, DataTypes.UUID);
 		entity.name("index1");
 		entity.fields(Arrays.asList("foo:int"));
@@ -307,7 +307,7 @@ public class IndexServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
-		Index entity = new Index();
+		BucketedViewIndex entity = new BucketedViewIndex();
 		entity.table(tbl);
 		entity.name("doesnt_exist");
 		entity.fields(Arrays.asList("foo:int"));
@@ -329,7 +329,7 @@ public class IndexServiceTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateInvalidDatabaseSynchronously()
 	{
-		Index entity = new Index();
+		Index entity = new BucketedViewIndex();
 		entity.table("invalid db 9", TABLE_NAME, DataTypes.UUID);
 		entity.name("doesnt_matter");
 		indexes.update(entity);
@@ -338,7 +338,7 @@ public class IndexServiceTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateInvalidTableSynchronously()
 	{
-		Index entity = new Index();
+		Index entity = new BucketedViewIndex();
 		entity.table(DATABASE_NAME, "Isn't valid", DataTypes.UUID);
 		entity.name("doesnt_matter");
 		indexes.update(entity);
@@ -349,7 +349,7 @@ public class IndexServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
-		Index entity = new Index();
+		Index entity = new BucketedViewIndex();
 		entity.table("invalid db 8", TABLE_NAME, DataTypes.UUID);
 		entity.name("doesnt_matter");
 		indexes.updateAsync(entity, callback);
@@ -364,7 +364,7 @@ public class IndexServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
-		Index entity = new Index();
+		Index entity = new BucketedViewIndex();
 		entity.table(tbl);
 		entity.name("isn't valid");
 		indexes.updateAsync(entity, callback);

@@ -17,13 +17,10 @@ package com.orangerhymelabs.helenusdb.cassandra.index;
 
 /**
  * @author tfredrich
- * @since Aug 17, 2015
+ * @since Aug 18, 2015
  */
-public class LuceneIndex
-extends Index
+public enum IndexEngine
 {
-	public LuceneIndex()
-	{
-		super(IndexEngine.LUCENE);
-	}
+	LUCENE,
+	BUCKETED_VIEW
 }

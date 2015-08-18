@@ -40,7 +40,7 @@ public class IndexService
 		this.tables = tableRepository;
 	}
 
-	public Index create(Index index)
+	public Index create(BucketedViewIndex index)
 	{
 		Table previous = tables.read(index.table().getIdentifier());
 		index.table(previous);

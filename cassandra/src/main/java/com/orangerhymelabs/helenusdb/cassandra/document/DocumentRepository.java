@@ -30,7 +30,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
-import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
+import com.orangerhymelabs.helenusdb.cassandra.bucket.BucketedViewStatementFactory;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenusdb.persistence.Identifier;
@@ -86,13 +86,13 @@ extends AbstractCassandraRepository<Document>
 	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists";
 
 	private Table table;
-	private ItableStatementFactory iTableStmtFactory;
+	private BucketedViewStatementFactory iTableStmtFactory;
 
 	public DocumentRepository(Session session, String keyspace, Table table)
 	{
 		super(session, keyspace);
 		this.table = table;
-		this.iTableStmtFactory = new ItableStatementFactory(session, keyspace, table);
+		this.iTableStmtFactory = new BucketedViewStatementFactory(session, keyspace, table);
 		init();
 	}
 

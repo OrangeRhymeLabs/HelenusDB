@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenusdb.cassandra.itable;
+package com.orangerhymelabs.helenusdb.cassandra.bucket;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -26,6 +26,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
+import com.orangerhymelabs.helenusdb.cassandra.bucket.SimpleBucketIndexer;
 
 /**
  * @author tfredrich

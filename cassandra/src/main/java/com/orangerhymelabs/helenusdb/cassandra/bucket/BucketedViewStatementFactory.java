@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.helenusdb.cassandra.itable;
+package com.orangerhymelabs.helenusdb.cassandra.bucket;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -30,18 +30,19 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.document.Document;
+import com.orangerhymelabs.helenusdb.cassandra.index.BucketedViewIndex;
 import com.orangerhymelabs.helenusdb.cassandra.index.Index;
 import com.orangerhymelabs.helenusdb.cassandra.index.IndexField;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 
 /**
- * Creates BoundStatements for maintaining index table (ITable) entries. There is one ItableStatementFactory per Table
+ * Creates BoundStatements for maintaining bucketed-view index table entries. There is one BucketdViewStatementFactory per Table
  * per keyspace.
  * 
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public class ItableStatementFactory
+public class BucketedViewStatementFactory
 {
 	private static final String QUESTION_MARKS = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,";
 
@@ -95,7 +96,7 @@ public class ItableStatementFactory
 	private String keyspace;
 	private Table table;
 
-	public ItableStatementFactory(Session session, String keyspace, Table table)
+	public BucketedViewStatementFactory(Session session, String keyspace, Table table)
     {
 		super();
 		this.session = session;
@@ -116,11 +117,14 @@ public class ItableStatementFactory
 
 		for (Index index : table.indexes())
 		{
-			BoundStatement stmt = createIndexEntryCreateStatement(document, index);
-
-			if (stmt != null)
+			if (index.isBucketedView())
 			{
-				stmts.add(stmt);
+				BoundStatement stmt = createIndexEntryCreateStatement(document, (BucketedViewIndex) index);
+	
+				if (stmt != null)
+				{
+					stmts.add(stmt);
+				}
 			}
 		}
 
@@ -135,16 +139,20 @@ public class ItableStatementFactory
 
 		for (Index index : table.indexes())
 		{
-			if (isIndexKeyChanged(document, previous, index))
+			if (!index.isBucketedView()) continue;
+
+			BucketedViewIndex bvi = (BucketedViewIndex) index;
+
+			if (isIndexKeyChanged(document, previous, bvi))
 			{
-				BoundStatement creStmt = createIndexEntryCreateStatement(document, index);
+				BoundStatement creStmt = createIndexEntryCreateStatement(document, bvi);
 	
 				if (creStmt != null)
 				{
 					stmts.add(creStmt);
 				}
 	
-				BoundStatement delStmt = createIndexEntryDeleteStatment(document, index);
+				BoundStatement delStmt = createIndexEntryDeleteStatment(document, bvi);
 	
 				if (delStmt != null)
 				{
@@ -153,7 +161,7 @@ public class ItableStatementFactory
 			}
 			else
 			{
-				BoundStatement updStmt = createIndexEntryUpdateStatment(document, index);
+				BoundStatement updStmt = createIndexEntryUpdateStatment(document, bvi);
 
 				if (updStmt != null)
 				{
@@ -173,18 +181,21 @@ public class ItableStatementFactory
 
 		for (Index index : table.indexes())
 		{
-			BoundStatement stmt = createIndexEntryDeleteStatment(document, index);
-
-			if (stmt != null)
+			if (index.isBucketedView())
 			{
-				stmts.add(stmt);
+				BoundStatement stmt = createIndexEntryDeleteStatment(document, (BucketedViewIndex) index);
+	
+				if (stmt != null)
+				{
+					stmts.add(stmt);
+				}
 			}
 		}
 
 	    return stmts;
     }
 
-	public BoundStatement createIndexEntryCreateStatement(Document document, Index index)
+	public BoundStatement createIndexEntryCreateStatement(Document document, BucketedViewIndex index)
 	{
 		Map<String, Object> bindings = index.extractBindings(document.object());
 
@@ -202,17 +213,17 @@ public class ItableStatementFactory
 		return null;
 	}
 
-	public BoundStatement createIndexEntryUpdateStatment(Document document, Index index)
+	public BoundStatement createIndexEntryUpdateStatment(Document document, BucketedViewIndex index)
 	{
 		return null;
 	}
 
-	public BoundStatement createIndexEntryDeleteStatment(Document document, Index index)
+	public BoundStatement createIndexEntryDeleteStatment(Document document, BucketedViewIndex index)
 	{
 		return null;
 	}
 
-	private void bindAll(Index index, BoundStatement bs, long bucketId, Document document, Object[] keys)
+	private void bindAll(BucketedViewIndex index, BoundStatement bs, long bucketId, Document document, Object[] keys)
     {
 		int i = 0;
 		bs.setLong(i++, bucketId);
@@ -240,13 +251,13 @@ public class ItableStatementFactory
 	    return i;
     }
 
-	private long getBucketId(Index index, Collection<Object> values)
+	private long getBucketId(BucketedViewIndex index, Collection<Object> values)
     {
 		// TODO: Determine bucketId.
 	    return 0;
     }
 
-	private String getQuestionMarks(Index index)
+	private String getQuestionMarks(BucketedViewIndex index)
     {
 	    return QUESTION_MARKS.substring(0, (index.size() * 2) - 1);
     }
@@ -260,7 +271,7 @@ public class ItableStatementFactory
 	 * @param index the Index that informs the key(s) to check for deltas.
 	 * @return True if the indexed key(s) have changed. Otherwise, false.
 	 */
-	private boolean isIndexKeyChanged(Document document, Document previous,Index index)
+	private boolean isIndexKeyChanged(Document document, Document previous,BucketedViewIndex index)
     {
 	    return true;
     }

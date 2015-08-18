@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenusdb.cassandra.itable;
+package com.orangerhymelabs.helenusdb.cassandra.bucket;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

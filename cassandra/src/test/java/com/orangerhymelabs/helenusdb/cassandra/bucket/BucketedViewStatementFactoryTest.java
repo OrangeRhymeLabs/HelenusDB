@@ -1,4 +1,4 @@
-package com.orangerhymelabs.helenusdb.cassandra.itable;
+package com.orangerhymelabs.helenusdb.cassandra.bucket;
 
 import static org.junit.Assert.*;
 
@@ -14,17 +14,17 @@ import org.junit.Test;
 import com.datastax.driver.core.BoundStatement;
 import com.orangerhymelabs.helenusdb.cassandra.CassandraManager;
 import com.orangerhymelabs.helenusdb.cassandra.SchemaRegistry;
+import com.orangerhymelabs.helenusdb.cassandra.bucket.BucketedViewStatementFactory;
 import com.orangerhymelabs.helenusdb.cassandra.document.Document;
-import com.orangerhymelabs.helenusdb.cassandra.index.Index;
+import com.orangerhymelabs.helenusdb.cassandra.index.BucketedViewIndex;
 import com.orangerhymelabs.helenusdb.cassandra.index.IndexRepository;
-import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.cassandra.table.TableRepository;
 
-public class ItableStatementFactoryTest
+public class BucketedViewStatementFactoryTest
 {
-	private static ItableStatementFactory factory;
-	private static Index abcIndex;
+	private static BucketedViewStatementFactory factory;
+	private static BucketedViewIndex abcIndex;
 
 	@BeforeClass
 	public static void beforeClass()
@@ -41,13 +41,13 @@ public class ItableStatementFactoryTest
 		table.description("A sample indexed table");
 		table = tables.create(table);
 
-		abcIndex = new Index();
+		abcIndex = new BucketedViewIndex();
 		abcIndex.name("index_abc");
 		abcIndex.fields(Arrays.asList("a:text", "b:integer", "c:text"));
 		abcIndex.table(table);
-		abcIndex = indexes.create(abcIndex);
+		abcIndex = (BucketedViewIndex) indexes.create(abcIndex);
 
-		factory = new ItableStatementFactory(CassandraManager.session(), CassandraManager.keyspace(), table);
+		factory = new BucketedViewStatementFactory(CassandraManager.session(), CassandraManager.keyspace(), table);
 	}
 
 	@AfterClass

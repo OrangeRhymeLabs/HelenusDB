@@ -38,7 +38,7 @@ import com.orangerhymelabs.helenusdb.cassandra.CassandraManager;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenusdb.cassandra.TestCallback;
-import com.orangerhymelabs.helenusdb.cassandra.index.Index;
+import com.orangerhymelabs.helenusdb.cassandra.index.BucketedViewIndex;
 import com.orangerhymelabs.helenusdb.cassandra.index.IndexRepository;
 import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
 import com.orangerhymelabs.helenusdb.exception.ItemNotFoundException;
@@ -77,7 +77,7 @@ public class IndexRepositoryTest
 	throws Exception
 	{
 		// Create
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db1", "table1", DataTypes.UUID);
 		index.description("a test index");
@@ -91,6 +91,7 @@ public class IndexRepositoryTest
 
 		// Read
 		Index result = indexes.read(index.getIdentifier());
+		assertTrue(result instanceof BucketedViewIndex);
 		assertEquals(index, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -127,10 +128,60 @@ public class IndexRepositoryTest
 	}
 
 	@Test
+	public void shouldCRUDLuceneIndexSynchronously()
+	throws Exception
+	{
+		// Create
+		LuceneIndex index = new LuceneIndex();
+		index.name("lucene1");
+		index.table("db1", "table1", DataTypes.UUID);
+		index.description("a test Lucene index");
+		Index createResult = indexes.create(index);
+		assertEquals(index, createResult);
+
+		// Lucene doesn't require underlying bucket table.
+		assertFalse("Should not create bucket table: " + index.toDbTable(), tableExists(index.toDbTable()));
+
+		// Read
+		Index result = indexes.read(index.getIdentifier());
+		assertTrue(result instanceof LuceneIndex);
+		assertEquals(index, result);
+		assertNotNull(result.createdAt());
+		assertNotNull(result.updatedAt());
+
+		// Update
+		index.description("an updated test Lucene index");
+		Index updateResult = indexes.update(index);
+		assertEquals(index, updateResult);
+
+		// Re-Read
+		Index result2 = indexes.read(index.getIdentifier());
+		assertEquals(index, result2);
+		assertNotEquals(result2.createdAt(), result2.updatedAt());
+		assertNotNull(result2.createdAt());
+		assertNotNull(result2.updatedAt());
+
+		// Delete
+		indexes.delete(index.getIdentifier());
+
+		// Re-Read table
+		try
+		{
+			indexes.read(index.getIdentifier());
+		}
+		catch (ItemNotFoundException e)
+		{
+			return;
+		}
+
+		fail("Index not deleted: " + index.getIdentifier().toString());
+	}
+
+	@Test
 	public void shouldCRUDAsynchronously()
 	throws InterruptedException
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db2", "table1", DataTypes.UUID);
 		index.description("another test index");
@@ -152,6 +203,7 @@ public class IndexRepositoryTest
 		indexes.readAsync(index.getIdentifier(), callback);
 		waitFor(callback);
 
+		assertTrue(callback.entity() instanceof BucketedViewIndex);
 		assertEquals(index, callback.entity());
 
 		// Update
@@ -192,11 +244,73 @@ public class IndexRepositoryTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
+	@Test
+	public void shouldCRUDLuceneIndexAsynchronously()
+	throws InterruptedException
+	{
+		LuceneIndex index = new LuceneIndex();
+		index.name("lucene1");
+		index.table("db2", "table1", DataTypes.UUID);
+		index.description("another test Lucene index");
+		TestCallback<Index> callback = new TestCallback<Index>();
+
+		// Create
+		indexes.createAsync(index, callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+
+		// Lucene doesn't require underlying bucket table.
+		assertFalse("Should not create bucket table: " + index.toDbTable(), tableExists(index.toDbTable()));
+
+		// Read
+		callback.clear();
+		indexes.readAsync(index.getIdentifier(), callback);
+		waitFor(callback);
+
+		assertTrue(callback.entity() instanceof LuceneIndex);
+		assertEquals(index, callback.entity());
+
+		// Update
+		callback.clear();
+		index.description("an updated test Lucene index");
+		indexes.updateAsync(index, callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+
+		// Re-Read
+		callback.clear();
+		indexes.readAsync(index.getIdentifier(), callback);
+		waitFor(callback);
+
+		Index result2 = callback.entity();
+		assertEquals(index, result2);
+		assertNotEquals(result2.createdAt(), result2.updatedAt());
+		assertNotNull(result2.createdAt());
+		assertNotNull(result2.updatedAt());
+
+		// Delete
+		callback.clear();
+		indexes.deleteAsync(index.getIdentifier(), callback);
+		waitFor(callback);
+
+		assertTrue(callback.isEmpty());
+
+		// Re-Read
+		callback.clear();
+		indexes.readAsync(index.getIdentifier(), callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof ItemNotFoundException);
+	}
+
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
 	{
 		// Create
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db3", "table1", DataTypes.BIGINT);
 		index.fields(Arrays.asList("foo:text"));
@@ -211,7 +325,7 @@ public class IndexRepositoryTest
 	public void shouldThrowOnDuplicateAynchronously()
 	throws InterruptedException
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index2");
 		index.table("db4", "table1", DataTypes.TIMESTAMP);
 		index.fields(Arrays.asList("foo:uuid", "-bar:integer", "bat:timestamp"));
@@ -234,7 +348,7 @@ public class IndexRepositoryTest
 	@Test
 	public void shouldReadForSynchronously()
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db6", "table1", DataTypes.BIGINT);
 		index.fields(Arrays.asList("foo:text"));
@@ -264,7 +378,7 @@ public class IndexRepositoryTest
 	public void shouldReadForAynchronously()
 	throws InterruptedException
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db6", "table2", DataTypes.BIGINT);
 		index.fields(Arrays.asList("foo:text"));
@@ -319,7 +433,7 @@ public class IndexRepositoryTest
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentSynchronously()
 	{
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db1", "doesnt_exist", DataTypes.UUID);
 		indexes.update(index);
@@ -330,7 +444,7 @@ public class IndexRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Index> callback = new TestCallback<Index>();
-		Index index = new Index();
+		BucketedViewIndex index = new BucketedViewIndex();
 		index.name("index1");
 		index.table("db1", "doesnt_exist", DataTypes.UUID);
 		indexes.updateAsync(index, callback);

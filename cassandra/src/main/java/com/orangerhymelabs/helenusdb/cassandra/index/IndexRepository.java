@@ -32,7 +32,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
 import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
-import com.orangerhymelabs.helenusdb.cassandra.itable.ItableStatementFactory;
+import com.orangerhymelabs.helenusdb.cassandra.bucket.BucketedViewStatementFactory;
 import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
 import com.orangerhymelabs.helenusdb.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenusdb.exception.StorageException;
@@ -113,9 +113,10 @@ extends AbstractCassandraRepository<Index>
 		+ Columns.ID_TYPE + ", "
 		+ Columns.IS_UNIQUE + ", "
 		+ Columns.IS_CASE_SENSISTIVE + ", "
+		+ Columns.ENGINE + ", "
 		+ Columns.CREATED_AT + ", "
 		+ Columns.UPDATED_AT
-		+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
+		+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
 	private static final String UPDATE_CQL = "update %s.%s set "
 		+ Columns.DESCRIPTION + " = ?, "
 		+ Columns.UPDATED_AT + " = ?"
@@ -126,7 +127,7 @@ extends AbstractCassandraRepository<Index>
 	private static final String READ_ALL_CQL = "select * from %s.%s";
 	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
 
-	private static final ItableStatementFactory.Schema ITABLE_SCHEMA = new ItableStatementFactory.Schema();
+	private static final BucketedViewStatementFactory.Schema BUCKETED_VIEW_SCHEMA = new BucketedViewStatementFactory.Schema();
 
 	private PreparedStatement readForTableStmt;
 
@@ -141,7 +142,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-			ITABLE_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs(), index.toClusterOrderings());
+			optionallyCreateViewTable(index);
 			super.createAsync(index, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -159,7 +160,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-			ITABLE_SCHEMA.create(session(), keyspace(), index.toDbTable(), index.idType(), index.toColumnDefs(), index.toPkDefs(), index.toClusterOrderings());
+			optionallyCreateViewTable(index);
 			return super.create(index);
 		}
 		catch(AlreadyExistsException e)
@@ -224,7 +225,7 @@ extends AbstractCassandraRepository<Index>
 	@Override
 	public void delete(Identifier id)
 	{
-		ITABLE_SCHEMA.drop(session(), keyspace(), id.toDbName());
+		BUCKETED_VIEW_SCHEMA.drop(session(), keyspace(), id.toDbName());
 		super.delete(id);
 	}
 
@@ -233,7 +234,7 @@ extends AbstractCassandraRepository<Index>
 	{
 		try
 		{
-			ITABLE_SCHEMA.drop(session(), keyspace(), id.toDbName());
+			BUCKETED_VIEW_SCHEMA.drop(session(), keyspace(), id.toDbName());
 			super.deleteAsync(id, callback);
 		}
 		catch(AlreadyExistsException e)
@@ -280,17 +281,39 @@ extends AbstractCassandraRepository<Index>
 		Date now = new Date();
 		index.createdAt(now);
 		index.updatedAt(now);
-		bs.bind(index.databaseName(),
-			index.tableName(),
-			index.name(),
-			index.description(),
-			index.fields(),
-			index.containsOnly(),
-			index.idType().name(),
-			index.isUnique(),
-			index.isCaseSensitive(),
-			index.createdAt(),
-		    index.updatedAt());
+
+		if (index.isBucketedView())
+		{
+			BucketedViewIndex bvi = (BucketedViewIndex) index;
+			bs.bind(bvi.databaseName(),
+				bvi.tableName(),
+				bvi.name(),
+				bvi.description(),
+				bvi.fields(),
+				bvi.containsOnly(),
+				bvi.idType().name(),
+				bvi.isUnique(),
+				bvi.isCaseSensitive(),
+				bvi.engine().name(),
+				bvi.createdAt(),
+				bvi.updatedAt());
+		}
+		else if (index.isLucene())
+		{
+			LuceneIndex li = (LuceneIndex) index;
+			bs.bind(li.databaseName(),
+				li.tableName(),
+				li.name(),
+				li.description(),
+				null,
+				null,
+				li.idType().name(),
+				null,
+				null,
+				li.engine().name(),
+				li.createdAt(),
+				li.updatedAt());
+		}
 	}
 
 	@Override
@@ -308,7 +331,23 @@ extends AbstractCassandraRepository<Index>
 	{
 		if (row == null) return null;
 
-		Index n = new Index();
+		IndexEngine engine = IndexEngine.valueOf(row.getString(Columns.ENGINE));
+
+		if (IndexEngine.BUCKETED_VIEW.equals(engine))
+		{
+			return marshalBucketedViewIndex(row);
+		}
+		else if (IndexEngine.LUCENE.equals(engine))
+		{
+			return marshalLuceneIndex(row);
+		}
+
+		return null;
+	}
+
+	private Index marshalBucketedViewIndex(Row row)
+	{
+		BucketedViewIndex n = new BucketedViewIndex();
 		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), DataTypes.from(row.getString(Columns.ID_TYPE)));
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
@@ -319,5 +358,25 @@ extends AbstractCassandraRepository<Index>
 		n.createdAt(row.getDate(Columns.CREATED_AT));
 		n.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return n;
+	}
+
+	private Index marshalLuceneIndex(Row row)
+	{
+		LuceneIndex n = new LuceneIndex();
+		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), DataTypes.from(row.getString(Columns.ID_TYPE)));
+		n.name(row.getString(Columns.NAME));
+		n.description(row.getString(Columns.DESCRIPTION));
+		n.createdAt(row.getDate(Columns.CREATED_AT));
+		n.updatedAt(row.getDate(Columns.UPDATED_AT));
+		return n;
+	}
+
+	private void optionallyCreateViewTable(Index index)
+	{
+		if (index.isBucketedView())
+		{
+			BucketedViewIndex bvi = (BucketedViewIndex) index;
+			BUCKETED_VIEW_SCHEMA.create(session(), keyspace(), bvi.toDbTable(), bvi.idType(), bvi.toColumnDefs(), bvi.toPkDefs(), bvi.toClusterOrderings());
+		}
 	}
 }
