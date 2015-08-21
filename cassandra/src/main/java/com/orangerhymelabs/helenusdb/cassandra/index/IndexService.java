@@ -20,6 +20,7 @@ import java.util.List;
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.cassandra.table.TableRepository;
+import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
 import com.orangerhymelabs.helenusdb.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -40,11 +41,12 @@ public class IndexService
 		this.tables = tableRepository;
 	}
 
-	public Index create(BucketedViewIndex index)
+	public Index create(Index index)
 	{
 		Table previous = tables.read(index.table().getIdentifier());
 		index.table(previous);
 		ValidationEngine.validateAndThrow(index);
+		allowOnlyOneLuceneIndex(index, previous);
 		return indexes.create(index);
 	}
 
@@ -59,12 +61,23 @@ public class IndexService
 					{
 						index.table(previous);
 						ValidationEngine.validateAndThrow(index);
-						indexes.createAsync(index, callback);
 					}
 					catch(ValidationException e)
 					{
 						callback.onFailure(e);
 					}
+
+					try
+					{
+						allowOnlyOneLuceneIndex(index, previous);
+					}
+					catch(DuplicateItemException e)
+					{
+						callback.onFailure(e);
+						return;
+					}
+
+					indexes.createAsync(index, callback);
                 }
 
 				@Override
@@ -140,5 +153,30 @@ public class IndexService
 	public void deleteAsync(String database, String table, String name, FutureCallback<Index> callback)
 	{
 		indexes.deleteAsync(new Identifier(database, table, name), callback);
+	}
+
+	/**
+	 * Ensure no other Lucene indexes exist on this table. If one already exists,
+	 * throw DuplicateItemException.
+	 * 
+	 * Note: this method is VERY expensive since it reads all the indexes for a given table,
+	 * looping through them to determine if there's already a lucene index present.
+	 * 
+	 * @param index
+	 * @param previous
+	 * @throws DuplicateItemException
+	 */
+	private void allowOnlyOneLuceneIndex(Index index, Table previous)
+	{
+		if (index.isLucene())
+		{
+			for (Index ndx : indexes.readFor(previous.databaseName(), previous.name()))
+			{
+				if (ndx.isLucene())
+				{
+					throw new DuplicateItemException("Lucene index already exists on this table: " + ndx.name());
+				}
+			}
+		}
 	}
 }
