@@ -20,7 +20,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
+import com.orangerhymelabs.helenusdb.cassandra.SchemaProvider;
 
 /**
  * @author tfredrich
@@ -42,7 +42,7 @@ extends AbstractCassandraRepository<KeyValuePair>
 	}
 
 	public static class Schema
-	implements Schemaable
+	implements SchemaProvider
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table if not exists %s." + Tables.BY_ID +

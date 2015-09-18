@@ -21,7 +21,7 @@ import com.datastax.driver.core.Session;
  * @author tfredrich
  * @since May 7, 2015
  */
-public interface Schemaable
+public interface SchemaProvider
 {
 	public boolean drop(Session session, String keyspace);
 	public boolean create(Session session, String keyspace);

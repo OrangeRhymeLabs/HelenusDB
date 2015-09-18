@@ -27,7 +27,7 @@ import com.datastax.driver.core.Session;
  * @since May 7, 2015
  */
 public class KeyspaceSchema
-implements Schemaable
+implements SchemaProvider
 {
 	private class Schema
 	{

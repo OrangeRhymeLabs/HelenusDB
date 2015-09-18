@@ -28,7 +28,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
+import com.orangerhymelabs.helenusdb.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenusdb.exception.StorageException;
 import com.orangerhymelabs.helenusdb.persistence.Identifier;
 
@@ -54,7 +54,7 @@ extends AbstractCassandraRepository<Database>
 	}
 
 	public static class Schema
-	implements Schemaable
+	implements SchemaProvider
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table if not exists %s." + Tables.BY_ID +

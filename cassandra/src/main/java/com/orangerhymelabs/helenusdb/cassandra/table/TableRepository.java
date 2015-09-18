@@ -25,7 +25,7 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.helenusdb.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenusdb.cassandra.DataTypes;
-import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
+import com.orangerhymelabs.helenusdb.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenusdb.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.helenusdb.exception.DuplicateItemException;
 import com.orangerhymelabs.helenusdb.exception.ItemNotFoundException;
@@ -57,7 +57,7 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	public static class Schema
-	implements Schemaable
+	implements SchemaProvider
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + Tables.BY_ID;
 		private static final String CREATE_TABLE = "create table %s." + Tables.BY_ID +

@@ -17,7 +17,7 @@ package com.orangerhymelabs.helenusdb.cassandra.bucket;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.helenusdb.cassandra.Schemaable;
+import com.orangerhymelabs.helenusdb.cassandra.SchemaProvider;
 
 /**
  * @author tfredrich
@@ -37,7 +37,7 @@ public class IndexControlRepository
 	}
 
 	public static class Schema
-	implements Schemaable
+	implements SchemaProvider
 	{
 		private static final String DROP_TABLE = "drop table if exists %s." + TABLE_NAME;
 		private static final String CREATE_TABLE = "create table %s." + TABLE_NAME +

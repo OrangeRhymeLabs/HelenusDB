@@ -45,7 +45,7 @@ public class SchemaRegistry
 		INSTANCE.register(new IndexControlRepository.Schema());
 	}
 
-	private List<Schemaable> schemas = new ArrayList<Schemaable>();
+	private List<SchemaProvider> schemas = new ArrayList<SchemaProvider>();
 
 	private SchemaRegistry()
 	{
@@ -63,7 +63,7 @@ public class SchemaRegistry
 	 * @param schema
 	 * @return
 	 */
-	public SchemaRegistry register(Schemaable schema)
+	public SchemaRegistry register(SchemaProvider schema)
 	{
 		if (schema != null)
 		{
@@ -75,7 +75,7 @@ public class SchemaRegistry
 
 	public void initializeAll(Session session, String keyspace)
 	{
-		for (Schemaable schema : schemas)
+		for (SchemaProvider schema : schemas)
 		{
 			schema.drop(session, keyspace);
 			schema.create(session, keyspace);
@@ -84,7 +84,7 @@ public class SchemaRegistry
 
 	public void createAll(Session session, String keyspace)
 	{
-		for (Schemaable schema : schemas)
+		for (SchemaProvider schema : schemas)
 		{
 			schema.create(session, keyspace);
 		}
@@ -92,7 +92,7 @@ public class SchemaRegistry
 
 	public void dropAll(Session session, String keyspace)
 	{
-		for (Schemaable schema : schemas)
+		for (SchemaProvider schema : schemas)
 		{
 			schema.drop(session, keyspace);
 		}
