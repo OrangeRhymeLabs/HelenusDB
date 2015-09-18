@@ -35,6 +35,7 @@ public class SchemaRegistry
 {
 	private static final SchemaRegistry INSTANCE = new SchemaRegistry();
 
+	// Registration order matters...
 	static
 	{
 		INSTANCE.register(new KeyspaceSchema());
@@ -58,21 +59,27 @@ public class SchemaRegistry
 	}
 
 	/**
-	 * Order matters!
+	 * Registration order matters!
 	 * 
-	 * @param schema
-	 * @return
+	 * @param provider
+	 * @return this schema registry
 	 */
-	public SchemaRegistry register(SchemaProvider schema)
+	public SchemaRegistry register(SchemaProvider provider)
 	{
-		if (schema != null)
+		if (provider != null)
 		{
-			schemas.add(schema);
+			schemas.add(provider);
 		}
 
 		return this;
 	}
 
+	/**
+	 * Drops all schema providers, then creates all.
+	 * 
+	 * @param session
+	 * @param keyspace
+	 */
 	public void initializeAll(Session session, String keyspace)
 	{
 		for (SchemaProvider schema : schemas)

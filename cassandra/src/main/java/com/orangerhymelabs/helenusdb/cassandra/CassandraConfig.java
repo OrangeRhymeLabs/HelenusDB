@@ -82,8 +82,7 @@ public class CassandraConfig
 	/**
 	 * Sub-classes can override to initialize other properties.
 	 * 
-	 * @param p
-	 *            Propreties
+	 * @param p Propreties
 	 */
 	protected void initialize(Properties p)
 	{
