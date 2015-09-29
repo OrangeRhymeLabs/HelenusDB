@@ -46,7 +46,7 @@ public class IndexService
 		Table previous = tables.read(index.table().getIdentifier());
 		index.table(previous);
 		ValidationEngine.validateAndThrow(index);
-		allowOnlyOneLuceneIndex(index, previous);
+		ensureUniqueExternalIndex(index, previous);
 		return indexes.create(index);
 	}
 
@@ -69,7 +69,7 @@ public class IndexService
 
 					try
 					{
-						allowOnlyOneLuceneIndex(index, previous);
+						ensureUniqueExternalIndex(index, previous);
 					}
 					catch(DuplicateItemException e)
 					{
@@ -156,25 +156,25 @@ public class IndexService
 	}
 
 	/**
-	 * Ensure no other Lucene indexes exist on this table. If one already exists,
+	 * Ensure no other external indexes exist of this same type on this table. If one already exists,
 	 * throw DuplicateItemException.
 	 * 
 	 * Note: this method is VERY expensive since it reads all the indexes for a given table,
-	 * looping through them to determine if there's already a lucene index present.
+	 * looping through them to determine if there's already an external index matching the external indexer.
 	 * 
-	 * @param index
-	 * @param previous
-	 * @throws DuplicateItemException
+	 * @param index the proposed new index.
+	 * @param table the table being considered for indexing.
+	 * @throws DuplicateItemException if the proposed index type is external (Lucene, SOLR, ElasticSearch, etc.) and one already exists on the table.
 	 */
-	private void allowOnlyOneLuceneIndex(Index index, Table previous)
+	private void ensureUniqueExternalIndex(Index index, Table table)
 	{
-		if (index.isLucene())
+		if (index.isExternal())
 		{
-			for (Index ndx : indexes.readFor(previous.databaseName(), previous.name()))
+			for (Index ndx : indexes.readFor(table.databaseName(), table.name()))
 			{
-				if (ndx.isLucene())
+				if (index.engine().equals(ndx.engine()))
 				{
-					throw new DuplicateItemException("Lucene index already exists on this table: " + ndx.name());
+					throw new DuplicateItemException(index.engine().name() + " index already exists on this table: " + ndx.name());
 				}
 			}
 		}

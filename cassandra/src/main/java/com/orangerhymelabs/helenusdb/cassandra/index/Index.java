@@ -64,6 +64,27 @@ extends AbstractEntity
 		return IndexEngine.LUCENE.equals(engine);
 	}
 
+	public boolean isSolr()
+	{
+		return IndexEngine.SOLR.equals(engine);
+	}
+
+	public boolean isElasticSearch()
+	{
+		return IndexEngine.ELASTIC_SEARCH.equals(engine);
+	}
+
+	/**
+	 * Returns true if the index engine is external (not native Cassandra).
+	 * For example, Lucene, ElasticSearch, SOLR, etc.
+	 * 
+	 * @return true if the index engine is external.
+	 */
+	public boolean isExternal()
+	{
+		return (isLucene() || isSolr() || isElasticSearch());
+	}
+
 	public boolean isBucketedView()
 	{
 		return IndexEngine.BUCKETED_VIEW.equals(engine);

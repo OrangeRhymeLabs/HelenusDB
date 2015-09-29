@@ -17,12 +17,13 @@ package com.orangerhymelabs.helenusdb.cassandra.index;
 
 /**
  * @author tfredrich
- * @since Aug 18, 2015
+ * @since Sep 29, 2015
  */
-public enum IndexEngine
+public class ElasticSearchIndex
+extends Index
 {
-	LUCENE,
-	SOLR,
-	ELASTIC_SEARCH,
-	BUCKETED_VIEW
+	public ElasticSearchIndex()
+	{
+		super(IndexEngine.ELASTIC_SEARCH);
+	}
 }

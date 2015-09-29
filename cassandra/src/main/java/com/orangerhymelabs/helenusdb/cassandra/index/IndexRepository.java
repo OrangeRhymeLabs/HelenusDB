@@ -298,7 +298,7 @@ extends AbstractCassandraRepository<Index>
 				bvi.createdAt(),
 				bvi.updatedAt());
 		}
-		else if (index.isLucene())
+		else if (index.isExternal())
 		{
 			LuceneIndex li = (LuceneIndex) index;
 			bs.bind(li.databaseName(),
@@ -339,7 +339,7 @@ extends AbstractCassandraRepository<Index>
 		}
 		else if (IndexEngine.LUCENE.equals(engine))
 		{
-			return marshalLuceneIndex(row);
+			return marshalExternalIndex(row);
 		}
 
 		return null;
@@ -360,15 +360,34 @@ extends AbstractCassandraRepository<Index>
 		return n;
 	}
 
-	private Index marshalLuceneIndex(Row row)
+	private Index marshalExternalIndex(Row row)
 	{
-		LuceneIndex n = new LuceneIndex();
+		IndexEngine engine = IndexEngine.valueOf(row.getString(Columns.ENGINE));
+		Index n = constructIndexType(engine);
 		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), DataTypes.from(row.getString(Columns.ID_TYPE)));
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
 		n.createdAt(row.getDate(Columns.CREATED_AT));
 		n.updatedAt(row.getDate(Columns.UPDATED_AT));
 		return n;
+	}
+
+	private Index constructIndexType(IndexEngine engine)
+	{
+		if (IndexEngine.ELASTIC_SEARCH.equals(engine))
+		{
+			return new ElasticSearchIndex();
+		}
+		else if (IndexEngine.LUCENE.equals(engine))
+		{
+			return new LuceneIndex();
+		}
+		else if (IndexEngine.SOLR.equals(engine))
+		{
+			return new SolrIndex();
+		}
+
+		throw new StorageException("Invalid engine type: " + engine.name());
 	}
 
 	private void optionallyCreateViewTable(Index index)
