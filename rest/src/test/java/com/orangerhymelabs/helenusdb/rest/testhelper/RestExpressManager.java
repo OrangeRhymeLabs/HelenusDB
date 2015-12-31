@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orangerhymelabs.orangedb.testhelper;
-
-import com.orangerhymelabs.orangedb.Main;
+package com.orangerhymelabs.helenusdb.rest.testhelper;
 
 import java.io.IOException;
 
 import org.restexpress.RestExpress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.orangerhymelabs.helenusdb.rest.Main;
 
 /**
  * Class for managing testing of RestExpress so we are not tearing down and

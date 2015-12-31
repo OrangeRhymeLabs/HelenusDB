@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>OrangeDB REST Interface</name>
+    <name>HelenusDB REST Interface</name>
     <description>An HTTP/REST document database API</description>
-    <artifactId>OrangeDB-REST</artifactId>
+    <artifactId>HelenusDB-REST</artifactId>
     <packaging>jar</packaging>    
 
     <parent>
-        <groupId>com.orangerhymelabs.orangedb</groupId>
-        <artifactId>OrangeDB-Parent</artifactId>
+        <groupId>com.orangerhymelabs.helenusdb</groupId>
+        <artifactId>HelenusDB-Parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -17,11 +17,11 @@
         <dependency>
             <groupId>com.strategicgains</groupId>
             <artifactId>RestExpress</artifactId>
-            <version>0.11.0</version>
+            <version>0.11.3-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.orangerhymelabs.orangedb</groupId>
-            <artifactId>OrangeDB-Cassandra</artifactId>
+            <groupId>com.orangerhymelabs.helenusdb</groupId>
+            <artifactId>HelenusDB-Cassandra</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -49,6 +49,11 @@
             <artifactId>metrics-graphite</artifactId>
             <version>3.0.2</version>
         </dependency>
+		<!-- dependency>
+		    <groupId>com.strategicgains.domain-eventing</groupId>
+		    <artifactId>domain-eventing-core</artifactId>
+		    <version>0.4.5</version>
+		</dependency -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jcl</artifactId>
@@ -90,7 +95,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.2.1</version>
                 <configuration>
-                    <mainClass>com.orangerhymelabs.orangedb.Main</mainClass>
+                    <mainClass>com.orangerhymelabs.helenusdb.Main</mainClass>
                 </configuration>
             </plugin>
             <plugin>
@@ -103,7 +108,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>./lib/</classpathPrefix>
-                            <mainClass>com.orangerhymelabs.orangedb.Main</mainClass>
+                            <mainClass>com.orangerhymelabs.helenusdb.Main</mainClass>
                         </manifest>
                         <manifestEntries>
                             <Project-Version>${project.version}</Project-Version>
@@ -120,7 +125,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.orangerhymelabs.orangedb.Main</mainClass>
+                            <mainClass>com.orangerhymelabs.helenusdb.Main</mainClass>
                         </manifest>
                         <manifestEntries>
                             <artifactId>${project.artifactId}</artifactId>
@@ -129,7 +134,7 @@
                         </manifestEntries>
                         <manifestSections>
                             <manifestSection>
-                                <name>OrangeDB</name>
+                                <name>HelenusDB</name>
                                 <manifestEntries>
                                     <artifact-version>${project.version}</artifact-version>
                                 </manifestEntries>
@@ -168,7 +173,7 @@
                             <dataSet>
                                 <data>
                                     <src>
-                                        ${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar
+                                        ${project.build.directory}/${project.build.finalName}.jar
                                     </src>
                                     <type>file</type>
                                     <mapper>
@@ -179,7 +184,7 @@
                                     </mapper>
                                 </data>
                                 <data>
-                                    <src>${project.basedir}/src/deb/init/orangedb.conf</src>
+                                    <src>${project.basedir}/src/deb/init/helenusdb.conf</src>
                                     <dst>/etc/init/${project.build.finalName}.conf</dst>
                                     <type>file</type>
                                 </data>

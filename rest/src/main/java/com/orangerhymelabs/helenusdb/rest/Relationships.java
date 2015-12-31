@@ -13,12 +13,12 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.helenusdb.rest;
 
-import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.DATABASE;
-import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.DATABASES;
-import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.TABLE;
-import static com.orangerhymelabs.orangedb.cassandra.Constants.Routes.TABLES;
+import static com.orangerhymelabs.helenusdb.rest.Constants.Routes.DATABASE;
+import static com.orangerhymelabs.helenusdb.rest.Constants.Routes.DATABASES;
+import static com.orangerhymelabs.helenusdb.rest.Constants.Routes.TABLE;
+import static com.orangerhymelabs.helenusdb.rest.Constants.Routes.TABLES;
 import static com.strategicgains.hyperexpress.RelTypes.SELF;
 import static com.strategicgains.hyperexpress.RelTypes.UP;
 
@@ -26,8 +26,8 @@ import java.util.Map;
 
 import org.restexpress.RestExpress;
 
-import com.orangerhymelabs.orangedb.cassandra.database.Database;
-import com.orangerhymelabs.orangedb.cassandra.table.Table;
+import com.orangerhymelabs.helenusdb.cassandra.database.Database;
+import com.orangerhymelabs.helenusdb.cassandra.table.Table;
 import com.strategicgains.hyperexpress.HyperExpress;
 
 /**

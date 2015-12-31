@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.helenusdb.rest;
 
 import java.io.IOException;
 import java.net.URL;
@@ -11,23 +11,18 @@ import org.restexpress.util.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.Session;
-import com.orangerhymelabs.orangedb.cassandra.Utils;
-import com.orangerhymelabs.orangedb.cassandra.database.DatabaseDeletedHandler;
-import com.orangerhymelabs.orangedb.cassandra.database.DatabaseRepository;
-import com.orangerhymelabs.orangedb.cassandra.database.DatabaseService;
-import com.orangerhymelabs.orangedb.cassandra.document.DocumentRepository;
-import com.orangerhymelabs.orangedb.cassandra.document.DocumentService;
-import com.orangerhymelabs.orangedb.cassandra.table.TableDeleteHandler;
-import com.orangerhymelabs.orangedb.cassandra.table.TableRepository;
-import com.orangerhymelabs.orangedb.cassandra.table.TableService;
-import com.orangerhymelabs.orangedb.database.DatabaseController;
-import com.orangerhymelabs.orangedb.document.DocumentController;
-import com.orangerhymelabs.orangedb.table.TableController;
-import com.strategicgains.eventing.DomainEvents;
-import com.strategicgains.eventing.EventBus;
-import com.strategicgains.eventing.local.LocalEventBusBuilder;
-import com.strategicgains.repoexpress.cassandra.CassandraConfig;
+import com.orangerhymelabs.helenusdb.cassandra.CassandraConfig;
+import com.orangerhymelabs.helenusdb.cassandra.database.DatabaseRepository;
+import com.orangerhymelabs.helenusdb.cassandra.database.DatabaseService;
+import com.orangerhymelabs.helenusdb.cassandra.document.DocumentRepositoryFactory;
+import com.orangerhymelabs.helenusdb.cassandra.document.DocumentRepositoryFactoryImpl;
+import com.orangerhymelabs.helenusdb.cassandra.document.DocumentService;
+import com.orangerhymelabs.helenusdb.cassandra.index.IndexRepository;
+import com.orangerhymelabs.helenusdb.cassandra.table.TableRepository;
+import com.orangerhymelabs.helenusdb.cassandra.table.TableService;
+import com.orangerhymelabs.helenusdb.rest.database.DatabaseController;
+import com.orangerhymelabs.helenusdb.rest.document.DocumentController;
+import com.orangerhymelabs.helenusdb.rest.table.TableController;
 import com.strategicgains.restexpress.plugin.metrics.MetricsConfig;
 
 public class Configuration
@@ -58,39 +53,31 @@ extends Environment
         this.baseUrl = p.getProperty(BASE_URL_PROPERTY, "http://localhost:" + String.valueOf(port));
         this.executorThreadPoolSize = Integer.parseInt(p.getProperty(EXECUTOR_THREAD_POOL_SIZE, DEFAULT_EXECUTOR_THREAD_POOL_SIZE));
         this.metricsSettings = new MetricsConfig(p);
-        CassandraConfigWithGenericSessionAccess dbConfig = new CassandraConfigWithGenericSessionAccess(p);
+        CassandraConfig dbConfig = new CassandraConfig(p);
         initialize(dbConfig);
         loadManifest();
     }
 
-    private void initialize(CassandraConfigWithGenericSessionAccess dbConfig)
+    private void initialize(CassandraConfig dbConfig)
     {
-        try
-        {
-            Utils.initDatabase("/megadoc_autoload.cql", dbConfig.getGenericSession());
-        } catch (IOException e)
-        {
-            LOGGER.error("Could not init database; trying to continue startup anyway (in case DB was manually created).", e);
-        }
-        DatabaseRepository databaseRepository = new DatabaseRepository(dbConfig.getSession());
-        TableRepository tableRepository = new TableRepository(dbConfig.getSession());
-        DocumentRepository documentRepository = new DocumentRepository(dbConfig.getSession());
+        DatabaseRepository databaseRepository = new DatabaseRepository(dbConfig.getSession(), dbConfig.getKeyspace());
+        TableRepository tableRepository = new TableRepository(dbConfig.getSession(), dbConfig.getKeyspace());
+        IndexRepository indexRepository = new IndexRepository(dbConfig.getSession(), dbConfig.getKeyspace());
+        DocumentRepositoryFactory documentRepositoryFactory = new DocumentRepositoryFactoryImpl(dbConfig.getSession(), dbConfig.getKeyspace(), indexRepository);
 
         DatabaseService databaseService = new DatabaseService(databaseRepository);
         TableService tableService = new TableService(databaseRepository, tableRepository);
-        DocumentService documentService = new DocumentService(tableRepository, documentRepository);
+        DocumentService documentService = new DocumentService(tableService, documentRepositoryFactory);
 
         databaseController = new DatabaseController(databaseService);
         tableController = new TableController(tableService);
         documentController = new DocumentController(documentService);
 
-        // TODO: create service and repository implementations for these...
-//		entitiesController = new EntitiesController(SampleUuidEntityService);
-        EventBus bus = new LocalEventBusBuilder()
-                .subscribe(new TableDeleteHandler(dbConfig.getSession()))
-                .subscribe(new DatabaseDeletedHandler(dbConfig.getSession()))
-                .build();
-        DomainEvents.addBus("local", bus);
+//        EventBus bus = new LocalEventBusBuilder()
+//                .subscribe(new TableDeleteHandler(dbConfig.getSession()))
+//                .subscribe(new DatabaseDeletedHandler(dbConfig.getSession()))
+//                .build();
+//        DomainEvents.addBus("local", bus);
     }
 
     public int getPort()
@@ -183,30 +170,5 @@ extends Environment
     private boolean hasManifest()
     {
         return (manifest != null);
-    }
-
-    /**
-     * CassandraConfig object that we can get a session seperate from the
-     * keyspace.
-     */
-    private class CassandraConfigWithGenericSessionAccess extends CassandraConfig
-    {
-
-        private Session genericSession;
-
-        public CassandraConfigWithGenericSessionAccess(Properties p)
-        {
-            super(p);
-        }
-
-        public Session getGenericSession()
-        {
-            if (genericSession == null)
-            {
-                genericSession = getCluster().connect();
-            }
-
-            return genericSession;
-        }
     }
 }

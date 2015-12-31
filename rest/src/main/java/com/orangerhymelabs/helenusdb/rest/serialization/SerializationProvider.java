@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb.serialization;
+package com.orangerhymelabs.helenusdb.rest.serialization;
 
 import org.restexpress.response.ErrorResponseWrapper;
 import org.restexpress.response.ResponseWrapper;

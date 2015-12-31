@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.helenusdb.rest;
 
 public class Constants
 {

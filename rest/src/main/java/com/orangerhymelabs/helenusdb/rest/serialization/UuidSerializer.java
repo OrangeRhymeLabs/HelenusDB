@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb.serialization;
+package com.orangerhymelabs.helenusdb.rest.serialization;
 
 import java.io.IOException;
 import java.util.UUID;

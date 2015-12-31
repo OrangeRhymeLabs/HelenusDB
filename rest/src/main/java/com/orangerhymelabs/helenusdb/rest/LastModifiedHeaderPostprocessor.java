@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.helenusdb.rest;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.LAST_MODIFIED;
 
@@ -6,7 +6,7 @@ import org.restexpress.Request;
 import org.restexpress.Response;
 import org.restexpress.pipeline.Postprocessor;
 
-import com.strategicgains.repoexpress.domain.Timestamped;
+import com.orangerhymelabs.helenusdb.persistence.Timestamped;
 import com.strategicgains.util.date.DateAdapter;
 import com.strategicgains.util.date.HttpHeaderTimestampAdapter;
 
@@ -31,7 +31,7 @@ implements Postprocessor
 
 		if (!response.hasHeader(LAST_MODIFIED) && body.getClass().isAssignableFrom(Timestamped.class))
 		{
-			response.addHeader(LAST_MODIFIED, fmt.format(((Timestamped) body).getUpdatedAt()));
+			response.addHeader(LAST_MODIFIED, fmt.format(((Timestamped) body).updatedAt()));
 		}
 	}
 }

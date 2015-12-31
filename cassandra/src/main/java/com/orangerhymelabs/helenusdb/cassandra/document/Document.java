@@ -36,6 +36,13 @@ extends AbstractEntity
 
 	public Document()
 	{
+		super();
+	}
+
+	public Document(BSONObject bson)
+	{
+		this();
+		object(bson);
 	}
 
 	@Override

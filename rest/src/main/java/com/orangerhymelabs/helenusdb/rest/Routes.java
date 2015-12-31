@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.helenusdb.rest;
 
 import static io.netty.handler.codec.http.HttpMethod.DELETE;
 import static io.netty.handler.codec.http.HttpMethod.GET;
@@ -8,7 +8,7 @@ import static io.netty.handler.codec.http.HttpMethod.PUT;
 
 import org.restexpress.RestExpress;
 
-import com.orangerhymelabs.orangedb.cassandra.Constants;
+import com.orangerhymelabs.helenusdb.rest.Constants;
 
 public abstract class Routes
 {

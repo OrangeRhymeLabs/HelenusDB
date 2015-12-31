@@ -1,4 +1,4 @@
-package com.orangerhymelabs.orangedb;
+package com.orangerhymelabs.helenusdb.rest;
 
 /*
  * Copyright 2015 udeyoje.
@@ -24,11 +24,11 @@ import static com.jayway.restassured.RestAssured.given;
 
 import com.jayway.restassured.response.Response;
 import com.mongodb.util.JSON;
-import com.orangerhymelabs.orangedb.cassandra.database.Database;
-import com.orangerhymelabs.orangedb.cassandra.document.Document;
-import com.orangerhymelabs.orangedb.cassandra.table.Table;
-import com.orangerhymelabs.orangedb.cassandra.testhelper.Fixtures;
-import com.orangerhymelabs.orangedb.testhelper.RestExpressManager;
+import com.orangerhymelabs.helenusdb.cassandra.database.Database;
+import com.orangerhymelabs.helenusdb.cassandra.document.Document;
+import com.orangerhymelabs.helenusdb.cassandra.table.Table;
+import com.orangerhymelabs.helenusdb.rest.cassandra.testhelper.Fixtures;
+import com.orangerhymelabs.helenusdb.rest.testhelper.RestExpressManager;
 
 import org.junit.BeforeClass;
 import org.slf4j.Logger;

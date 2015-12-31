@@ -11,8 +11,8 @@
 	
 	<modules>
 		<module>cassandra</module>
-		<!-- module>cli</module>
-		<module>rest</module -->
+		<!-- module>cli</module -->
+		<module>rest</module>
 	</modules>
 
 	<dependencies>
