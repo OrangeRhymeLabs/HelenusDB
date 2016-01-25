@@ -44,6 +44,7 @@ extends Index
 	 *  Optional. If present, defines a subset of the fields in the primary table that are carried in the index.
 	 *  If absent, all data elements from the primary table are carried in the index.
 	 */
+	// TODO: implement this or remove it.
 	private List<String> containsOnly;
 
 	public BucketedViewIndex()

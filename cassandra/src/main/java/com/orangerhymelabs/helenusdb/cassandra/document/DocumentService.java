@@ -32,6 +32,7 @@ import com.strategicgains.syntaxe.ValidationException;
  */
 public class DocumentService
 {
+	//TODO: this should be a distributed cache, perhaps?
 	private Map<String, DocumentRepository> repoCache = new HashMap<String, DocumentRepository>();
 	private TableService tables;
 	private DocumentRepositoryFactory factory;
