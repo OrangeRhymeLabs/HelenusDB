@@ -6,9 +6,9 @@ import org.restexpress.Request;
 import org.restexpress.Response;
 import org.restexpress.exception.BadRequestException;
 
-import com.orangerhymelabs.helenusdb.cassandra.document.Document;
-import com.orangerhymelabs.helenusdb.cassandra.document.DocumentService;
-import com.orangerhymelabs.helenusdb.persistence.Identifier;
+import com.orangerhymelabs.helenus.cassandra.document.Document;
+import com.orangerhymelabs.helenus.cassandra.document.DocumentService;
+import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenusdb.rest.Constants;
 import com.strategicgains.hyperexpress.HyperExpress;
 import com.strategicgains.hyperexpress.builder.TokenResolver;

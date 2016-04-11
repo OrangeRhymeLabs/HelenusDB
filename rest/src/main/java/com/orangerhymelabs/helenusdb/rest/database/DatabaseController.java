@@ -8,8 +8,8 @@ import java.util.List;
 import org.restexpress.Request;
 import org.restexpress.Response;
 
-import com.orangerhymelabs.helenusdb.cassandra.database.Database;
-import com.orangerhymelabs.helenusdb.cassandra.database.DatabaseService;
+import com.orangerhymelabs.helenus.cassandra.database.Database;
+import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenusdb.rest.Constants;
 import com.strategicgains.hyperexpress.HyperExpress;
 import com.strategicgains.hyperexpress.builder.TokenBinder;

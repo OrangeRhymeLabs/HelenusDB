@@ -24,9 +24,9 @@ import static com.jayway.restassured.RestAssured.given;
 
 import com.jayway.restassured.response.Response;
 import com.mongodb.util.JSON;
-import com.orangerhymelabs.helenusdb.cassandra.database.Database;
-import com.orangerhymelabs.helenusdb.cassandra.document.Document;
-import com.orangerhymelabs.helenusdb.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.database.Database;
+import com.orangerhymelabs.helenus.cassandra.document.Document;
+import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenusdb.rest.cassandra.testhelper.Fixtures;
 import com.orangerhymelabs.helenusdb.rest.testhelper.RestExpressManager;
 

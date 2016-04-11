@@ -6,7 +6,7 @@ import org.restexpress.Request;
 import org.restexpress.Response;
 import org.restexpress.pipeline.Postprocessor;
 
-import com.orangerhymelabs.helenusdb.persistence.Timestamped;
+import com.orangerhymelabs.helenus.persistence.Timestamped;
 import com.strategicgains.util.date.DateAdapter;
 import com.strategicgains.util.date.HttpHeaderTimestampAdapter;
 

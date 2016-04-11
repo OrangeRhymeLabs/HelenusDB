@@ -26,8 +26,8 @@ import java.util.Map;
 
 import org.restexpress.RestExpress;
 
-import com.orangerhymelabs.helenusdb.cassandra.database.Database;
-import com.orangerhymelabs.helenusdb.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.database.Database;
+import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.strategicgains.hyperexpress.HyperExpress;
 
 /**
