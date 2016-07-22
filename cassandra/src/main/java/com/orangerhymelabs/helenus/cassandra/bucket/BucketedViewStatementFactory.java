@@ -230,8 +230,8 @@ public class BucketedViewStatementFactory
 		i = bindKeys(bs, i, index.fieldSpecs(), keys);
 		bindDocumentId(bs, i++, document.id());
 		bs.setBytes(i++, ByteBuffer.wrap(BSON.encode(document.object())));
-		bs.setDate(i++, document.createdAt());
-		bs.setDate(i++, document.updatedAt());
+		bs.setTimestamp(i++, document.createdAt());
+		bs.setTimestamp(i++, document.updatedAt());
     }
 
 	private void bindDocumentId(BoundStatement bs, int i, Object id)

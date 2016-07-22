@@ -142,7 +142,8 @@ public class CassandraConfig
 
 		if (getDataCenter() != null)
 		{
-			cb.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy(getDataCenter()));
+			// TODO: fixe round robin policy
+//			cb.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy(getDataCenter(), getPort(), false, false));
 		}
 
 		enrichCluster(cb);

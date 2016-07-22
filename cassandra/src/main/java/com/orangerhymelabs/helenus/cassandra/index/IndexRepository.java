@@ -212,7 +212,7 @@ extends AbstractCassandraRepository<Index>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
 	}
 
 	private ResultSetFuture _readFor(String database, String table)
@@ -355,8 +355,8 @@ extends AbstractCassandraRepository<Index>
 		n.containsOnly(row.getList(Columns.CONTAINS_ONLY, String.class));
 		n.isUnique(row.getBool(Columns.IS_UNIQUE));
 		n.isCaseSensitive(row.getBool(Columns.IS_CASE_SENSISTIVE));
-		n.createdAt(row.getDate(Columns.CREATED_AT));
-		n.updatedAt(row.getDate(Columns.UPDATED_AT));
+		n.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		n.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return n;
 	}
 
@@ -367,8 +367,8 @@ extends AbstractCassandraRepository<Index>
 		n.table(row.getString(Columns.DB_NAME), row.getString(Columns.TBL_NAME), DataTypes.from(row.getString(Columns.ID_TYPE)));
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
-		n.createdAt(row.getDate(Columns.CREATED_AT));
-		n.updatedAt(row.getDate(Columns.UPDATED_AT));
+		n.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		n.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return n;
 	}
 

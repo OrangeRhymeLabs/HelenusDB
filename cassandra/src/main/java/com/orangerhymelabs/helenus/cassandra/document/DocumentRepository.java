@@ -239,8 +239,8 @@ extends AbstractCassandraRepository<Document>
 			d.object(BSON.decode(result));
 		}
 
-		d.createdAt(row.getDate(Columns.CREATED_AT));
-		d.updatedAt(row.getDate(Columns.UPDATED_AT));
+		d.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		d.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return d;
 	}
 

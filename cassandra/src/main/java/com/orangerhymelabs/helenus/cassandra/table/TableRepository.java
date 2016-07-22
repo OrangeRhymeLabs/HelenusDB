@@ -197,8 +197,8 @@ extends AbstractCassandraRepository<Table>
 		t.ttl(row.getLong(Columns.TTL));
 		t.type(TableType.from(row.getString(Columns.TYPE)));
 		t.idType(DataTypes.from(row.getString(Columns.ID_TYPE)));
-		t.createdAt(row.getDate(Columns.CREATED_AT));
-		t.updatedAt(row.getDate(Columns.UPDATED_AT));
+		t.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		t.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return t;
 	}
 

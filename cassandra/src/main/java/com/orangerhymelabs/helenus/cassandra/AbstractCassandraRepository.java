@@ -117,7 +117,7 @@ public abstract class AbstractCassandraRepository<T>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
 	}
 
 	public T create(T entity)
@@ -178,7 +178,7 @@ public abstract class AbstractCassandraRepository<T>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
 	}
 
 	public T update(T entity)
@@ -228,7 +228,7 @@ public abstract class AbstractCassandraRepository<T>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
 	}
 
 	public void delete(Identifier id)
@@ -283,7 +283,7 @@ public abstract class AbstractCassandraRepository<T>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
 	}
 
 	public T read(Identifier id)
@@ -329,7 +329,7 @@ public abstract class AbstractCassandraRepository<T>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
 	}
 
 	public List<T> readAll(Object... parms)
@@ -392,7 +392,7 @@ public abstract class AbstractCassandraRepository<T>
 					{
 						callback.onFailure(t);
 					}
-				}, MoreExecutors.sameThreadExecutor()
+				}, MoreExecutors.newDirectExecutorService()
 			);
 		}
 	}

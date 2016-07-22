@@ -127,7 +127,7 @@ extends AbstractCassandraRepository<Database>
 			{
 				callback.onFailure(t);
 			}
-		}, MoreExecutors.sameThreadExecutor());
+		}, MoreExecutors.newDirectExecutorService());
     }
 
 	private ResultSetFuture _exists(Identifier id)
@@ -196,8 +196,8 @@ extends AbstractCassandraRepository<Database>
 		Database n = new Database();
 		n.name(row.getString(Columns.NAME));
 		n.description(row.getString(Columns.DESCRIPTION));
-		n.createdAt(row.getDate(Columns.CREATED_AT));
-		n.updatedAt(row.getDate(Columns.UPDATED_AT));
+		n.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		n.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return n;
 	}
 }

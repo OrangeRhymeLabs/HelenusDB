@@ -67,7 +67,7 @@ public enum DataTypes
 			break;
 			case TEXT: bs.setString(bsIndex, (String) value);
 			break;
-			case TIMESTAMP: bs.setDate(bsIndex, (Date) value);
+			case TIMESTAMP: bs.setTimestamp(bsIndex, (Date) value);
 			break;
 			case TIMEUUID:
 			case UUID: bs.setUUID(bsIndex, (UUID) value);
