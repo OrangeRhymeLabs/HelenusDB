@@ -94,7 +94,8 @@ public class DatabaseRepositoryReadInTest
 
 	private void shouldReturnListSynchronously()
     {
-		assertDatabases(databases.readIn(IDS));
+		List<Database> list = databases.readIn(IDS);
+		assertDatabases(list);
     }
 
 	private void shouldReturnListAsynchronously()

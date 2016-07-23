@@ -21,12 +21,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.bson.BSON;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.document.Document;
@@ -80,8 +82,18 @@ public class BucketedViewStatementFactory
 
 		public boolean create(Session session, String keyspace, String table, DataTypes oidType, String columnDefs, String pkDefs, String ordering)
 		{
-			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, oidType.cassandraType(), pkDefs, ordering));
-			return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(Schema.CREATE_TABLE, keyspace, table, columnDefs, oidType.cassandraType(), pkDefs, ordering));
+			try
+			{
+				return rs.get().wasApplied();
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				// TODO Log this
+				e.printStackTrace();
+			}
+
+			return false;
 		}
     }
 

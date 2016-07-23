@@ -27,6 +27,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -474,7 +475,7 @@ public abstract class AbstractCassandraRepository<T>
 		{
 			bs.bind(id.components().toArray());
 		}
-		catch(InvalidTypeException e)
+		catch(InvalidTypeException | CodecNotFoundException e)
 		{
 			throw new InvalidIdentifierException(e);
 		}

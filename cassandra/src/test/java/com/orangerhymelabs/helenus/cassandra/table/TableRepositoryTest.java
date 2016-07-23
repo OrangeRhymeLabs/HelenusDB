@@ -311,7 +311,7 @@ public class TableRepositoryTest
 
 	private boolean tableExists(String tableName)
     {
-	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
+	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system_schema.tables where keyspace_name='%s' and table_name='%s'", CassandraManager.keyspace(), tableName));
 		return (rs.one().getLong(0) > 0);
     }
 }

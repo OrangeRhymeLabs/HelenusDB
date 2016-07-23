@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -170,13 +171,26 @@ public class IndexService
 	{
 		if (index.isExternal())
 		{
-			for (Index ndx : indexes.readFor(table.databaseName(), table.name()))
+			indexes.readForAsync(table.databaseName(), table.name(), new FutureCallback<List<Index>>()
 			{
-				if (index.engine().equals(ndx.engine()))
+				@Override
+				public void onSuccess(List<Index> results)
 				{
-					throw new DuplicateItemException(index.engine().name() + " index already exists on this table: " + ndx.name());
+					for (Index ndx : results)
+					{
+						if (index.engine().equals(ndx.engine()))
+						{
+							throw new DuplicateItemException(index.engine().name() + " index already exists on this table: " + ndx.name());
+						}
+					}
 				}
-			}
+
+				@Override
+				public void onFailure(Throwable t)
+				{
+					throw new StorageException(t);
+				}
+			});
 		}
 	}
 }

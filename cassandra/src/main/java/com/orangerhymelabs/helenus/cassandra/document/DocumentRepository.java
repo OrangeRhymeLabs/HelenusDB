@@ -17,6 +17,7 @@ package com.orangerhymelabs.helenus.cassandra.document;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 import org.bson.BSON;
 
@@ -27,6 +28,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
@@ -75,8 +77,18 @@ extends AbstractCassandraRepository<Document>
 
         public boolean create(Session session, String keyspace, String table, DataTypes idType)
         {
-			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace, table, idType.cassandraType()));
-			return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace, table, idType.cassandraType()));
+			try
+			{
+				return rs.get().wasApplied();
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				// TODO log here
+				e.printStackTrace();
+			}
+			
+			return false;
         }
 	}
 
@@ -188,7 +200,7 @@ extends AbstractCassandraRepository<Document>
 				    document.updatedAt());
 			}
 		}
-		catch (InvalidTypeException e)
+		catch (InvalidTypeException | CodecNotFoundException e)
 		{
 			throw new InvalidIdentifierException(e);
 		}
@@ -214,7 +226,7 @@ extends AbstractCassandraRepository<Document>
 				    document.id());
 			}
 		}
-		catch (InvalidTypeException e)
+		catch (InvalidTypeException | CodecNotFoundException e)
 		{
 			throw new InvalidIdentifierException(e);
 		}
@@ -254,7 +266,7 @@ extends AbstractCassandraRepository<Document>
 			case FLOAT: return row.getFloat(Columns.ID);
 			case INTEGER: return row.getInt(Columns.ID);
 			case TEXT: return row.getString(Columns.ID);
-			case TIMESTAMP: return row.getDate(Columns.ID);
+			case TIMESTAMP: return row.getTimestamp(Columns.ID);
 			case TIMEUUID:
 			case UUID:  return row.getUUID(Columns.ID);
 			default: throw new UnsupportedOperationException("Conversion of ID type: " + table.idType().toString());

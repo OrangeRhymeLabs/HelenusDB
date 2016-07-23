@@ -51,7 +51,7 @@ public class SchemaRegistryTest
 	@Test
 	public void keyspaceShouldExist()
 	{
-		ResultSet rs = CassandraManager.session().execute(String.format("SELECT count(*) FROM system.schema_keyspaces where keyspace_name='%s'", CassandraManager.keyspace()));
+		ResultSet rs = CassandraManager.session().execute(String.format("SELECT count(*) FROM system_schema.keyspaces where keyspace_name='%s'", CassandraManager.keyspace()));
 		assertTrue("Keyspace not created: " + CassandraManager.keyspace(), rs.one().getLong(0) > 0);
 	}
 
@@ -75,7 +75,7 @@ public class SchemaRegistryTest
 
 	private boolean tableExists(String tableName)
     {
-	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system.schema_columnfamilies where keyspace_name='%s' and columnfamily_name='%s'", CassandraManager.keyspace(), tableName));
+	    ResultSet rs = CassandraManager.session().execute(String.format("select count(*) from system_schema.tables where keyspace_name='%s' and table_name='%s'", CassandraManager.keyspace(), tableName));
 		return (rs.one().getLong(0) > 0);
     }
 }

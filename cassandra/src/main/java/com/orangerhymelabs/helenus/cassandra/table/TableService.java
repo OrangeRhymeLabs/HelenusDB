@@ -56,9 +56,9 @@ public class TableService
 		databases.existsAsync(table.database().getIdentifier(), new FutureCallback<Boolean>()
 			{
 				@Override
-                public void onSuccess(Boolean result)
+                public void onSuccess(Boolean successful)
                 {
-					if (!result)
+					if (!successful)
 					{
 						callback.onFailure(new ItemNotFoundException("Database not found: " + table.databaseName()));
 					}
