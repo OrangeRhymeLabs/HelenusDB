@@ -19,6 +19,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -28,6 +31,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
@@ -45,6 +49,8 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
 public class IndexRepository
 extends AbstractCassandraRepository<Index>
 {
+	private static final Logger LOG = LoggerFactory.getLogger(IndexRepository.class);
+
 	private class Tables
 	{
 		static final String BY_ID = "sys_idx";
@@ -90,15 +96,33 @@ extends AbstractCassandraRepository<Index>
 		@Override
 		public boolean drop(Session session, String keyspace)
 		{
-			ResultSet rs = session.execute(String.format(Schema.DROP_TABLE, keyspace));
-			return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(Schema.DROP_TABLE, keyspace));
+			try
+			{
+				return rs.get().wasApplied();
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				LOG.error("Index schema drop failed", e);
+			}
+
+			return false;
 		}
 
 		@Override
 		public boolean create(Session session, String keyspace)
 		{
-			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
-			return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(Schema.CREATE_TABLE, keyspace));
+			try
+			{
+				return rs.get().wasApplied();
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				LOG.error("Index schema create failed", e);
+			}
+
+			return false;
 		}
 	}
 
@@ -138,35 +162,10 @@ extends AbstractCassandraRepository<Index>
 	}
 
 	@Override
-	public void createAsync(Index index, FutureCallback<Index> callback)
+	public ListenableFuture<Index> create(Index index)
 	{
-		try
-		{
-			optionallyCreateViewTable(index);
-			super.createAsync(index, callback);
-		}
-		catch(AlreadyExistsException e)
-		{
-			callback.onFailure(new DuplicateItemException(e));
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(new StorageException(e));
-		}
-	}
-
-	@Override
-	public Index create(Index index)
-	{
-		try
-		{
-			optionallyCreateViewTable(index);
-			return super.create(index);
-		}
-		catch(AlreadyExistsException e)
-		{
-			throw new DuplicateItemException(e);
-		}
+		optionallyCreateViewTable(index);
+		return super.create(index);
 	}
 
 	/**

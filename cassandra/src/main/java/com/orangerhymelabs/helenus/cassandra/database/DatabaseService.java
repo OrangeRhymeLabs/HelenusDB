@@ -16,8 +16,11 @@
 package com.orangerhymelabs.helenus.cassandra.database;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -38,16 +41,27 @@ public class DatabaseService
 
 	public Database create(Database database)
 	{
-		ValidationEngine.validateAndThrow(database);
-		return databases.create(database);
+		try
+		{
+			ValidationEngine.validateAndThrow(database);
+			return databases.create(database).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw (RuntimeException) e.getCause();
+		}
+		catch (InterruptedException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
-	public void createAsync(Database database, FutureCallback<Database> callback)
+	public void create(Database database, FutureCallback<Database> callback)
 	{
 		try
 		{
 			ValidationEngine.validateAndThrow(database);
-			databases.createAsync(database, callback);
+			Futures.addCallback(databases.create(database), callback);
 		}
 		catch(ValidationException e)
 		{
@@ -57,36 +71,69 @@ public class DatabaseService
 
 	public Database read(String name)
 	{
-		return databases.read(new Identifier(name));		
+		try
+		{
+			return databases.read(new Identifier(name)).get();
+		}
+		catch(ExecutionException e)
+		{
+			throw (RuntimeException) e.getCause();
+		}
+		catch (InterruptedException e)
+		{
+			throw new StorageException(e);
+		}		
 	}
 
-	public void readAsync(String name, FutureCallback<Database> callback)
+	public void read(String name, FutureCallback<Database> callback)
 	{
-		databases.readAsync(new Identifier(name), callback);
+		Futures.addCallback(databases.read(new Identifier(name)), callback);
 	}
 
-	public List<Database> readAll()
+	public List<Database> readAll(Object... parms)
 	{
-		return databases.readAll();
+		try
+		{
+			return databases.readAll(parms).get();
+		}
+		catch(ExecutionException e)
+		{
+			throw (RuntimeException) e.getCause();
+		}
+		catch (InterruptedException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
-	public void readAllAsync(FutureCallback<List<Database>> callback)
+	public void readAll(FutureCallback<List<Database>> callback, Object... parms)
 	{
-		databases.readAllAsync(callback);
+		Futures.addCallback(databases.readAll(parms), callback);
 	}
 
 	public Database update(Database database)
 	{
-		ValidationEngine.validateAndThrow(database);
-		return databases.update(database);
+		try
+		{
+			ValidationEngine.validateAndThrow(database);
+			return databases.update(database).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw (RuntimeException) e.getCause();
+		}
+		catch (InterruptedException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
-	public void updateAsync(Database database, FutureCallback<Database> callback)
+	public void update(Database database, FutureCallback<Database> callback)
     {
 		try
 		{
 			ValidationEngine.validateAndThrow(database);
-			databases.updateAsync(database, callback);
+			Futures.addCallback(databases.update(database), callback);
 		}
 		catch(ValidationException e)
 		{
@@ -94,13 +141,24 @@ public class DatabaseService
 		}
     }
 
-	public void delete(String name)
+	public boolean delete(String name)
 	{
-		databases.delete(new Identifier(name));
+		try
+		{
+			return databases.delete(new Identifier(name)).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw (RuntimeException) e.getCause();
+		}
+		catch (InterruptedException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
-	public void deleteAsync(String name, FutureCallback<Database> callback)
+	public void delete(String name, FutureCallback<Boolean> callback)
     {
-		databases.deleteAsync(new Identifier(name), callback);
+		Futures.addCallback(databases.delete(new Identifier(name)), callback);
     }
 }

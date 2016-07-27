@@ -16,9 +16,13 @@
 package com.orangerhymelabs.helenus.cassandra.table;
 
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
@@ -39,6 +43,8 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
 public class TableRepository
 extends AbstractCassandraRepository<Table>
 {
+	private static final Logger LOG = LoggerFactory.getLogger(TableRepository.class);
+
 	private class Tables
 	{
 		static final String BY_ID = "sys_tbl";
@@ -76,15 +82,33 @@ extends AbstractCassandraRepository<Table>
 		@Override
 	    public boolean drop(Session session, String keyspace)
 	    {
-			ResultSet rs = session.execute(String.format(DROP_TABLE, keyspace));
-		    return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(DROP_TABLE, keyspace));
+		    try
+		    {
+				return rs.get().wasApplied();
+			}
+		    catch (InterruptedException | ExecutionException e)
+		    {
+		    	LOG.error("Table schema drop failed", e);
+			}
+
+		    return false;
 	    }
 
 		@Override
 	    public boolean create(Session session, String keyspace)
 	    {
-			ResultSet rs = session.execute(String.format(CREATE_TABLE, keyspace));
-		    return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace));
+		    try
+		    {
+				return rs.get().wasApplied();
+			}
+		    catch (InterruptedException | ExecutionException e)
+		    {
+		    	LOG.error("Table schema create failed", e);
+			}
+
+		    return false;
 	    }
 	}
 

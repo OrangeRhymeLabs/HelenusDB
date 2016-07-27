@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -31,11 +32,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Futures;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
-import com.orangerhymelabs.helenus.cassandra.database.Database;
-import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -76,36 +76,36 @@ public class DatabaseRepositoryTest
 		Database db = new Database();
 		db.name("db1");
 		db.description("a test database");
-		Database createResult = databases.create(db);
+		Database createResult = databases.create(db).get();
 		assertEquals(db, createResult);
 
 		// Read
-		Database result = databases.read(db.getIdentifier());
+		Database result = databases.read(db.getIdentifier()).get();
 		assertEquals(db, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		db.description("an updated test database");
-		Database updateResult = databases.update(db);
+		Database updateResult = databases.update(db).get();
 		assertEquals(db, updateResult);
 
 		// Re-Read
-		Database result2 = databases.read(db.getIdentifier());
+		Database result2 = databases.read(db.getIdentifier()).get();
 		assertEquals(db, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		databases.delete(db.getIdentifier());
+		databases.delete(db.getIdentifier()).get();
 
 		// Re-Read
 		try
 		{
-			databases.read(db.getIdentifier());
+			databases.read(db.getIdentifier()).get();
 		}
-		catch (ItemNotFoundException e)
+		catch (ExecutionException e)
 		{
 			return;
 		}
@@ -124,27 +124,27 @@ public class DatabaseRepositoryTest
 
 		// Shouldn't Exist
 		TestCallback<Boolean> existCallback = new TestCallback<Boolean>();
-		databases.existsAsync(db.getIdentifier(), existCallback);
+		Futures.addCallback(databases.exists(db.getIdentifier()), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertFalse(existCallback.entity());
 
 		// Create
-		databases.createAsync(db, callback);
+		Futures.addCallback(databases.create(db), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		databases.readAsync(db.getIdentifier(), callback);
+		Futures.addCallback(databases.read(db.getIdentifier()), callback);
 		waitFor(callback);
 
 		assertEquals(db, callback.entity());
 
 		// Should Also Exist
 		existCallback.clear();
-		databases.existsAsync(db.getIdentifier(), existCallback);
+		Futures.addCallback(databases.exists(db.getIdentifier()), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertTrue(existCallback.entity());
@@ -152,14 +152,14 @@ public class DatabaseRepositoryTest
 		// Update
 		callback.clear();
 		db.description("an updated test database");
-		databases.updateAsync(db, callback);
+		Futures.addCallback(databases.update(db), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(db.getIdentifier(), callback);
+		Futures.addCallback(databases.read(db.getIdentifier()), callback);
 		waitFor(callback);
 
 		Database result2 = callback.entity();
@@ -169,15 +169,15 @@ public class DatabaseRepositoryTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		databases.deleteAsync(db.getIdentifier(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
+		Futures.addCallback(databases.delete(db.getIdentifier()), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(db.getIdentifier(), callback);
+		Futures.addCallback(databases.read(db.getIdentifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -186,14 +186,22 @@ public class DatabaseRepositoryTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateDatabaseSynchronously()
+	throws Throwable
 	{
 		// Create
 		Database entity = new Database();
 		entity.name("db3");
-		Database createResult = databases.create(entity);
+		Database createResult = databases.create(entity).get();
 		assertEquals(entity, createResult);
 
-		databases.create(entity);
+		try
+		{
+			databases.create(entity).get();
+		}
+		catch(ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -205,13 +213,14 @@ public class DatabaseRepositoryTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
-		databases.createAsync(entity, callback);
+		Futures.addCallback(databases.create(entity), callback);
 		waitFor(callback);
 
-		assertTrue(callback.isEmpty());
+		assertNotNull(callback.entity());
+		assertNull(callback.throwable());
 
 		// Create Duplicate
-		databases.createAsync(entity, callback);
+		Futures.addCallback(databases.create(entity), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -220,8 +229,16 @@ public class DatabaseRepositoryTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentDatabaseSynchronously()
+	throws Throwable
 	{
-		databases.read(new Identifier("doesn't exist"));
+		try
+		{
+			databases.read(new Identifier("doesn't exist")).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -229,7 +246,7 @@ public class DatabaseRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Database> callback = new TestCallback<Database>();
-		databases.readAsync(new Identifier("doesn't exist"), callback);
+		Futures.addCallback(databases.read(new Identifier("doesn't exist")), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -238,10 +255,19 @@ public class DatabaseRepositoryTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
+	throws Throwable
 	{
 		Database entity = new Database();
 		entity.name("doesn't exist");
-		databases.update(entity);
+
+		try
+		{
+			databases.update(entity).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -251,7 +277,7 @@ public class DatabaseRepositoryTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesn't exist");
-		databases.updateAsync(entity, callback);
+		Futures.addCallback(databases.update(entity), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -29,14 +28,12 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
-import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
@@ -86,59 +83,24 @@ public abstract class AbstractCassandraRepository<T>
 		return deleteStmt;
 	}
 
-	public void createAsync(T entity, FutureCallback<T> callback)
+	public ListenableFuture<T> create(T entity)
 	{
-		ResultSetFuture future = null;
-		
-		try
-		{
-			future = _create(entity);
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(e);
-			return;
-		}
-
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		ListenableFuture<ResultSet> future = _create(entity);
+		return Futures.transform(future, new Function<ResultSet, T>()
 		{
 			@Override
-			public void onSuccess(ResultSet result)
+			public T apply(ResultSet result)
 			{
-				if (!result.wasApplied())
+				if (result.wasApplied())
 				{
-					callback.onFailure(new DuplicateItemException(entity.toString()));
+					return entity;
 				}
 
-				callback.onSuccess(null);
+				throw new DuplicateItemException(entity.toString());
 			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.newDirectExecutorService());
+		});
 	}
 
-	public T create(T entity)
-	{
-		try
-		{
-			ResultSet rs = _create(entity).get();
-
-			if (rs.wasApplied())
-			{
-				return entity;
-			}
-
-			throw new DuplicateItemException(entity.toString());
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
-	}
 
 	protected ResultSetFuture _create(T entity)
 	{
@@ -147,58 +109,22 @@ public abstract class AbstractCassandraRepository<T>
 		return session.executeAsync(bs);
 	}
 
-	public void updateAsync(T entity, FutureCallback<T> callback)
+	public ListenableFuture<T> update(T entity)
 	{
-		ResultSetFuture future = null;
-		
-		try
-		{
-			future = _update(entity);
-		}
-		catch (Exception e)
-		{
-			callback.onFailure(e);
-			return;
-		}
-
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		ListenableFuture<ResultSet> future = _update(entity);
+		return Futures.transform(future, new Function<ResultSet, T>()
 		{
 			@Override
-			public void onSuccess(ResultSet result)
+			public T apply(ResultSet result)
 			{
-				if (!result.wasApplied())
+				if (result.wasApplied())
 				{
-					callback.onFailure(new ItemNotFoundException(entity.toString()));
+					return entity;
 				}
 
-				callback.onSuccess(null);
+				throw new ItemNotFoundException(entity.toString());
 			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.newDirectExecutorService());
-	}
-
-	public T update(T entity)
-	{
-		try
-		{
-			ResultSet rs = _update(entity).get();
-
-			if (rs.wasApplied())
-			{
-				return entity;
-			}
-
-			throw new ItemNotFoundException(entity.toString());
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
+		});		
 	}
 
 	protected ResultSetFuture _update(T entity)
@@ -208,40 +134,22 @@ public abstract class AbstractCassandraRepository<T>
 		return session.executeAsync(bs);
 	}
 
-	public void deleteAsync(Identifier id, FutureCallback<T> callback)
+	public ListenableFuture<Boolean> delete(Identifier id)
 	{
-		ResultSetFuture future = _delete(id);
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		ListenableFuture<ResultSet> future = _delete(id);
+		return Futures.transform(future, new Function<ResultSet, Boolean>()
 		{
 			@Override
-			public void onSuccess(ResultSet result)
+			public Boolean apply(ResultSet result)
 			{
 				if (!result.wasApplied())
 				{
-					callback.onFailure(new ItemNotFoundException(id.toString()));
+					throw new ItemNotFoundException(id.toString());
 				}
 
-				callback.onSuccess(null);
+				return true;
 			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.newDirectExecutorService());
-	}
-
-	public void delete(Identifier id)
-	{
-		try
-		{
-			_delete(id).get();
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
+		});
 	}
 
 	protected ResultSetFuture _delete(Identifier id)
@@ -251,60 +159,22 @@ public abstract class AbstractCassandraRepository<T>
 		return session.executeAsync(bs);
 	}
 
-	public void readAsync(Identifier id, FutureCallback<T> callback)
+	public ListenableFuture<T> read(Identifier id)
 	{
-		ResultSetFuture future;
-
-		try
-		{
-			future = _read(id);
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(e);
-			return;
-		}
-
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		ListenableFuture<ResultSet> rs = _read(id);
+		return Futures.transform(rs, new Function<ResultSet, T>()
 		{
 			@Override
-			public void onSuccess(ResultSet result)
+			public T apply(ResultSet result)
 			{
 				if (result.isExhausted())
 				{
-					callback.onFailure(new ItemNotFoundException(id.toString()));
+					throw new ItemNotFoundException(id.toString());
 				}
 
-				T entity = marshalRow(result.one());
-				callback.onSuccess(entity);
+				return marshalRow(result.one());
 			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.newDirectExecutorService());
-	}
-
-	public T read(Identifier id)
-	{
-		try
-		{
-			ResultSet rs = _read(id).get();
-
-			if (rs.isExhausted())
-			{
-				throw new ItemNotFoundException(id.toString());
-			}
-
-			T entity = marshalRow(rs.one());
-			return entity;
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
+		});
 	}
 
 	private ResultSetFuture _read(Identifier id)
@@ -314,36 +184,17 @@ public abstract class AbstractCassandraRepository<T>
 		return session.executeAsync(bs);
 	}
 
-	public void readAllAsync(FutureCallback<List<T>> callback, Object... parms)
+	public ListenableFuture<List<T>> readAll(Object... parms)
 	{
-		ResultSetFuture future = _readAll(parms);
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		ListenableFuture<ResultSet> future = _readAll(parms);
+		return Futures.transform(future, new Function<ResultSet, List<T>>()
 		{
 			@Override
-			public void onSuccess(ResultSet result)
+			public List<T> apply(ResultSet input)
 			{
-				callback.onSuccess(marshalAll(result));
+				return marshalAll(input);
 			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.newDirectExecutorService());
-	}
-
-	public List<T> readAll(Object... parms)
-	{
-		try
-		{
-			ResultSet rs = _readAll(parms).get();
-			return marshalAll(rs);
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
+		});
 	}
 
 	private ResultSetFuture _readAll(Object... parms)
@@ -371,68 +222,18 @@ public abstract class AbstractCassandraRepository<T>
 	 * @param callback a FutureCallback to notify for each ID in the ids array.
 	 * @param ids the partition keys (identifiers) to select.
 	 */
-	public void readInAsync(FutureCallback<T> callback, Identifier... ids)
+	public ListenableFuture<List<T>> readIn(Identifier... ids)
 	{
 		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
-
-		for (ListenableFuture<ResultSet> future : futures)
-		{
-			Futures.addCallback(future,  new FutureCallback<ResultSet>()
-				{
-					@Override
-					public void onSuccess(ResultSet result)
-					{
-						if (!result.isExhausted())
-						{
-							callback.onSuccess(marshalRow(result.one()));
-						}
-					}
-
-					@Override
-					public void onFailure(Throwable t)
-					{
-						callback.onFailure(t);
-					}
-				}, MoreExecutors.newDirectExecutorService()
-			);
-		}
-	}
-
-	/**
-	 * Read all given identifiers, returning them as a List. No order is guaranteed in the resulting list.
-	 * 
-	 * Leverages the token-awareness of the driver to optimally query each node directly instead of invoking a
-	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
-	 * directly and collates the results client-side.
-	 * 
-	 * @param ids the partition keys (identifiers) to select.
-	 * @return a list of entities identified by the identifiers given in the 'ids' parameter.
-	 */
-	public List<T> readIn(Identifier... ids)
-	{
-		if (ids == null) return Collections.emptyList();
-
-		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
-		List<T> results = new ArrayList<T>(futures.size());
-
-		try
-		{
-			for (ListenableFuture<ResultSet> future : futures)
-			{
-				ResultSet rs = future.get();
-
-				if (!rs.isExhausted())
-				{
-					results.add(marshalRow(rs.one()));
-				}
-			}
-
-			return results;
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
+		return Futures.transform(input, function)
+//		return Futures.transform(futures, new Function<ListenableFuture<ResultSet>, List<T>>()
+//		{
+//			@Override
+//			public List<T> apply(ListenableFuture<ResultSet> input)
+//			{
+//				return marshalAll(input);
+//			}
+//		});
 	}
 
 	/**
@@ -443,9 +244,9 @@ public abstract class AbstractCassandraRepository<T>
 	 * @param ids the partition keys (identifiers) to select.
 	 * @return a List of ListenableFuture instances for each underlying ResultSet--one for each ID.
 	 */
-	private List<ListenableFuture<ResultSet>> _readIn(Identifier... ids)
+	private  List<ListenableFuture<ResultSet>> _readIn(Identifier... ids)
 	{
-		if (ids == null) return null;
+		if (ids == null) return Collections.emptyList();
 
 		List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>(ids.length);
 		BoundStatement bs = new BoundStatement(readStmt);

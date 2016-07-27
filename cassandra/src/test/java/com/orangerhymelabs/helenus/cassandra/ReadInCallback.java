@@ -16,7 +16,11 @@
 package com.orangerhymelabs.helenus.cassandra;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 import com.google.common.util.concurrent.FutureCallback;
 
@@ -28,7 +32,7 @@ import com.google.common.util.concurrent.FutureCallback;
 public class ReadInCallback<T>
 implements FutureCallback<T>
 {
-	private List<T> entities = new ArrayList<T>();
+	private ConcurrentLinkedQueue<T> entities = new ConcurrentLinkedQueue<T>();
 	private Throwable throwable;
 	private int threshold = 0;
 	private int count = 0;
@@ -79,7 +83,7 @@ implements FutureCallback<T>
 
 	public List<T> entities()
 	{
-		return entities;
+		return new ArrayList<T>(entities);
 	}
 
 	public Throwable throwable()

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -30,11 +31,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.ReadInCallback;
-import com.orangerhymelabs.helenus.cassandra.database.Database;
-import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
@@ -74,7 +75,7 @@ public class DatabaseRepositoryReadInTest
 
 	@Test
 	public void shouldReadIn()
-	throws InterruptedException
+	throws Exception
 	{
 		populateDatabase("dba", 10);
 		shouldReturnListSynchronously();
@@ -93,19 +94,22 @@ public class DatabaseRepositoryReadInTest
     }
 
 	private void shouldReturnListSynchronously()
+	throws InterruptedException, ExecutionException
     {
-		List<Database> list = databases.readIn(IDS);
+		List<Database> list = databases.readIn(IDS).get();
 		assertDatabases(list);
     }
 
 	private void shouldReturnListAsynchronously()
-	throws InterruptedException
+	throws Exception
     {
-		ReadInCallback<Database> callback = new ReadInCallback<Database>(5); // 5 forces a timeout, but checks that 'dba21' doesn't have a value in the list.
-		databases.readInAsync(callback, IDS);
-		waitFor(callback);
+//		ReadInCallback<Database> callback = new ReadInCallback<>(5); // 5 forces a timeout, but checks that 'dba21' doesn't have a value in the list.
+		ListenableFuture<List<Database>> dbs = databases.readIn(IDS);
+//		Futures.addCallback(dbs, callback);
 
-		assertDatabases(callback.entities());
+		while(!dbs.isDone());
+
+		assertDatabases(dbs.get());
     }
 
 	private void assertDatabases(List<Database> dbs)

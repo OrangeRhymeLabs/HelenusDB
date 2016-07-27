@@ -20,11 +20,12 @@ import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import org.bson.BSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -46,6 +47,8 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
 public class DocumentRepository
 extends AbstractCassandraRepository<Document>
 {
+	private static final Logger LOG = LoggerFactory.getLogger(DocumentRepository.class);
+
 	private class Columns
 	{
 		static final String ID = "id";
@@ -71,8 +74,17 @@ extends AbstractCassandraRepository<Document>
 
 		public boolean drop(Session session, String keyspace, String table)
         {
-			ResultSet rs = session.execute(String.format(DROP_TABLE, keyspace, table));
-	        return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(DROP_TABLE, keyspace, table));
+	        try
+	        {
+				return rs.get().wasApplied();
+			}
+	        catch (InterruptedException | ExecutionException e)
+	        {
+	        	LOG.error("Document schema drop failed", e);
+			}
+
+	        return false;
         }
 
         public boolean create(Session session, String keyspace, String table, DataTypes idType)
@@ -84,8 +96,7 @@ extends AbstractCassandraRepository<Document>
 			}
 			catch (InterruptedException | ExecutionException e)
 			{
-				// TODO log here
-				e.printStackTrace();
+				LOG.error("Document schema create failed", e);
 			}
 			
 			return false;
@@ -151,7 +162,8 @@ extends AbstractCassandraRepository<Document>
 		if (table.hasIndexes())
 		{
 			// TODO: make this lookup non-blocking (asynchronous).
-			Document previous = read(document.getIdentifier());
+//			Document previous = read(document.getIdentifier()).get();
+			read(document.getIdentifier());
 			batch.addAll(iTableStmtFactory.createIndexEntryUpdateStatements(document, previous));
 		}
 

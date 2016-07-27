@@ -18,18 +18,20 @@ package com.orangerhymelabs.helenus.cassandra.database;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
-import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
@@ -39,6 +41,8 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
 public class DatabaseRepository
 extends AbstractCassandraRepository<Database>
 {
+	private static final Logger LOG = LoggerFactory.getLogger(DatabaseRepository.class);
+
 	private class Tables
 	{
 
@@ -69,15 +73,33 @@ extends AbstractCassandraRepository<Database>
 		@Override
 		public boolean drop(Session session, String keyspace)
 		{
-			ResultSet rs = session.execute(String.format(Schema.DROP_TABLE, keyspace));
-			return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(Schema.DROP_TABLE, keyspace));
+			try
+			{
+				return rs.get().wasApplied();
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				LOG.error("Database schema drop failed", e);
+			}
+
+			return false;
 		}
 
 		@Override
 		public boolean create(Session session, String keyspace)
 		{
-			ResultSet rs = session.execute(String.format(Schema.CREATE_TABLE, keyspace));
-			return rs.wasApplied();
+			ResultSetFuture rs = session.executeAsync(String.format(Schema.CREATE_TABLE, keyspace));
+			try
+			{
+				return rs.get().wasApplied();
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				LOG.error("Database schema create failed", e);
+			}
+
+			return false;
 		}
 	}
 
@@ -97,40 +119,20 @@ extends AbstractCassandraRepository<Database>
 		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
 	}
 
-	public boolean exists(Identifier id)
+	public ListenableFuture<Boolean> exists(Identifier id)
 	{
-		ResultSet rs;
-        try
-        {
-	        rs = _exists(id).get();
-	        return (rs.one().getLong(0) > 0);
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-        	throw new StorageException(e);
-        }
-	}
-
-	public void existsAsync(Identifier id, FutureCallback<Boolean> callback)
-    {
-		ResultSetFuture future = _exists(id);
-		Futures.addCallback(future, new FutureCallback<ResultSet>()
+		ListenableFuture<ResultSet> future = _exists(id);
+		return Futures.transform(future, new Function<ResultSet, Boolean>()
 		{
 			@Override
-			public void onSuccess(ResultSet result)
+			public Boolean apply(ResultSet result)
 			{
-				callback.onSuccess(result.one().getLong(0) > 0);
+				return result.one().getLong(0) > 0;
 			}
+		});
+	}
 
-			@Override
-			public void onFailure(Throwable t)
-			{
-				callback.onFailure(t);
-			}
-		}, MoreExecutors.newDirectExecutorService());
-    }
-
-	private ResultSetFuture _exists(Identifier id)
+	private ListenableFuture<ResultSet> _exists(Identifier id)
 	{
 		BoundStatement bs = new BoundStatement(existsStmt);
 		bindIdentity(bs, id);
@@ -146,23 +148,23 @@ extends AbstractCassandraRepository<Database>
 	@Override
 	protected String buildUpdateStatement()
 	{
-		return String.format(UPDATE_CQL, keyspace(), Tables.BY_ID);
+		return buildStatement(UPDATE_CQL);
 	}
 
 	@Override
 	protected String buildReadStatement()
 	{
-		return String.format(READ_CQL, keyspace(), Tables.BY_ID);
+		return buildStatement(READ_CQL);
 	}
 
 	protected String buildReadAllStatement()
 	{
-		return String.format(READ_ALL_CQL, keyspace(), Tables.BY_ID);
+		return buildStatement(READ_ALL_CQL);
 	}
 
 	protected String buildDeleteStatement()
 	{
-		return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
+		return buildStatement(DELETE_CQL);
 	}
 
 	@Override
@@ -199,5 +201,10 @@ extends AbstractCassandraRepository<Database>
 		n.createdAt(row.getTimestamp(Columns.CREATED_AT));
 		n.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return n;
+	}
+
+	private String buildStatement(String cql)
+	{
+		return String.format(cql, keyspace(), Tables.BY_ID);
 	}
 }

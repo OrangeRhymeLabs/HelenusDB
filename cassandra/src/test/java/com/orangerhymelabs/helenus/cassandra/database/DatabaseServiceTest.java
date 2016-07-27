@@ -33,9 +33,6 @@ import org.junit.Test;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
-import com.orangerhymelabs.helenus.cassandra.database.Database;
-import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
-import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.strategicgains.syntaxe.ValidationException;
@@ -124,14 +121,14 @@ public class DatabaseServiceTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
-		databases.createAsync(entity, callback);
+		databases.create(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		databases.readAsync(entity.name(), callback);
+		databases.read(entity.name(), callback);
 		waitFor(callback);
 
 		assertEquals(entity, callback.entity());
@@ -139,14 +136,14 @@ public class DatabaseServiceTest
 		// Update
 		callback.clear();
 		entity.description("an updated test database");
-		databases.updateAsync(entity, callback);
+		databases.update(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(entity.name(), callback);
+		databases.read(entity.name(), callback);
 		waitFor(callback);
 
 		Database result2 = callback.entity();
@@ -156,15 +153,16 @@ public class DatabaseServiceTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		databases.deleteAsync(entity.name(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
+		databases.delete(entity.name(), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertNull(deleteCallback.throwable());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		databases.readAsync(entity.name(), callback);
+		databases.read(entity.name(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -192,13 +190,14 @@ public class DatabaseServiceTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
-		databases.createAsync(entity, callback);
+		databases.create(entity, callback);
 		waitFor(callback);
 
-		assertTrue(callback.isEmpty());
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
 
 		// Create Duplicate
-		databases.createAsync(entity, callback);
+		databases.create(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -210,7 +209,7 @@ public class DatabaseServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Database> callback = new TestCallback<Database>();
-		databases.readAsync("doesn't exist", callback);
+		databases.read("doesn't exist", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -230,7 +229,7 @@ public class DatabaseServiceTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesnt_exist");
-		databases.updateAsync(entity, callback);
+		databases.update(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -252,7 +251,7 @@ public class DatabaseServiceTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesn't exist");
-		databases.updateAsync(entity, callback);
+		databases.update(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -260,7 +259,7 @@ public class DatabaseServiceTest
 
 		// Should be same for create.
 		callback.clear();
-		databases.createAsync(entity, callback);
+		databases.create(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
