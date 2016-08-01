@@ -225,6 +225,7 @@ public abstract class AbstractCassandraRepository<T>
 	public List<ListenableFuture<T>> readIn(Identifier... ids)
 	{
 		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
+
 		List<ListenableFuture<T>> results = new ArrayList<>(ids.length);
 
 		for (ListenableFuture<ResultSet> future : futures)

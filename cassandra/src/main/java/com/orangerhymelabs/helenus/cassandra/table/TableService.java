@@ -17,7 +17,10 @@ package com.orangerhymelabs.helenus.cassandra.table;
 
 import java.util.List;
 
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -42,16 +45,32 @@ public class TableService
 
 	public Table create(Table table)
 	{
-		if (!databases.exists(table.database().getIdentifier()))
+		databases.exists(table.database().getIdentifier());
+
+		Futures.transform(databases.exists(table.database().getIdentifier()), new Function<Boolean, Table>()
+		{
+			@Override
+			public Table apply(Boolean input)
+			{
+				if (input)
+				{
+					ValidationEngine.validateAndThrow(table);
+					return tables.create(table).get();
+				}
+				// TODO Auto-generated method stub
+				return null;
+			}
+		});
+		if (!databases.exists(table.database().getIdentifier()).get())
 		{
 			throw new ItemNotFoundException("Database not found: " + table.databaseName());
 		}
 
 		ValidationEngine.validateAndThrow(table);
-		return tables.create(table);
+		return tables.create(table).get();
 	}
 
-	public void createAsync(Table table, FutureCallback<Table> callback)
+	public void create(Table table, FutureCallback<Table> callback)
 	{
 		databases.existsAsync(table.database().getIdentifier(), new FutureCallback<Boolean>()
 			{

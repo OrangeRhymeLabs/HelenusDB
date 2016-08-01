@@ -27,6 +27,8 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
@@ -127,60 +129,17 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	@Override
-	public void createAsync(Table table, FutureCallback<Table> callback)
+	public ListenableFuture<Table> create(Table table)
 	{
-		try
-		{
-			createDocumentSchema(table);
-			super.createAsync(table, callback);
-		}
-		catch(AlreadyExistsException e)
-		{
-			callback.onFailure(new DuplicateItemException(e));
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(new StorageException(e));
-		}
+		createDocumentSchema(table);
+		return super.create(table);
 	}
 
 	@Override
-	public Table create(Table table)
-	{
-		try
-		{
-			createDocumentSchema(table);
-			return super.create(table);
-		}
-		catch(AlreadyExistsException e)
-		{
-			throw new DuplicateItemException(e);
-		}
-	}
-
-	@Override
-	public void delete(Identifier id)
+	public ListenableFuture<Boolean> delete(Identifier id)
 	{
 		dropDocumentSchema(id);
-		super.delete(id);
-	}
-
-	@Override
-	public void deleteAsync(Identifier id, FutureCallback<Table> callback)
-	{
-		try
-		{
-			dropDocumentSchema(id);
-			super.deleteAsync(id, callback);
-		}
-		catch(AlreadyExistsException e)
-		{
-			callback.onFailure(new ItemNotFoundException(e));
-		}
-		catch(Exception e)
-		{
-			callback.onFailure(new StorageException(e));
-		}
+		return super.delete(id);
 	}
 
 	@Override
