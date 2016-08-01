@@ -101,7 +101,7 @@ public class DatabaseRepositoryReadInTest
 	private void shouldReturnListAsynchronously()
 	throws InterruptedException
     {
-		ReadInCallback<Database> callback = new ReadInCallback<Database>(5); // 5 forces a timeout, but checks that 'dba21' doesn't have a value in the list.
+		ReadInCallback<Database> callback = new ReadInCallback<Database>(IDS.length);
 		databases.readInAsync(callback, IDS);
 		waitFor(callback);
 
