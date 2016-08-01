@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -31,7 +32,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
@@ -78,38 +78,38 @@ public class DatabaseRepositoryReadInTest
 	throws Exception
 	{
 		populateDatabase("dba", 10);
-		shouldReturnListSynchronously();
 		shouldReturnListAsynchronously();
 	}
 
 	private void populateDatabase(String prefix, int count)
+	throws InterruptedException, ExecutionException
     {
 		Database db = new Database();
 
 		for (int i = 1; i <= count; i++)
 		{
 			db.name(prefix + i);
-			databases.create(db);
+			databases.create(db).get();
 		}
-    }
-
-	private void shouldReturnListSynchronously()
-	throws InterruptedException, ExecutionException
-    {
-		List<Database> list = databases.readIn(IDS).get();
-		assertDatabases(list);
     }
 
 	private void shouldReturnListAsynchronously()
 	throws Exception
     {
-//		ReadInCallback<Database> callback = new ReadInCallback<>(5); // 5 forces a timeout, but checks that 'dba21' doesn't have a value in the list.
-		ListenableFuture<List<Database>> dbs = databases.readIn(IDS);
-//		Futures.addCallback(dbs, callback);
+		List<ListenableFuture<Database>> dbs = databases.readIn(IDS);
+		List<Database> list = new ArrayList<>(dbs.size());
 
-		while(!dbs.isDone());
+		for(ListenableFuture<Database> db : dbs)
+		{
+			Database d = db.get();
 
-		assertDatabases(dbs.get());
+			if (d != null)
+			{
+				list.add(d);
+			}
+		}
+
+		assertDatabases(list);
     }
 
 	private void assertDatabases(List<Database> dbs)
@@ -130,14 +130,5 @@ public class DatabaseRepositoryReadInTest
 		assertEquals("dba3", dbs.get(1).name());
 		assertEquals("dba5", dbs.get(2).name());
 		assertEquals("dba7", dbs.get(3).name());
-    }
-
-	private void waitFor(ReadInCallback<Database> callback)
-	throws InterruptedException
-    {
-		synchronized(callback)
-		{
-			callback.wait(CALLBACK_TIMEOUT);
-		}
     }
 }

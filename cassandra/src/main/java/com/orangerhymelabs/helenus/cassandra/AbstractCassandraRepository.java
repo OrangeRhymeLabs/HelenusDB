@@ -222,18 +222,29 @@ public abstract class AbstractCassandraRepository<T>
 	 * @param callback a FutureCallback to notify for each ID in the ids array.
 	 * @param ids the partition keys (identifiers) to select.
 	 */
-	public ListenableFuture<List<T>> readIn(Identifier... ids)
+	public List<ListenableFuture<T>> readIn(Identifier... ids)
 	{
 		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
-		return Futures.transform(input, function)
-//		return Futures.transform(futures, new Function<ListenableFuture<ResultSet>, List<T>>()
-//		{
-//			@Override
-//			public List<T> apply(ListenableFuture<ResultSet> input)
-//			{
-//				return marshalAll(input);
-//			}
-//		});
+		List<ListenableFuture<T>> results = new ArrayList<>(ids.length);
+
+		for (ListenableFuture<ResultSet> future : futures)
+		{
+			results.add(Futures.transform(future, new Function<ResultSet, T>()
+			{
+				@Override
+				public T apply(ResultSet input)
+				{
+					if (!input.isExhausted())
+					{
+						return marshalRow(input.one());
+					}
+
+					return null;
+				}
+			}));
+		}
+
+		return results;
 	}
 
 	/**
