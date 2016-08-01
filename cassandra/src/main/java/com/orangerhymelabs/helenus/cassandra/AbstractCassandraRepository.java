@@ -249,10 +249,10 @@ public abstract class AbstractCassandraRepository<T>
 		if (ids == null) return Collections.emptyList();
 
 		List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>(ids.length);
-		BoundStatement bs = new BoundStatement(readStmt);
 
 		for (Identifier id : ids)
 		{
+			BoundStatement bs = new BoundStatement(readStmt);
 			bindIdentity(bs, id);
 			futures.add(session.executeAsync(bs));
 		}
