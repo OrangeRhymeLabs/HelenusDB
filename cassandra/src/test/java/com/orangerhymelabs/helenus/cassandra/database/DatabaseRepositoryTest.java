@@ -107,7 +107,7 @@ public class DatabaseRepositoryTest
 		}
 		catch (ExecutionException e)
 		{
-			return;
+			if (ItemNotFoundException.class.equals(e.getCause().getClass())) return;
 		}
 
 		fail("Database not deleted: " + db.getIdentifier().toString());

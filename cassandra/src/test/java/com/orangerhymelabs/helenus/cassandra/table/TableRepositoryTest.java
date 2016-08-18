@@ -114,11 +114,11 @@ public class TableRepositoryTest
 		// Re-Read table
 		try
 		{
-			tables.read(table.getIdentifier());
+			tables.read(table.getIdentifier()).get();
 		}
-		catch (ItemNotFoundException e)
+		catch (ExecutionException e)
 		{
-			return;
+			if (ItemNotFoundException.class.equals(e.getCause().getClass())) return;
 		}
 
 		fail("Table not deleted: " + table.getIdentifier().toString());
@@ -191,7 +191,7 @@ public class TableRepositoryTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
-	throws InterruptedException, ExecutionException
+	throws Throwable
 	{
 		// Create
 		Table table = new Table();
@@ -200,7 +200,14 @@ public class TableRepositoryTest
 		Table createResult = tables.create(table).get();
 		assertEquals(table, createResult);
 
-		tables.create(table);
+		try
+		{
+			tables.create(table).get();
+		}
+		catch(ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -216,7 +223,8 @@ public class TableRepositoryTest
 		Futures.addCallback(tables.create(table), callback);
 		waitFor(callback);
 
-		assertTrue(callback.isEmpty());
+		assertNotNull(callback.entity());
+		assertNull(callback.throwable());
 
 		// Create Duplicate
 		Futures.addCallback(tables.create(table), callback);
@@ -264,8 +272,16 @@ public class TableRepositoryTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentSynchronously()
+	throws Throwable
 	{
-		tables.read(new Identifier("db5", "doesn't exist"));
+		try
+		{
+			tables.read(new Identifier("db5", "doesn't exist")).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -282,12 +298,20 @@ public class TableRepositoryTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentSynchronously()
-	throws InterruptedException, ExecutionException
+	throws Throwable
 	{
 		Table table = new Table();
 		table.database("db7");
 		table.name("doesn't exist");
-		tables.update(table).get();
+
+		try
+		{
+			tables.update(table).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
