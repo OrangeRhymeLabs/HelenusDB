@@ -20,12 +20,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -33,15 +30,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.util.concurrent.Futures;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
-import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
-import com.orangerhymelabs.helenus.cassandra.table.TableService;
+import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.strategicgains.syntaxe.ValidationException;
@@ -60,7 +54,7 @@ public class TableServiceTest
 
 	@BeforeClass
 	public static void beforeClass()
-	throws ConfigurationException, TTransportException, IOException, InterruptedException
+	throws ConfigurationException, TTransportException, IOException, InterruptedException, ExecutionException
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
@@ -69,63 +63,18 @@ public class TableServiceTest
 		new DatabaseRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		TableRepository tableRepository = new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
 		DatabaseRepository databaseRepository = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
-		tables = new TableService(databaseRepository, tableRepository);
+		DatabaseService databaseService = new DatabaseService(databaseRepository);
+		tables = new TableService(databaseService, tableRepository);
 
 		Database db = new Database();
 		db.name(DATABASE);
-		databaseRepository.create(db);
+		databaseRepository.create(db).get();
 	}
 
 	@AfterClass
 	public static void afterClass()
 	{
 		keyspace.drop(CassandraManager.session(), CassandraManager.keyspace());		
-	}
-
-	@Test
-	public void shouldCRUDSynchronously()
-	throws Exception
-	{
-		// Create
-		Table entity = new Table();
-		entity.name("table1");
-		entity.database(DATABASE);
-		entity.description("a test table");
-		Table createResult = tables.create(entity);
-		assertEquals(entity, createResult);
-
-		// Read
-		Table result = tables.read(entity.databaseName(), entity.name());
-		assertEquals(entity, result);
-		assertNotNull(result.createdAt());
-		assertNotNull(result.updatedAt());
-
-		// Update
-		entity.description("an updated test table");
-		Table updateResult = tables.update(entity);
-		assertEquals(entity, updateResult);
-
-		// Re-Read
-		Table result2 = tables.read(entity.databaseName(), entity.name());
-		assertEquals(entity, result2);
-		assertNotEquals(result2.createdAt(), result2.updatedAt());
-		assertNotNull(result2.createdAt());
-		assertNotNull(result2.updatedAt());
-
-		// Delete
-		tables.delete(entity.databaseName(), entity.name());
-
-		// Re-Read
-		try
-		{
-			tables.read(entity.databaseName(), entity.name());
-		}
-		catch (ItemNotFoundException e)
-		{
-			return;
-		}
-
-		fail("Table not deleted: " + entity.getIdentifier().toString());
 	}
 
 	@Test
@@ -139,14 +88,14 @@ public class TableServiceTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.createAsync(entity, callback);
+		tables.create(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		tables.readAsync(entity.databaseName(), entity.name(), callback);
+		tables.read(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		assertEquals(entity, callback.entity());
@@ -154,14 +103,14 @@ public class TableServiceTest
 		// Update
 		callback.clear();
 		entity.description("an updated test table");
-		tables.updateAsync(entity, callback);
+		tables.update(entity, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(entity.databaseName(), entity.name(), callback);
+		tables.read(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		Table result2 = callback.entity();
@@ -171,32 +120,19 @@ public class TableServiceTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		tables.deleteAsync(entity.databaseName(), entity.name(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<>();
+		tables.delete(entity.databaseName(), entity.name(), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(entity.databaseName(), entity.name(), callback);
+		tables.read(entity.databaseName(), entity.name(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
-	}
-
-	@Test(expected=DuplicateItemException.class)
-	public void shouldThrowOnDuplicateSynchronously()
-	{
-		// Create
-		Table entity = new Table();
-		entity.name("table3");
-		entity.database(DATABASE);
-		Table createResult = tables.create(entity);
-		assertEquals(entity, createResult);
-
-		tables.create(entity);
 	}
 
 	@Test
@@ -209,29 +145,18 @@ public class TableServiceTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.createAsync(entity, callback);
+		tables.create(entity, callback);
 		waitFor(callback);
 
-		assertTrue(callback.isEmpty());
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
 
 		// Create Duplicate
-		tables.createAsync(entity, callback);
+		tables.create(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
-	}
-
-	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnReadNonExistentTableSynchronously()
-	{
-		tables.read(DATABASE, "doesn't exist");
-	}
-
-	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnReadNonExistentDatabaseSynchronously()
-	{
-		tables.read("db9", "doesn't matter");
 	}
 
 	@Test
@@ -240,7 +165,7 @@ public class TableServiceTest
 	{
 		// Table doesn't exist
 		TestCallback<Table> callback = new TestCallback<Table>();
-		tables.readAsync(DATABASE, "doesn't exist", callback);
+		tables.read(DATABASE, "doesn't exist", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -248,29 +173,11 @@ public class TableServiceTest
 
 		// Database name doesn't exist
 		callback.clear();
-		tables.readAsync("db9", "doesn't matter", callback);
+		tables.read("db9", "doesn't matter", callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
-	}
-
-	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnUpdateNonExistentTableSynchronously()
-	{
-		Table entity = new Table();
-		entity.database(DATABASE);
-		entity.name("doesnt_exist");
-		tables.update(entity);
-	}
-
-	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnUpdateNonExistentDatabaseSynchronously()
-	{
-		Table entity = new Table();
-		entity.database("db9");
-		entity.name("doesnt_matter");
-		tables.update(entity);
 	}
 
 	@Test
@@ -281,7 +188,7 @@ public class TableServiceTest
 		Table entity = new Table();
 		entity.database(DATABASE);
 		entity.name("doesnt_exist");
-		tables.updateAsync(entity, callback);
+		tables.update(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -289,29 +196,11 @@ public class TableServiceTest
 
 		callback.clear();
 		entity.database("db9");
-		tables.updateAsync(entity, callback);
+		tables.update(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
-	}
-
-	@Test(expected=ValidationException.class)
-	public void shouldThrowOnUpdateInvalidDatabaseSynchronously()
-	{
-		Table entity = new Table();
-		entity.database("invalid db 9");
-		entity.name("doesnt_matter");
-		tables.update(entity);
-	}
-
-	@Test(expected=ValidationException.class)
-	public void shouldThrowOnUpdateInvalidTableSynchronously()
-	{
-		Table entity = new Table();
-		entity.database(DATABASE);
-		entity.name("isn't valid");
-		tables.update(entity);
 	}
 
 	@Test
@@ -322,7 +211,7 @@ public class TableServiceTest
 		Table entity = new Table();
 		entity.database("invalid db 8");
 		entity.name("doesnt_matter");
-		tables.updateAsync(entity, callback);
+		tables.update(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -337,14 +226,22 @@ public class TableServiceTest
 		Table entity = new Table();
 		entity.database(DATABASE);
 		entity.name("isn't valid");
-		tables.updateAsync(entity, callback);
+		tables.update(entity, callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof ValidationException);
+
+		// Should be same for create.
+		callback.clear();
+		tables.create(entity, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ValidationException);
 	}
 
-	private void waitFor(TestCallback<Table> callback)
+	private void waitFor(TestCallback<?> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
