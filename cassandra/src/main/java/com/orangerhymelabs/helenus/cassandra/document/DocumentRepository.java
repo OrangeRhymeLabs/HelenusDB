@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -33,10 +34,12 @@ import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.orangerhymelabs.helenus.cassandra.bucket.BucketedViewStatementFactory;
+import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.orangerhymelabs.helenus.persistence.Query;
+import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
  * Document repositories are unique per document/table and therefore must be cached by table.
@@ -45,7 +48,7 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
  * @since Jun 8, 2015
  */
 public class DocumentRepository
-extends AbstractCassandraRepository<Document>
+extends AbstractCassandraRepository<Document, DocumentStatements>
 {
 	private static final Logger LOG = LoggerFactory.getLogger(DocumentRepository.class);
 
@@ -103,31 +106,32 @@ extends AbstractCassandraRepository<Document>
         }
 	}
 
-	private static final String READ_CQL = "select * from %s.%s where " + Columns.ID + " = ?";
-	private static final String DELETE_CQL = "delete from %s.%s where " + Columns.ID + " = ?";
-	private static final String UPDATE_CQL = "update %s.%s set " + Columns.OBJECT + " = ?, " + Columns.UPDATED_AT + " = ? where " + Columns.ID + " = ? if exists";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists";
+	public interface DocumentStatements
+	extends StatementFactory
+	{
+		@Override
+		@Query("insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists")
+		PreparedStatement create();
+
+		@Override
+		@Query("delete from %s.%s where " + Columns.ID + " = ?")
+		PreparedStatement delete();
+
+		@Override
+		@Query("update %s.%s set " + Columns.OBJECT + " = ?, " + Columns.UPDATED_AT + " = ? where " + Columns.ID + " = ? if exists")
+		PreparedStatement update();
+
+		@Override
+		@Query("select * from %s.%s where " + Columns.ID + " = ?")
+		PreparedStatement read();
+	}
 
 	private Table table;
-	private BucketedViewStatementFactory iTableStmtFactory;
 
 	public DocumentRepository(Session session, String keyspace, Table table)
 	{
-		super(session, keyspace);
+		super(session, keyspace, DocumentStatements.class);
 		this.table = table;
-		this.iTableStmtFactory = new BucketedViewStatementFactory(session, keyspace, table);
-		init();
-	}
-
-	private void init()
-    {
-		super.initializeStatements();
-    }
-
-	@Override
-	protected void initializeStatements()
-	{
-		// Do nothing.
 	}
 
 	public String tableName()
@@ -138,15 +142,15 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected ResultSetFuture submitCreate(Document document)
 	{
-		BatchStatement batch = new BatchStatement(Type.LOGGED);
-		BoundStatement create = new BoundStatement(createStmt());
+		BatchStatement batch = new BatchStatement(Type.UNLOGGED);
+		BoundStatement create = new BoundStatement(statementFactory().create());
 		bindCreate(create, document);
 		batch.add(create);
 
-		if (table.hasIndexes())
-		{
-			batch.addAll(iTableStmtFactory.createIndexEntryCreateStatements(document));
-		}
+//		if (table.hasIndexes())
+//		{
+//			batch.addAll(iTableStmtFactory.createIndexEntryCreateStatements(document));
+//		}
 
 		return session().executeAsync(batch);
 	}
@@ -154,18 +158,18 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected ResultSetFuture submitUpdate(Document document)
 	{
-		BatchStatement batch = new BatchStatement(Type.LOGGED);
-		BoundStatement update = new BoundStatement(updateStmt());
+		BatchStatement batch = new BatchStatement(Type.UNLOGGED);
+		BoundStatement update = new BoundStatement(statementFactory().update());
 		bindUpdate(update, document);
 		batch.add(update);
 
-		if (table.hasIndexes())
-		{
+//		if (table.hasIndexes())
+//		{
 			// TODO: make this lookup non-blocking (asynchronous).
 //			Document previous = read(document.getIdentifier()).get();
-			read(document.getIdentifier());
-			batch.addAll(iTableStmtFactory.createIndexEntryUpdateStatements(document, previous));
-		}
+//			read(document.getIdentifier());
+//			batch.addAll(iTableStmtFactory.createIndexEntryUpdateStatements(document, previous));
+//		}
 
 		return session().executeAsync(batch);
 	}
@@ -173,17 +177,17 @@ extends AbstractCassandraRepository<Document>
 	@Override
 	protected ResultSetFuture submitDelete(Identifier id)
 	{
-		BatchStatement batch = new BatchStatement(Type.LOGGED);
-		BoundStatement delete = new BoundStatement(deleteStmt());
+		BatchStatement batch = new BatchStatement(Type.UNLOGGED);
+		BoundStatement delete = new BoundStatement(statementFactory().delete());
 		bindIdentity(delete, id);
 		batch.add(delete);
 
-		if (table.hasIndexes())
-		{
+//		if (table.hasIndexes())
+//		{
 			// TODO: make this lookup non-blocking (asynchronous).
-			Document previous = read(id);
-			batch.addAll(iTableStmtFactory.createIndexEntryDeleteStatements(previous));
-		}
+//			Document previous = read(id);
+//			batch.addAll(iTableStmtFactory.createIndexEntryDeleteStatements(previous));
+//		}
 
 		return session().executeAsync(batch);
 	}
@@ -283,35 +287,5 @@ extends AbstractCassandraRepository<Document>
 			case UUID:  return row.getUUID(Columns.ID);
 			default: throw new UnsupportedOperationException("Conversion of ID type: " + table.idType().toString());
 		}
-    }
-
-	@Override
-    protected String buildCreateStatement()
-    {
-	    return String.format(CREATE_CQL, keyspace(), tableName());
-    }
-
-	@Override
-    protected String buildUpdateStatement()
-    {
-	    return String.format(UPDATE_CQL, keyspace(), tableName());
-    }
-
-	@Override
-    protected String buildReadStatement()
-    {
-	    return String.format(READ_CQL, keyspace(), tableName());
-    }
-
-	@Override
-    protected String buildReadAllStatement()
-    {
-	    return null;
-    }
-
-	@Override
-    protected String buildDeleteStatement()
-    {
-	    return String.format(DELETE_CQL, keyspace(), tableName());
     }
 }

@@ -37,17 +37,19 @@ import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenus.cassandra.bucket.BucketedViewStatementFactory;
-import com.orangerhymelabs.helenus.exception.DuplicateItemException;
+import com.orangerhymelabs.helenus.cassandra.index.IndexRepository.IndexStatements;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.orangerhymelabs.helenus.persistence.Query;
+import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  */
 public class IndexRepository
-extends AbstractCassandraRepository<Index>
+extends AbstractCassandraRepository<Index, IndexStatements>
 {
 	private static final Logger LOG = LoggerFactory.getLogger(IndexRepository.class);
 
@@ -71,6 +73,8 @@ extends AbstractCassandraRepository<Index>
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
+
+	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
 
 	public static class Schema
 	implements SchemaProvider
@@ -126,8 +130,11 @@ extends AbstractCassandraRepository<Index>
 		}
 	}
 
-	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s ("
+	public interface IndexStatements
+	extends StatementFactory
+	{
+		@Override
+		@Query("insert into %s.%s ("
 		+ Columns.DB_NAME + ", "
 		+ Columns.TBL_NAME + ", "
 		+ Columns.NAME + ", "
@@ -140,25 +147,38 @@ extends AbstractCassandraRepository<Index>
 		+ Columns.ENGINE + ", "
 		+ Columns.CREATED_AT + ", "
 		+ Columns.UPDATED_AT
-		+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists";
-	private static final String UPDATE_CQL = "update %s.%s set "
+		+ ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) if not exists")
+		PreparedStatement create();
+
+		@Override
+		@Query("delete from %s.%s" + IDENTITY_CQL)
+		PreparedStatement delete();
+
+		@Override
+		@Query("update %s." + Tables.BY_ID + " set "
 		+ Columns.DESCRIPTION + " = ?, "
 		+ Columns.UPDATED_AT + " = ?"
 		+ IDENTITY_CQL
-		+ " if exists";
-	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
-	private static final String READ_FOR_TABLE_CQL = "select * from %s.%s where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ?";
-	private static final String READ_ALL_CQL = "select * from %s.%s";
-	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
+		+ " if exists")
+		PreparedStatement update();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement read();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID)
+		PreparedStatement readAll();
+
+		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ?")
+		PreparedStatement readFor();
+	}
 
 	private static final BucketedViewStatementFactory.Schema BUCKETED_VIEW_SCHEMA = new BucketedViewStatementFactory.Schema();
 
-	private PreparedStatement readForTableStmt;
-
 	public IndexRepository(Session session, String keyspace)
 	{
-		super(session, keyspace);
-		readForTableStmt = prepare(String.format(READ_FOR_TABLE_CQL, keyspace(), Tables.BY_ID));
+		super(session, keyspace, IndexStatements.class);
 	}
 
 	@Override
@@ -216,7 +236,7 @@ extends AbstractCassandraRepository<Index>
 
 	private ResultSetFuture _readFor(String database, String table)
 	{
-		BoundStatement bs = new BoundStatement(readForTableStmt);
+		BoundStatement bs = new BoundStatement(statementFactory().readFor());
 		bs.bind(database, table);
 		return session().executeAsync(bs);
 	}
@@ -244,34 +264,6 @@ extends AbstractCassandraRepository<Index>
 		{
 			callback.onFailure(new StorageException(e));
 		}
-	}
-
-	@Override
-	protected String buildCreateStatement()
-	{
-		return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	@Override
-	protected String buildUpdateStatement()
-	{
-		return String.format(UPDATE_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	@Override
-	protected String buildReadStatement()
-	{
-		return String.format(READ_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	protected String buildReadAllStatement()
-	{
-		return String.format(READ_ALL_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	protected String buildDeleteStatement()
-	{
-		return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
 	}
 
 	@Override
