@@ -291,6 +291,6 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	@SuppressWarnings("unchecked")
 	private F newStatementFactory(Class<F> factoryClass, Session session, String keyspace)
 	{
-		return (F) Proxy.newProxyInstance(this.getClass().getClassLoader(), (Class<F>[]) new Class[]{factoryClass}, new StatementFactoryHandler(session, keyspace));
+		return (F) Proxy.newProxyInstance(factoryClass.getClassLoader(), (Class<F>[]) new Class[]{factoryClass}, new StatementFactoryHandler(session, keyspace));
 	}
 }
