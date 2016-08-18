@@ -16,15 +16,13 @@
 package com.orangerhymelabs.helenus.cassandra.table;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
-import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
-import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -45,159 +43,117 @@ public class TableService
 		this.tables = tableRepository;
 	}
 
-	public Table create(Table table)
-	{
-		databases.exists(table.database().getIdentifier(), new FutureCallback<Boolean>()
-		{
-			@Override
-			public void onSuccess(Boolean result)
-			{
-				
-			}
-
-			@Override
-			public void onFailure(Throwable t)
-			{
-			}
-		});
-
-		Futures.transform(databases.exists(table.database().getIdentifier()), new Function<Boolean, Table>()
-		{
-			@Override
-			public Table apply(Boolean input)
-			{
-				if (input)
-				{
-					ValidationEngine.validateAndThrow(table);
-					return tables.create(table).get();
-				}
-				// TODO Auto-generated method stub
-				return null;
-			}
-		});
-		if (!databases.exists(table.database().getIdentifier()).get())
-		{
-			throw new ItemNotFoundException("Database not found: " + table.databaseName());
-		}
-
-		ValidationEngine.validateAndThrow(table);
-		return tables.create(table).get();
-	}
-
 	public void create(Table table, FutureCallback<Table> callback)
 	{
-		databases.exists(table.database().getIdentifier(), new FutureCallback<Boolean>()
-			{
-				@Override
-                public void onSuccess(Boolean successful)
-                {
-					if (!successful)
-					{
-						callback.onFailure(new ItemNotFoundException("Database not found: " + table.databaseName()));
-					}
-					else
-					{
-						try
-						{
-							ValidationEngine.validateAndThrow(table);
-							tables.create(table, callback);
-						}
-						catch(ValidationException e)
-						{
-							callback.onFailure(e);
-						}
-					}
-                }
-
-				@Override
-                public void onFailure(Throwable t)
-                {
-					callback.onFailure(t);
-                }
-			}
-		);
+		Futures.addCallback(create(table), callback);
 	}
 
-	public Table read(String database, String table)
+	public ListenableFuture<Table> create(Table table)
+	{
+		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().getIdentifier());
+		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, Table>()
+		{
+			@Override
+			public ListenableFuture<Table> apply(Boolean exists)
+			throws Exception
+			{
+				if (!exists)
+				{
+					try
+					{
+						ValidationEngine.validateAndThrow(table);
+						return tables.create(table);
+					}
+					catch(ValidationException e)
+					{
+						return Futures.immediateFailedFuture(e);
+					}
+				}
+				else
+				{
+					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + table.databaseName()));
+				}
+			}
+		});
+	}
+
+	public void read(String database, String table, FutureCallback<Table> callback)
+	{
+		Futures.addCallback(read(database, table), callback);
+	}
+
+	public ListenableFuture<Table> read(String database, String table)
 	{
 		return tables.read(new Identifier(database, table));
 	}
 
-	public void readAsync(String database, String table, FutureCallback<Table> callback)
+	public ListenableFuture<List<Table>> readAll(String database, Object... parms)
 	{
-		tables.readAsync(new Identifier(database, table), callback);
-	}
-
-	public List<Table> readAll(String database)
-	{
-		Identifier id = new Identifier(database);
-		if (!databases.exists(id))
+		ListenableFuture<Boolean> dbFuture = databases.exists(new Identifier(database));
+		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, List<Table>>()
 		{
-			throw new ItemNotFoundException("Database not found: " + database);
-		}
-
-		return tables.readAll(id);
-	}
-
-	public void readAllAsync(String database, FutureCallback<List<Table>> callback)
-	{
-		databases.existsAsync(new Identifier(database), new FutureCallback<Boolean>()
+			@Override
+			public ListenableFuture<List<Table>> apply(Boolean exists)
+			throws Exception
 			{
-				@Override
-                public void onSuccess(Boolean result)
-                {
-					if (!result)
-					{
-						callback.onFailure(new ItemNotFoundException("Database not found: " + database));
-					}
-					else
-					{
-						tables.readAllAsync(callback, database);
-					}
-                }
-
-				@Override
-                public void onFailure(Throwable t)
-                {
-					callback.onFailure(t);
-                }
+				if (exists)
+				{
+					return tables.readAll(parms);
+				}
+				else
+				{
+					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + database));
+				}
 			}
-		);
+		});
 	}
 
-	public Table update(Table table)
+	public void readAll(String database, FutureCallback<List<Table>> callback)
 	{
-		try
-		{
-			ValidationEngine.validateAndThrow(table);
-			return tables.update(table).get();
-		}
-		catch (InterruptedException | ExecutionException e)
-		{
-			throw new StorageException(e);
-		}
+		Futures.addCallback(readAll(database), callback);
 	}
 
-	public void updateAsync(Table table, FutureCallback<Table> callback)
+	public ListenableFuture<Table> update(Table table)
 	{
-		try
+		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().getIdentifier());
+		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, Table>()
 		{
-			ValidationEngine.validateAndThrow(table);
-			tables.updateAsync(table, callback);
-		}
-		catch(ValidationException e)
-		{
-			callback.onFailure(e);
-		}
+			@Override
+			public ListenableFuture<Table> apply(Boolean exists)
+			throws Exception
+			{
+				if (!exists)
+				{
+					try
+					{
+						ValidationEngine.validateAndThrow(table);
+						return tables.update(table);
+					}
+					catch(ValidationException e)
+					{
+						return Futures.immediateFailedFuture(e);
+					}
+				}
+				else
+				{
+					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + table.databaseName()));
+				}
+			}
+		});
 	}
 
-	public void delete(String database, String table)
+	public void update(Table table, FutureCallback<Table> callback)
 	{
-		tables.delete(new Identifier(database, table));
+		Futures.addCallback(update(table), callback);
 	}
 
-	public void deleteAsync(String database, String table, FutureCallback<Table> callback)
+	public ListenableFuture<Boolean> delete(String database, String table)
 	{
-		tables.deleteAsync(new Identifier(database, table), callback);
+		return tables.delete(new Identifier(database, table));
+	}
+
+	public void delete(String database, String table, FutureCallback<Boolean> callback)
+	{
+		Futures.addCallback(delete(database, table), callback);
 	}
 }

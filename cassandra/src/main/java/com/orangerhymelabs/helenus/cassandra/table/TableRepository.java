@@ -22,28 +22,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository;
-import com.orangerhymelabs.helenus.exception.DuplicateItemException;
-import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
+import com.orangerhymelabs.helenus.cassandra.table.TableRepository.TableStatements;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.orangerhymelabs.helenus.persistence.Query;
+import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  */
 public class TableRepository
-extends AbstractCassandraRepository<Table>
+extends AbstractCassandraRepository<Table, TableStatements>
 {
 	private static final Logger LOG = LoggerFactory.getLogger(TableRepository.class);
 
@@ -115,31 +115,73 @@ extends AbstractCassandraRepository<Table>
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.DATABASE + " = ? and " + Columns.NAME + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.NAME + ", " + Columns.DATABASE + ", " + Columns.DESCRIPTION + ", " + Columns.TYPE + ", " + Columns.TTL + ", " + Columns.ID_TYPE + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT +") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists";
-	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
-	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
-	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
-	private static final String READ_ALL_CQL = "select * from %s.%s where " + Columns.DATABASE + " = ?";
+
+	public interface TableStatements
+	extends StatementFactory
+	{
+		@Override
+		@Query("insert into %s." + Tables.BY_ID + " ("
+		+ Columns.NAME + ", "
+		+ Columns.DATABASE + ", "
+		+ Columns.DESCRIPTION + ", "
+		+ Columns.TYPE + ", "
+		+ Columns.TTL + ", "
+		+ Columns.ID_TYPE + ", "
+		+ Columns.CREATED_AT + ", "
+		+ Columns.UPDATED_AT
+		+") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists")
+		PreparedStatement create();
+
+		@Override
+		@Query("delete from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement delete();
+
+		@Override
+		@Query("update %s." + Tables.BY_ID + " set " + Columns.DESCRIPTION + " = ?, " + Columns.TTL + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists")
+		PreparedStatement update();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement read();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DATABASE + " = ?")
+		PreparedStatement readAll();
+	}
 
 	private static final  DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
 
 	public TableRepository(Session session, String keyspace)
 	{
-		super(session, keyspace);
+		super(session, keyspace, TableStatements.class);
 	}
 
 	@Override
 	public ListenableFuture<Table> create(Table table)
 	{
-		createDocumentSchema(table);
-		return super.create(table);
+		if (createDocumentSchema(table))
+		{
+			// TODO: what about rollback?
+			return super.create(table);
+		}
+		else
+		{
+			return Futures.immediateFailedFuture(new StorageException("Failed to create document schema for: " + table.toDbTable()));
+		}
 	}
 
 	@Override
 	public ListenableFuture<Boolean> delete(Identifier id)
 	{
-		dropDocumentSchema(id);
-		return super.delete(id);
+		if (dropDocumentSchema(id))
+		{
+			// TODO: what about rollback?
+			return super.delete(id);
+		}
+		else
+		{
+			return Futures.immediateFailedFuture(new StorageException("Failed to drop document schema for: " + id.toDbName()));
+		}
 	}
 
 	@Override
@@ -185,43 +227,13 @@ extends AbstractCassandraRepository<Table>
 		return t;
 	}
 
-	@Override
-    protected String buildCreateStatement()
+	private boolean createDocumentSchema(Table table)
     {
-	    return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
+    	return DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
     }
 
-	@Override
-    protected String buildUpdateStatement()
+	private boolean dropDocumentSchema(Identifier id)
     {
-	    return String.format(UPDATE_CQL, keyspace(), Tables.BY_ID);
-    }
-
-	@Override
-    protected String buildReadStatement()
-    {
-	    return String.format(READ_CQL, keyspace(), Tables.BY_ID);
-    }
-
-	@Override
-    protected String buildReadAllStatement()
-    {
-	    return String.format(READ_ALL_CQL, keyspace(), Tables.BY_ID);
-    }
-
-	@Override
-    protected String buildDeleteStatement()
-    {
-	    return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
-    }
-
-	private void createDocumentSchema(Table table)
-    {
-    	DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
-    }
-
-	private void dropDocumentSchema(Identifier id)
-    {
-		DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
+		return DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
     }
 }

@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -32,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
+import com.google.common.util.concurrent.Futures;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
@@ -79,25 +81,25 @@ public class TableRepositoryTest
 		table.name("table1");
 		table.database("db1");
 		table.description("a test table");
-		Table createResult = tables.create(table);
+		Table createResult = tables.create(table).get();
 		assertEquals(table, createResult);
 
 		// Document table should exist.
 		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
 
 		// Read
-		Table result = tables.read(table.getIdentifier());
+		Table result = tables.read(table.getIdentifier()).get();
 		assertEquals(table, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		table.description("an updated test table");
-		Table updateResult = tables.update(table);
+		Table updateResult = tables.update(table).get();
 		assertEquals(table, updateResult);
 
 		// Re-Read
-		Table result2 = tables.read(table.getIdentifier());
+		Table result2 = tables.read(table.getIdentifier()).get();
 		assertEquals(table, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -133,7 +135,7 @@ public class TableRepositoryTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.createAsync(table, callback);
+		Futures.addCallback(tables.create(table), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -143,7 +145,7 @@ public class TableRepositoryTest
 
 		// Read
 		callback.clear();
-		tables.readAsync(table.getIdentifier(), callback);
+		Futures.addCallback(tables.read(table.getIdentifier()), callback);
 		waitFor(callback);
 
 		assertEquals(table, callback.entity());
@@ -151,14 +153,14 @@ public class TableRepositoryTest
 		// Update
 		callback.clear();
 		table.description("an updated test table");
-		tables.updateAsync(table, callback);
+		Futures.addCallback(tables.update(table), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(table.getIdentifier(), callback);
+		Futures.addCallback(tables.read(table.getIdentifier()), callback);
 		waitFor(callback);
 
 		Table result2 = callback.entity();
@@ -168,18 +170,19 @@ public class TableRepositoryTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		tables.deleteAsync(table.getIdentifier(), callback);
 		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
+		Futures.addCallback(tables.delete(table.getIdentifier()), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.entity());
 
 		// Document table should no longer exist.
 		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
 
 		// Re-Read
 		callback.clear();
-		tables.readAsync(table.getIdentifier(), callback);
+		Futures.addCallback(tables.read(table.getIdentifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -188,12 +191,13 @@ public class TableRepositoryTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
+	throws InterruptedException, ExecutionException
 	{
 		// Create
 		Table table = new Table();
 		table.name("table3");
 		table.database("db3");
-		Table createResult = tables.create(table);
+		Table createResult = tables.create(table).get();
 		assertEquals(table, createResult);
 
 		tables.create(table);
@@ -209,13 +213,13 @@ public class TableRepositoryTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		tables.createAsync(table, callback);
+		Futures.addCallback(tables.create(table), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Create Duplicate
-		tables.createAsync(table, callback);
+		Futures.addCallback(tables.create(table), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -224,17 +228,17 @@ public class TableRepositoryTest
 
 	@Test
 	public void shouldMarshal()
-	throws InterruptedException
+	throws InterruptedException, ExecutionException
 	{
 		// Create
 		Table table = new Table();
 		table.name("table5");
 		table.database("db5");
 		table.idType(DataTypes.BIGINT);
-		Table createResult = tables.create(table);
+		Table createResult = tables.create(table).get();
 		assertEquals(table, createResult);
 
-		Table sync = tables.read(table.getIdentifier());
+		Table sync = tables.read(table.getIdentifier()).get();
 		assertEquals(table.createdAt(), sync.createdAt());
 		assertEquals(table.updatedAt(), sync.updatedAt());
 		assertEquals(table.databaseName(), sync.databaseName());
@@ -244,7 +248,7 @@ public class TableRepositoryTest
 		assertEquals(table.ttl(), sync.ttl());
 
 		TestCallback<Table> callback = new TestCallback<Table>();
-		tables.readAsync(table.getIdentifier(), callback);
+		Futures.addCallback(tables.read(table.getIdentifier()), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -269,7 +273,7 @@ public class TableRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Table> callback = new TestCallback<Table>();
-		tables.readAsync(new Identifier("db6", "doesn't exist"), callback);
+		Futures.addCallback(tables.read(new Identifier("db6", "doesn't exist")), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -278,11 +282,12 @@ public class TableRepositoryTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentSynchronously()
+	throws InterruptedException, ExecutionException
 	{
 		Table table = new Table();
 		table.database("db7");
 		table.name("doesn't exist");
-		tables.update(table);
+		tables.update(table).get();
 	}
 
 	@Test
@@ -293,14 +298,14 @@ public class TableRepositoryTest
 		Table table = new Table();
 		table.database("db8");
 		table.name("doesn't exist");
-		tables.updateAsync(table, callback);
+		Futures.addCallback(tables.update(table), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitFor(TestCallback<Table> callback)
+	private void waitFor(TestCallback<?> callback)
 	throws InterruptedException
     {
 		synchronized(callback)
