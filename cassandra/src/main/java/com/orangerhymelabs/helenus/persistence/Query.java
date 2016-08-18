@@ -15,10 +15,14 @@
 */
 package com.orangerhymelabs.helenus.persistence;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * @author tfredrich
  * @since 18 Aug 2016
  */
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Query
 {
 	String value();
