@@ -122,7 +122,7 @@ public class TableService
 			public ListenableFuture<Table> apply(Boolean exists)
 			throws Exception
 			{
-				if (!exists)
+				if (exists)
 				{
 					try
 					{
