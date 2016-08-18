@@ -15,13 +15,13 @@
  */
 package com.orangerhymelabs.helenus.cassandra;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
@@ -35,57 +35,30 @@ import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.orangerhymelabs.helenus.persistence.StatementFactory;
+import com.orangerhymelabs.helenus.persistence.StatementFactoryHandler;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  * @param <T> The type stored in this repository.
  */
-public abstract class AbstractCassandraRepository<T>
+public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 {
 	private Session session;
 	private String keyspace;
+	private F statementFactory;
 
-	private PreparedStatement createStmt;
-	private PreparedStatement updateStmt;
-	private PreparedStatement readAllStmt;
-	private PreparedStatement readStmt;
-	private PreparedStatement deleteStmt;
-
-	public AbstractCassandraRepository(Session session, String keyspace)
+	public AbstractCassandraRepository(Session session, String keyspace, Class<F> factoryClass)
 	{
 		this.session = session;
 		this.keyspace = keyspace;
-		initializeStatements();
-	}
-
-	protected void initializeStatements()
-	{
-		createStmt = prepare(buildCreateStatement());
-		updateStmt = prepare(buildUpdateStatement());
-		readAllStmt = prepare(buildReadAllStatement());
-		readStmt = prepare(buildReadStatement());
-		deleteStmt = prepare(buildDeleteStatement());
-	}
-
-	protected PreparedStatement createStmt()
-	{
-		return createStmt;
-	}
-
-	protected PreparedStatement updateStmt()
-	{
-		return updateStmt;
-	}
-
-	protected PreparedStatement deleteStmt()
-	{
-		return deleteStmt;
+		this.statementFactory = newStatementFactory(factoryClass, session, keyspace);
 	}
 
 	public ListenableFuture<T> create(T entity)
 	{
-		ListenableFuture<ResultSet> future = _create(entity);
+		ListenableFuture<ResultSet> future = submitCreate(entity);
 		return Futures.transform(future, new Function<ResultSet, T>()
 		{
 			@Override
@@ -101,17 +74,9 @@ public abstract class AbstractCassandraRepository<T>
 		});
 	}
 
-
-	protected ResultSetFuture _create(T entity)
-	{
-		BoundStatement bs = new BoundStatement(createStmt);
-		bindCreate(bs, entity);
-		return session.executeAsync(bs);
-	}
-
 	public ListenableFuture<T> update(T entity)
 	{
-		ListenableFuture<ResultSet> future = _update(entity);
+		ListenableFuture<ResultSet> future = submitUpdate(entity);
 		return Futures.transform(future, new Function<ResultSet, T>()
 		{
 			@Override
@@ -127,16 +92,9 @@ public abstract class AbstractCassandraRepository<T>
 		});		
 	}
 
-	protected ResultSetFuture _update(T entity)
-	{
-		BoundStatement bs = new BoundStatement(updateStmt);
-		bindUpdate(bs, entity);
-		return session.executeAsync(bs);
-	}
-
 	public ListenableFuture<Boolean> delete(Identifier id)
 	{
-		ListenableFuture<ResultSet> future = _delete(id);
+		ListenableFuture<ResultSet> future = submitDelete(id);
 		return Futures.transform(future, new Function<ResultSet, Boolean>()
 		{
 			@Override
@@ -152,16 +110,9 @@ public abstract class AbstractCassandraRepository<T>
 		});
 	}
 
-	protected ResultSetFuture _delete(Identifier id)
-	{
-		BoundStatement bs = new BoundStatement(deleteStmt);
-		bindIdentity(bs, id);
-		return session.executeAsync(bs);
-	}
-
 	public ListenableFuture<T> read(Identifier id)
 	{
-		ListenableFuture<ResultSet> rs = _read(id);
+		ListenableFuture<ResultSet> rs = submitRead(id);
 		return Futures.transform(rs, new Function<ResultSet, T>()
 		{
 			@Override
@@ -177,16 +128,9 @@ public abstract class AbstractCassandraRepository<T>
 		});
 	}
 
-	private ResultSetFuture _read(Identifier id)
-	{
-		BoundStatement bs = new BoundStatement(readStmt);
-		bindIdentity(bs, id);
-		return session.executeAsync(bs);
-	}
-
 	public ListenableFuture<List<T>> readAll(Object... parms)
 	{
-		ListenableFuture<ResultSet> future = _readAll(parms);
+		ListenableFuture<ResultSet> future = submitReadAll(parms);
 		return Futures.transform(future, new Function<ResultSet, List<T>>()
 		{
 			@Override
@@ -195,18 +139,6 @@ public abstract class AbstractCassandraRepository<T>
 				return marshalAll(input);
 			}
 		});
-	}
-
-	private ResultSetFuture _readAll(Object... parms)
-	{
-		BoundStatement bs = new BoundStatement(readAllStmt);
-
-		if (parms != null)
-		{
-			bs.bind(parms);
-		}
-
-		return session.executeAsync(bs);
 	}
 
 	/**
@@ -224,7 +156,7 @@ public abstract class AbstractCassandraRepository<T>
 	 */
 	public List<ListenableFuture<T>> readIn(Identifier... ids)
 	{
-		List<ListenableFuture<ResultSet>> futures = _readIn(ids);
+		List<ListenableFuture<ResultSet>> futures = submitReadIn(ids);
 
 		List<ListenableFuture<T>> results = new ArrayList<>(ids.length);
 
@@ -248,30 +180,6 @@ public abstract class AbstractCassandraRepository<T>
 		return results;
 	}
 
-	/**
-	 * Leverages the token-awareness of the driver to optimally query each node directly instead of invoking a
-	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
-	 * directly and collates the results client-side.
-	 * 
-	 * @param ids the partition keys (identifiers) to select.
-	 * @return a List of ListenableFuture instances for each underlying ResultSet--one for each ID.
-	 */
-	private  List<ListenableFuture<ResultSet>> _readIn(Identifier... ids)
-	{
-		if (ids == null) return Collections.emptyList();
-
-		List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>(ids.length);
-
-		for (Identifier id : ids)
-		{
-			BoundStatement bs = new BoundStatement(readStmt);
-			bindIdentity(bs, id);
-			futures.add(session.executeAsync(bs));
-		}
-
-		return Futures.inCompletionOrder(futures);
-	}
-
 	public Session session()
 	{
 		return session;
@@ -280,6 +188,11 @@ public abstract class AbstractCassandraRepository<T>
 	protected String keyspace()
 	{
 		return keyspace;
+	}
+
+	protected F statementFactory()
+	{
+		return statementFactory;
 	}
 
 	protected void bindIdentity(BoundStatement bs, Identifier id)
@@ -310,19 +223,74 @@ public abstract class AbstractCassandraRepository<T>
 	protected abstract void bindCreate(BoundStatement bs, T entity);
 	protected abstract void bindUpdate(BoundStatement bs, T entity);
 	protected abstract T marshalRow(Row row);
-	protected abstract String buildCreateStatement();
-	protected abstract String buildUpdateStatement();
-	protected abstract String buildReadStatement();
-	protected abstract String buildReadAllStatement();
-	protected abstract String buildDeleteStatement();
 
-	protected PreparedStatement prepare(String statement)
+	protected ResultSetFuture submitCreate(T entity)
 	{
-		if (statement == null || statement.trim().isEmpty())
+		BoundStatement bs = new BoundStatement(statementFactory.create());
+		bindCreate(bs, entity);
+		return session.executeAsync(bs);
+	}
+
+	protected ResultSetFuture submitDelete(Identifier id)
+	{
+		BoundStatement bs = new BoundStatement(statementFactory.delete());
+		bindIdentity(bs, id);
+		return session.executeAsync(bs);
+	}
+
+	private ResultSetFuture submitRead(Identifier id)
+	{
+		BoundStatement bs = new BoundStatement(statementFactory.read());
+		bindIdentity(bs, id);
+		return session.executeAsync(bs);
+	}
+
+	private ResultSetFuture submitReadAll(Object... parms)
+	{
+		BoundStatement bs = new BoundStatement(statementFactory.readAll());
+
+		if (parms != null)
 		{
-			return null;
+			bs.bind(parms);
 		}
 
-		return session().prepare(statement);
+		return session.executeAsync(bs);
+	}
+
+	protected ResultSetFuture submitUpdate(T entity)
+	{
+		BoundStatement bs = new BoundStatement(statementFactory.update());
+		bindUpdate(bs, entity);
+		return session.executeAsync(bs);
+	}
+
+	/**
+	 * Leverages the token-awareness of the driver to optimally query each node directly instead of invoking a
+	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
+	 * directly and collates the results client-side.
+	 * 
+	 * @param ids the partition keys (identifiers) to select.
+	 * @return a List of ListenableFuture instances for each underlying ResultSet--one for each ID.
+	 */
+	private  List<ListenableFuture<ResultSet>> submitReadIn(Identifier... ids)
+	{
+		if (ids == null) return Collections.emptyList();
+
+		List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>(ids.length);
+
+		for (Identifier id : ids)
+		{
+			BoundStatement bs = new BoundStatement(statementFactory.read());
+			bindIdentity(bs, id);
+			futures.add(session.executeAsync(bs));
+		}
+
+		return Futures.inCompletionOrder(futures);
+	}
+
+	@SuppressWarnings("unchecked")
+	private F newStatementFactory(Class<F> factoryClass, Session session, String keyspace)
+	{
+		return (F) Proxy.newProxyInstance(this.getClass().getClassLoader(), (Class<F>[]) new Class[]{factoryClass}, new StatementFactoryHandler(session, keyspace));
 	}
 }

@@ -26,6 +26,7 @@ public abstract class AbstractEntity
 implements Identifiable, Timestamped
 {
 	private Date createdAt;
+
 	private Date updatedAt;
 
 	@Override

@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
@@ -64,51 +63,6 @@ public class DatabaseServiceTest
 	public static void afterClass()
 	{
 		keyspace.drop(CassandraManager.session(), CassandraManager.keyspace());		
-	}
-
-	@Test
-	public void shouldCRUDDatabaseSync()
-	throws Exception
-	{
-		// Create
-		Database entity = new Database();
-		entity.name("db1");
-		entity.description("a test database");
-		Database createResult = databases.create(entity);
-		assertEquals(entity, createResult);
-
-		// Read
-		Database result = databases.read(entity.name());
-		assertEquals(entity, result);
-		assertNotNull(result.createdAt());
-		assertNotNull(result.updatedAt());
-
-		// Update
-		entity.description("an updated test database");
-		Database updateResult = databases.update(entity);
-		assertEquals(entity, updateResult);
-
-		// Re-Read
-		Database result2 = databases.read(entity.name());
-		assertEquals(entity, result2);
-		assertNotEquals(result2.createdAt(), result2.updatedAt());
-		assertNotNull(result2.createdAt());
-		assertNotNull(result2.updatedAt());
-
-		// Delete
-		databases.delete(entity.name());
-
-		// Re-Read
-		try
-		{
-			databases.read(entity.name());
-		}
-		catch (ItemNotFoundException e)
-		{
-			return;
-		}
-
-		fail("Database not deleted: " + entity.getIdentifier().toString());
 	}
 
 	@Test
@@ -169,18 +123,6 @@ public class DatabaseServiceTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	@Test(expected=DuplicateItemException.class)
-	public void shouldThrowOnDuplicateDatabaseSync()
-	{
-		// Create
-		Database entity = new Database();
-		entity.name("db3");
-		Database createResult = databases.create(entity);
-		assertEquals(entity, createResult);
-
-		databases.create(entity);
-	}
-
 	@Test
 	public void shouldThrowOnDuplicateDatabaseAsync()
 	throws InterruptedException
@@ -216,12 +158,6 @@ public class DatabaseServiceTest
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnReadNonExistentDatabaseSync()
-	{
-		databases.read("doesn't exist");
-	}
-
 	@Test
 	public void shouldThrowOnUpdateNonExistentDatabaseAsync()
 	throws InterruptedException
@@ -234,14 +170,6 @@ public class DatabaseServiceTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
-	}
-
-	@Test(expected=ItemNotFoundException.class)
-	public void shouldThrowOnUpdateNonExistentDatabaseSync()
-	{
-		Database entity = new Database();
-		entity.name("doesnt_exist");
-		databases.update(entity);
 	}
 
 	@Test
@@ -264,22 +192,6 @@ public class DatabaseServiceTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ValidationException);
-	}
-
-	@Test(expected=ValidationException.class)
-	public void shouldThrowOnInvalidDatabaseNameUpdateSync()
-	{
-		Database entity = new Database();
-		entity.name("doesn't exist");
-		databases.update(entity);
-	}
-
-	@Test(expected=ValidationException.class)
-	public void shouldThrowOnInvalidDatabaseNameCreateSync()
-	{
-		Database entity = new Database();
-		entity.name("doesn't exist");
-		databases.create(entity);
 	}
 
 	private void waitFor(TestCallback<?> callback)

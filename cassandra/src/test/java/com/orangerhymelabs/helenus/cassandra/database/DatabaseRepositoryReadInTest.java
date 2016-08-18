@@ -35,7 +35,6 @@ import org.junit.Test;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
-import com.orangerhymelabs.helenus.cassandra.ReadInCallback;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
@@ -44,7 +43,6 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
  */
 public class DatabaseRepositoryReadInTest
 {
-	private static final int CALLBACK_TIMEOUT = 2000;
 	private static final Identifier[] IDS = {
 		new Identifier("dba1"),
 		new Identifier("dba3"),

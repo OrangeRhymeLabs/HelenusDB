@@ -16,13 +16,15 @@
 package com.orangerhymelabs.helenus.cassandra.table;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
+import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -34,18 +36,30 @@ import com.strategicgains.syntaxe.ValidationException;
 public class TableService
 {
 	private TableRepository tables;
-	private DatabaseRepository databases;
+	private DatabaseService databases;
 
-	public TableService(DatabaseRepository databaseRepository, TableRepository tableRepository)
+	public TableService(DatabaseService databaseService, TableRepository tableRepository)
 	{
 		super();
-		this.databases = databaseRepository;
+		this.databases = databaseService;
 		this.tables = tableRepository;
 	}
 
 	public Table create(Table table)
 	{
-		databases.exists(table.database().getIdentifier());
+		databases.exists(table.database().getIdentifier(), new FutureCallback<Boolean>()
+		{
+			@Override
+			public void onSuccess(Boolean result)
+			{
+				
+			}
+
+			@Override
+			public void onFailure(Throwable t)
+			{
+			}
+		});
 
 		Futures.transform(databases.exists(table.database().getIdentifier()), new Function<Boolean, Table>()
 		{
@@ -72,7 +86,7 @@ public class TableService
 
 	public void create(Table table, FutureCallback<Table> callback)
 	{
-		databases.existsAsync(table.database().getIdentifier(), new FutureCallback<Boolean>()
+		databases.exists(table.database().getIdentifier(), new FutureCallback<Boolean>()
 			{
 				@Override
                 public void onSuccess(Boolean successful)
@@ -86,7 +100,7 @@ public class TableService
 						try
 						{
 							ValidationEngine.validateAndThrow(table);
-							tables.createAsync(table, callback);
+							tables.create(table, callback);
 						}
 						catch(ValidationException e)
 						{
@@ -153,8 +167,15 @@ public class TableService
 
 	public Table update(Table table)
 	{
-		ValidationEngine.validateAndThrow(table);
-		return tables.update(table);
+		try
+		{
+			ValidationEngine.validateAndThrow(table);
+			return tables.update(table).get();
+		}
+		catch (InterruptedException | ExecutionException e)
+		{
+			throw new StorageException(e);
+		}
 	}
 
 	public void updateAsync(Table table, FutureCallback<Table> callback)

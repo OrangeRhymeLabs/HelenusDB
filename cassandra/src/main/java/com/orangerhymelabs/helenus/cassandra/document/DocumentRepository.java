@@ -136,7 +136,7 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	@Override
-	protected ResultSetFuture _create(Document document)
+	protected ResultSetFuture submitCreate(Document document)
 	{
 		BatchStatement batch = new BatchStatement(Type.LOGGED);
 		BoundStatement create = new BoundStatement(createStmt());
@@ -152,7 +152,7 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	@Override
-	protected ResultSetFuture _update(Document document)
+	protected ResultSetFuture submitUpdate(Document document)
 	{
 		BatchStatement batch = new BatchStatement(Type.LOGGED);
 		BoundStatement update = new BoundStatement(updateStmt());
@@ -171,7 +171,7 @@ extends AbstractCassandraRepository<Document>
 	}
 
 	@Override
-	protected ResultSetFuture _delete(Identifier id)
+	protected ResultSetFuture submitDelete(Identifier id)
 	{
 		BatchStatement batch = new BatchStatement(Type.LOGGED);
 		BoundStatement delete = new BoundStatement(deleteStmt());

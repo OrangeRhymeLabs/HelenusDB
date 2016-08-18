@@ -32,20 +32,22 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
+import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository.DatabaseStatements;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.orangerhymelabs.helenus.persistence.Query;
+import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  */
 public class DatabaseRepository
-extends AbstractCassandraRepository<Database>
+extends AbstractCassandraRepository<Database, DatabaseStatements>
 {
 	private static final Logger LOG = LoggerFactory.getLogger(DatabaseRepository.class);
 
 	private class Tables
 	{
-
 		static final String BY_ID = "sys_db";
 	}
 
@@ -56,6 +58,8 @@ extends AbstractCassandraRepository<Database>
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
+
+	private static final String IDENTITY_CQL = " where " + Columns.NAME + " = ?";
 
 	public static class Schema
 	implements SchemaProvider
@@ -73,7 +77,7 @@ extends AbstractCassandraRepository<Database>
 		@Override
 		public boolean drop(Session session, String keyspace)
 		{
-			ResultSetFuture rs = session.executeAsync(String.format(Schema.DROP_TABLE, keyspace));
+			ResultSetFuture rs = session.executeAsync(String.format(DROP_TABLE, keyspace));
 			try
 			{
 				return rs.get().wasApplied();
@@ -89,7 +93,7 @@ extends AbstractCassandraRepository<Database>
 		@Override
 		public boolean create(Session session, String keyspace)
 		{
-			ResultSetFuture rs = session.executeAsync(String.format(Schema.CREATE_TABLE, keyspace));
+			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace));
 			try
 			{
 				return rs.get().wasApplied();
@@ -103,25 +107,41 @@ extends AbstractCassandraRepository<Database>
 		}
 	}
 
-	private static final String IDENTITY_CQL = " where " + Columns.NAME + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists";
-	private static final String UPDATE_CQL = "update %s.%s set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists";
-	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
-	private static final String READ_ALL_CQL = "select * from %s.%s";
-	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
-	private static final String EXISTS_CQL = "select count(*) from %s.%s" + IDENTITY_CQL + " limit 1";
+	public interface DatabaseStatements
+	extends StatementFactory
+	{
+		@Override
+		@Query("insert into %s." + Tables.BY_ID + "(" + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists")
+		PreparedStatement create();
 
-	private PreparedStatement existsStmt;
+		@Override
+		@Query("update %s." + Tables.BY_ID + " set " + Columns.DESCRIPTION + " = ?, " + Columns.UPDATED_AT + " = ?" + IDENTITY_CQL + " if exists")
+		PreparedStatement update();
+
+		@Override
+		@Query("delete from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement delete();
+
+		@Query("select count(*) from %s." + Tables.BY_ID + IDENTITY_CQL + " limit 1")
+		PreparedStatement exists();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement read();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID)
+		PreparedStatement readAll();
+	}
 
 	public DatabaseRepository(Session session, String keyspace)
 	{
-		super(session, keyspace);
-		this.existsStmt = prepare(String.format(EXISTS_CQL, keyspace(), Tables.BY_ID));
+		super(session, keyspace, DatabaseStatements.class);
 	}
 
 	public ListenableFuture<Boolean> exists(Identifier id)
 	{
-		ListenableFuture<ResultSet> future = _exists(id);
+		ListenableFuture<ResultSet> future = submitExists(id);
 		return Futures.transform(future, new Function<ResultSet, Boolean>()
 		{
 			@Override
@@ -132,39 +152,11 @@ extends AbstractCassandraRepository<Database>
 		});
 	}
 
-	private ListenableFuture<ResultSet> _exists(Identifier id)
+	private ListenableFuture<ResultSet> submitExists(Identifier id)
 	{
-		BoundStatement bs = new BoundStatement(existsStmt);
+		BoundStatement bs = new BoundStatement(statementFactory().exists());
 		bindIdentity(bs, id);
 		return session().executeAsync(bs);
-	}
-
-	@Override
-	protected String buildCreateStatement()
-	{
-		return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	@Override
-	protected String buildUpdateStatement()
-	{
-		return buildStatement(UPDATE_CQL);
-	}
-
-	@Override
-	protected String buildReadStatement()
-	{
-		return buildStatement(READ_CQL);
-	}
-
-	protected String buildReadAllStatement()
-	{
-		return buildStatement(READ_ALL_CQL);
-	}
-
-	protected String buildDeleteStatement()
-	{
-		return buildStatement(DELETE_CQL);
 	}
 
 	@Override
@@ -201,10 +193,5 @@ extends AbstractCassandraRepository<Database>
 		n.createdAt(row.getTimestamp(Columns.CREATED_AT));
 		n.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return n;
-	}
-
-	private String buildStatement(String cql)
-	{
-		return String.format(cql, keyspace(), Tables.BY_ID);
 	}
 }

@@ -16,11 +16,10 @@
 package com.orangerhymelabs.helenus.cassandra.database;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.orangerhymelabs.helenus.exception.StorageException;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -39,126 +38,79 @@ public class DatabaseService
 		this.databases = databaseRepository;
 	}
 
-	public Database create(Database database)
+	public void exists(Identifier id, FutureCallback<Boolean> callback)
 	{
-		try
-		{
-			ValidationEngine.validateAndThrow(database);
-			return databases.create(database).get();
-		}
-		catch (ExecutionException e)
-		{
-			throw (RuntimeException) e.getCause();
-		}
-		catch (InterruptedException e)
-		{
-			throw new StorageException(e);
-		}
+		Futures.addCallback(exists(id), callback);
+	}
+
+	public ListenableFuture<Boolean> exists(Identifier id)
+	{
+		return databases.exists(id);
 	}
 
 	public void create(Database database, FutureCallback<Database> callback)
 	{
-		try
-		{
-			ValidationEngine.validateAndThrow(database);
-			Futures.addCallback(databases.create(database), callback);
-		}
-		catch(ValidationException e)
-		{
-			callback.onFailure(e);
-		}
+		Futures.addCallback(create(database), callback);
 	}
 
-	public Database read(String name)
+	public ListenableFuture<Database> create(Database database)
 	{
 		try
 		{
-			return databases.read(new Identifier(name)).get();
+			ValidationEngine.validateAndThrow(database);
+			return databases.create(database);
 		}
-		catch(ExecutionException e)
+		catch(ValidationException e)
 		{
-			throw (RuntimeException) e.getCause();
+			return Futures.immediateFailedFuture(e);
 		}
-		catch (InterruptedException e)
-		{
-			throw new StorageException(e);
-		}		
 	}
 
 	public void read(String name, FutureCallback<Database> callback)
 	{
-		Futures.addCallback(databases.read(new Identifier(name)), callback);
+		Futures.addCallback(read(new Identifier(name)), callback);
 	}
 
-	public List<Database> readAll(Object... parms)
+	private ListenableFuture<Database> read(Identifier identifier)
 	{
-		try
-		{
-			return databases.readAll(parms).get();
-		}
-		catch(ExecutionException e)
-		{
-			throw (RuntimeException) e.getCause();
-		}
-		catch (InterruptedException e)
-		{
-			throw new StorageException(e);
-		}
+		return databases.read(identifier);
 	}
 
 	public void readAll(FutureCallback<List<Database>> callback, Object... parms)
 	{
-		Futures.addCallback(databases.readAll(parms), callback);
+		Futures.addCallback(readAll(parms), callback);
 	}
 
-	public Database update(Database database)
+	private ListenableFuture<List<Database>> readAll(Object[] parms)
 	{
-		try
-		{
-			ValidationEngine.validateAndThrow(database);
-			return databases.update(database).get();
-		}
-		catch (ExecutionException e)
-		{
-			throw (RuntimeException) e.getCause();
-		}
-		catch (InterruptedException e)
-		{
-			throw new StorageException(e);
-		}
+		return databases.readAll(parms);
 	}
 
 	public void update(Database database, FutureCallback<Database> callback)
     {
-		try
-		{
-			ValidationEngine.validateAndThrow(database);
-			Futures.addCallback(databases.update(database), callback);
-		}
-		catch(ValidationException e)
-		{
-			callback.onFailure(e);
-		}
+		Futures.addCallback(update(database), callback);
     }
 
-	public boolean delete(String name)
+	private ListenableFuture<Database> update(Database database)
 	{
 		try
 		{
-			return databases.delete(new Identifier(name)).get();
+			ValidationEngine.validateAndThrow(database);
+			return databases.update(database);
 		}
-		catch (ExecutionException e)
+		catch(ValidationException e)
 		{
-			throw (RuntimeException) e.getCause();
-		}
-		catch (InterruptedException e)
-		{
-			throw new StorageException(e);
+			return Futures.immediateFailedFuture(e);
 		}
 	}
 
 	public void delete(String name, FutureCallback<Boolean> callback)
     {
-		Futures.addCallback(databases.delete(new Identifier(name)), callback);
+		Futures.addCallback(delete(new Identifier(name)), callback);
     }
+
+	private ListenableFuture<Boolean> delete(Identifier identifier)
+	{
+		return databases.delete(identifier);
+	}
 }
