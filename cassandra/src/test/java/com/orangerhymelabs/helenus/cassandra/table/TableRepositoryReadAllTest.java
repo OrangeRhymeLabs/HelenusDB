@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -29,6 +30,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Futures;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -65,7 +67,7 @@ public class TableRepositoryReadAllTest
 
 	@Test
 	public void shouldReadAll()
-	throws InterruptedException
+	throws Throwable
 	{
 		shouldReturnEmptyListSynchronously();
 		shouldReturnEmptyListAsynchronously();
@@ -75,8 +77,9 @@ public class TableRepositoryReadAllTest
 	}
 
 	private void shouldReturnEmptyListSynchronously()
+	throws Throwable
     {
-		List<Table> tbs = tables.readAll("database1");
+		List<Table> tbs = tables.readAll("database1").get();
 		assertNotNull(tbs);
 		assertTrue(tbs.isEmpty());
     }
@@ -85,7 +88,7 @@ public class TableRepositoryReadAllTest
 	throws InterruptedException
     {
 		TestCallback<List<Table>> callback = new TestCallback<List<Table>>();
-		tables.readAllAsync(callback, "database1");
+		Futures.addCallback(tables.readAll("database1"), callback);
 		waitFor(callback);
 
 		assertFalse(callback.isEmpty());
@@ -111,8 +114,9 @@ public class TableRepositoryReadAllTest
     }
 
 	private void shouldReturnListSynchronously()
+	throws InterruptedException, ExecutionException
     {
-		List<Table> entities = tables.readAll("database1");
+		List<Table> entities = tables.readAll("database1").get();
 		assertNotNull(entities);
 		assertFalse(entities.isEmpty());
 		assertEquals(4, entities.size());
@@ -122,7 +126,7 @@ public class TableRepositoryReadAllTest
 	throws InterruptedException
     {
 		TestCallback<List<Table>> callback = new TestCallback<List<Table>>();
-		tables.readAllAsync(callback, "database1");
+		Futures.addCallback(tables.readAll("database1"), callback);
 		waitFor(callback);
 
 		List<Table> entities = callback.entity();
