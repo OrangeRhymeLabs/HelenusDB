@@ -88,7 +88,7 @@ public class TableRepositoryTest
 		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
 
 		// Read
-		Table result = tables.read(table.getIdentifier()).get();
+		Table result = tables.read(table.identifier()).get();
 		assertEquals(table, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -99,14 +99,14 @@ public class TableRepositoryTest
 		assertEquals(table, updateResult);
 
 		// Re-Read
-		Table result2 = tables.read(table.getIdentifier()).get();
+		Table result2 = tables.read(table.identifier()).get();
 		assertEquals(table, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		tables.delete(table.getIdentifier());
+		tables.delete(table.identifier());
 
 		// Document table should no longer exist.
 		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
@@ -114,14 +114,14 @@ public class TableRepositoryTest
 		// Re-Read table
 		try
 		{
-			tables.read(table.getIdentifier()).get();
+			tables.read(table.identifier()).get();
 		}
 		catch (ExecutionException e)
 		{
 			if (ItemNotFoundException.class.equals(e.getCause().getClass())) return;
 		}
 
-		fail("Table not deleted: " + table.getIdentifier().toString());
+		fail("Table not deleted: " + table.identifier().toString());
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class TableRepositoryTest
 
 		// Read
 		callback.clear();
-		Futures.addCallback(tables.read(table.getIdentifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback);
 		waitFor(callback);
 
 		assertEquals(table, callback.entity());
@@ -160,7 +160,7 @@ public class TableRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(tables.read(table.getIdentifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback);
 		waitFor(callback);
 
 		Table result2 = callback.entity();
@@ -172,7 +172,7 @@ public class TableRepositoryTest
 		// Delete
 		waitFor(callback);
 		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
-		Futures.addCallback(tables.delete(table.getIdentifier()), deleteCallback);
+		Futures.addCallback(tables.delete(table.identifier()), deleteCallback);
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
@@ -182,7 +182,7 @@ public class TableRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(tables.read(table.getIdentifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -246,7 +246,7 @@ public class TableRepositoryTest
 		Table createResult = tables.create(table).get();
 		assertEquals(table, createResult);
 
-		Table sync = tables.read(table.getIdentifier()).get();
+		Table sync = tables.read(table.identifier()).get();
 		assertEquals(table.createdAt(), sync.createdAt());
 		assertEquals(table.updatedAt(), sync.updatedAt());
 		assertEquals(table.databaseName(), sync.databaseName());
@@ -256,7 +256,7 @@ public class TableRepositoryTest
 		assertEquals(table.ttl(), sync.ttl());
 
 		TestCallback<Table> callback = new TestCallback<Table>();
-		Futures.addCallback(tables.read(table.getIdentifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());

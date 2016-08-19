@@ -80,7 +80,7 @@ public class DatabaseRepositoryTest
 		assertEquals(db, createResult);
 
 		// Read
-		Database result = databases.read(db.getIdentifier()).get();
+		Database result = databases.read(db.identifier()).get();
 		assertEquals(db, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -91,26 +91,26 @@ public class DatabaseRepositoryTest
 		assertEquals(db, updateResult);
 
 		// Re-Read
-		Database result2 = databases.read(db.getIdentifier()).get();
+		Database result2 = databases.read(db.identifier()).get();
 		assertEquals(db, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		databases.delete(db.getIdentifier()).get();
+		databases.delete(db.identifier()).get();
 
 		// Re-Read
 		try
 		{
-			databases.read(db.getIdentifier()).get();
+			databases.read(db.identifier()).get();
 		}
 		catch (ExecutionException e)
 		{
 			if (ItemNotFoundException.class.equals(e.getCause().getClass())) return;
 		}
 
-		fail("Database not deleted: " + db.getIdentifier().toString());
+		fail("Database not deleted: " + db.identifier().toString());
 	}
 
 	@Test
@@ -124,7 +124,7 @@ public class DatabaseRepositoryTest
 
 		// Shouldn't Exist
 		TestCallback<Boolean> existCallback = new TestCallback<Boolean>();
-		Futures.addCallback(databases.exists(db.getIdentifier()), existCallback);
+		Futures.addCallback(databases.exists(db.identifier()), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertFalse(existCallback.entity());
@@ -137,14 +137,14 @@ public class DatabaseRepositoryTest
 
 		// Read
 		callback.clear();
-		Futures.addCallback(databases.read(db.getIdentifier()), callback);
+		Futures.addCallback(databases.read(db.identifier()), callback);
 		waitFor(callback);
 
 		assertEquals(db, callback.entity());
 
 		// Should Also Exist
 		existCallback.clear();
-		Futures.addCallback(databases.exists(db.getIdentifier()), existCallback);
+		Futures.addCallback(databases.exists(db.identifier()), existCallback);
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertTrue(existCallback.entity());
@@ -159,7 +159,7 @@ public class DatabaseRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(databases.read(db.getIdentifier()), callback);
+		Futures.addCallback(databases.read(db.identifier()), callback);
 		waitFor(callback);
 
 		Database result2 = callback.entity();
@@ -170,14 +170,14 @@ public class DatabaseRepositoryTest
 
 		// Delete
 		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
-		Futures.addCallback(databases.delete(db.getIdentifier()), deleteCallback);
+		Futures.addCallback(databases.delete(db.identifier()), deleteCallback);
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(databases.read(db.getIdentifier()), callback);
+		Futures.addCallback(databases.read(db.identifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

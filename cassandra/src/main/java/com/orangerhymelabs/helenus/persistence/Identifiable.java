@@ -21,5 +21,5 @@ package com.orangerhymelabs.helenus.persistence;
  */
 public interface Identifiable
 {
-	public Identifier getIdentifier();
+	public Identifier identifier();
 }

@@ -91,7 +91,7 @@ extends AbstractEntity
 	}
 
 	@Override
-	public Identifier getIdentifier()
+	public Identifier identifier()
 	{
 		return new Identifier(table.database(), table.name(), name());
 	}
@@ -152,6 +152,6 @@ extends AbstractEntity
 
 	public String toDbTable()
 	{
-		return getIdentifier().toDbName();
+		return identifier().toDbName();
 	}
 }

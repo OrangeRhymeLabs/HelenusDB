@@ -149,7 +149,7 @@ public class DocumentServiceTest
 			return;
 		}
 
-		fail("Document not deleted: " + doc.getIdentifier().toString());
+		fail("Document not deleted: " + doc.identifier().toString());
 	}
 
 	@Test
@@ -196,7 +196,7 @@ public class DocumentServiceTest
 			return;
 		}
 
-		fail("Document not deleted: " + doc.getIdentifier().toString());
+		fail("Document not deleted: " + doc.identifier().toString());
 	}
 
 	@Test

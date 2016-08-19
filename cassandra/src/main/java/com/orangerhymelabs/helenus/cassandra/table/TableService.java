@@ -50,14 +50,14 @@ public class TableService
 
 	public ListenableFuture<Table> create(Table table)
 	{
-		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().getIdentifier());
+		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().identifier());
 		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, Table>()
 		{
 			@Override
 			public ListenableFuture<Table> apply(Boolean exists)
 			throws Exception
 			{
-				if (!exists)
+				if (exists)
 				{
 					try
 					{
@@ -115,7 +115,7 @@ public class TableService
 
 	public ListenableFuture<Table> update(Table table)
 	{
-		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().getIdentifier());
+		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().identifier());
 		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, Table>()
 		{
 			@Override

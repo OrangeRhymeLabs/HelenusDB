@@ -136,7 +136,7 @@ public class IndexServiceTest
 			return;
 		}
 
-		fail("Index not deleted: " + index.getIdentifier().toString());
+		fail("Index not deleted: " + index.identifier().toString());
 	}
 
 	@Test

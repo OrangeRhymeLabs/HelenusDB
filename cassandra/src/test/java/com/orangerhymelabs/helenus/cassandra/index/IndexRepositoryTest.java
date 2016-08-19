@@ -92,7 +92,7 @@ public class IndexRepositoryTest
 		assertTrue("Bucket table not created: " + index.toDbTable(), tableExists(index.toDbTable()));
 
 		// Read
-		Index result = indexes.read(index.getIdentifier());
+		Index result = indexes.read(index.identifier());
 		assertTrue(result instanceof BucketedViewIndex);
 		assertEquals(index, result);
 		assertNotNull(result.createdAt());
@@ -104,14 +104,14 @@ public class IndexRepositoryTest
 		assertEquals(index, updateResult);
 
 		// Re-Read
-		Index result2 = indexes.read(index.getIdentifier());
+		Index result2 = indexes.read(index.identifier());
 		assertEquals(index, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		indexes.delete(index.getIdentifier());
+		indexes.delete(index.identifier());
 
 		// Bucket table should no longer exist.
 		assertFalse("Bucket table not deleted: " + index.toDbTable(), tableExists(index.toDbTable()));
@@ -119,14 +119,14 @@ public class IndexRepositoryTest
 		// Re-Read table
 		try
 		{
-			indexes.read(index.getIdentifier());
+			indexes.read(index.identifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Index not deleted: " + index.getIdentifier().toString());
+		fail("Index not deleted: " + index.identifier().toString());
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class IndexRepositoryTest
 		assertFalse("Should not create bucket table: " + index.toDbTable(), tableExists(index.toDbTable()));
 
 		// Read
-		Index result = indexes.read(index.getIdentifier());
+		Index result = indexes.read(index.identifier());
 		assertTrue(result instanceof LuceneIndex);
 		assertEquals(index, result);
 		assertNotNull(result.createdAt());
@@ -157,26 +157,26 @@ public class IndexRepositoryTest
 		assertEquals(index, updateResult);
 
 		// Re-Read
-		Index result2 = indexes.read(index.getIdentifier());
+		Index result2 = indexes.read(index.identifier());
 		assertEquals(index, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		indexes.delete(index.getIdentifier());
+		indexes.delete(index.identifier());
 
 		// Re-Read table
 		try
 		{
-			indexes.read(index.getIdentifier());
+			indexes.read(index.identifier());
 		}
 		catch (ItemNotFoundException e)
 		{
 			return;
 		}
 
-		fail("Index not deleted: " + index.getIdentifier().toString());
+		fail("Index not deleted: " + index.identifier().toString());
 	}
 
 	@Test
@@ -202,7 +202,7 @@ public class IndexRepositoryTest
 
 		// Read
 		callback.clear();
-		indexes.readAsync(index.getIdentifier(), callback);
+		indexes.readAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.entity() instanceof BucketedViewIndex);
@@ -218,7 +218,7 @@ public class IndexRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		indexes.readAsync(index.getIdentifier(), callback);
+		indexes.readAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		Index result2 = callback.entity();
@@ -229,7 +229,7 @@ public class IndexRepositoryTest
 
 		// Delete
 		callback.clear();
-		indexes.deleteAsync(index.getIdentifier(), callback);
+		indexes.deleteAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
@@ -239,7 +239,7 @@ public class IndexRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		indexes.readAsync(index.getIdentifier(), callback);
+		indexes.readAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -267,7 +267,7 @@ public class IndexRepositoryTest
 
 		// Read
 		callback.clear();
-		indexes.readAsync(index.getIdentifier(), callback);
+		indexes.readAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.entity() instanceof LuceneIndex);
@@ -283,7 +283,7 @@ public class IndexRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		indexes.readAsync(index.getIdentifier(), callback);
+		indexes.readAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		Index result2 = callback.entity();
@@ -294,14 +294,14 @@ public class IndexRepositoryTest
 
 		// Delete
 		callback.clear();
-		indexes.deleteAsync(index.getIdentifier(), callback);
+		indexes.deleteAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Re-Read
 		callback.clear();
-		indexes.readAsync(index.getIdentifier(), callback);
+		indexes.readAsync(index.identifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
