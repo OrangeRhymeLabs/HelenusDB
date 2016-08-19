@@ -124,7 +124,8 @@ public class TableServiceTest
 		tables.delete(entity.databaseName(), entity.name(), deleteCallback);
 		waitFor(deleteCallback);
 
-		assertTrue(deleteCallback.isEmpty());
+		assertNull(deleteCallback.throwable());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
@@ -215,7 +216,8 @@ public class TableServiceTest
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
-		assertTrue(callback.throwable() instanceof ValidationException);
+		assertTrue(callback.throwable() instanceof ItemNotFoundException);
+//		assertTrue(callback.throwable() instanceof ValidationException);
 	}
 
 	@Test

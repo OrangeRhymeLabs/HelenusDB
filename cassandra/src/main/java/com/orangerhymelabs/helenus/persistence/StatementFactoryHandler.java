@@ -55,7 +55,7 @@ implements InvocationHandler
 		if (cql == null) throw new StorageException("No @Query annotation for '" + method.getName() + "'");
 
 		
-		ps = session.prepare(String.format(cql.value(), keyspace));
+		ps = session.prepareAsync(String.format(cql.value(), keyspace)).get();
 		statements.put(method, ps);
 		return ps;
 	}
