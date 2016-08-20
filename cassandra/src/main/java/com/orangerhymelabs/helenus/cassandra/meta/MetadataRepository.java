@@ -16,22 +16,25 @@
 package com.orangerhymelabs.helenus.cassandra.meta;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
+import com.orangerhymelabs.helenus.cassandra.meta.MetadataRepository.MetaStatements;
+import com.orangerhymelabs.helenus.persistence.Query;
+import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  */
 public class MetadataRepository
-extends AbstractCassandraRepository<KeyValuePair>
+extends AbstractCassandraRepository<KeyValuePair, MetaStatements>
 {
 	private class Tables
 	{
-
 		static final String BY_ID = "sys_meta";
 	}
 
@@ -68,43 +71,34 @@ extends AbstractCassandraRepository<KeyValuePair>
 	}
 
 	private static final String IDENTITY_CQL = " where " + Columns.ID + " = ?";
-	private static final String CREATE_CQL = "insert into %s.%s (" + Columns.ID + ", " + Columns.VALUE + ") values (?, ?) if not exists";
-	private static final String UPDATE_CQL = "update %s.%s set " + Columns.VALUE + " = ?" + IDENTITY_CQL + " if exists";
-	private static final String READ_CQL = "select * from %s.%s" + IDENTITY_CQL;
-	private static final String READ_ALL_CQL = "select * from %s.%s";
-	private static final String DELETE_CQL = "delete from %s.%s" + IDENTITY_CQL;
+
+	public interface MetaStatements
+	extends StatementFactory
+	{
+		@Override
+		@Query("insert into %s." + Tables.BY_ID + " (" + Columns.ID + ", " + Columns.VALUE + ") values (?, ?) if not exists")
+		PreparedStatement create();
+
+		@Override
+		@Query("delete from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement delete();
+
+		@Override
+		@Query("update %s." + Tables.BY_ID + " set " + Columns.VALUE + " = ?" + IDENTITY_CQL + " if exists")
+		PreparedStatement update();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID + IDENTITY_CQL)
+		PreparedStatement read();
+
+		@Override
+		@Query("select * from %s." + Tables.BY_ID)
+		PreparedStatement readAll();
+	}
 
 	public MetadataRepository(Session session, String keyspace)
 	{
-		super(session, keyspace);
-	}
-
-	@Override
-	protected String buildCreateStatement()
-	{
-		return String.format(CREATE_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	@Override
-	protected String buildUpdateStatement()
-	{
-		return String.format(UPDATE_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	@Override
-	protected String buildReadStatement()
-	{
-		return String.format(READ_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	protected String buildReadAllStatement()
-	{
-		return String.format(READ_ALL_CQL, keyspace(), Tables.BY_ID);
-	}
-
-	protected String buildDeleteStatement()
-	{
-		return String.format(DELETE_CQL, keyspace(), Tables.BY_ID);
+		super(session, keyspace, MetaStatements.class);
 	}
 
 	@Override

@@ -74,8 +74,6 @@ extends AbstractCassandraRepository<Index, IndexStatements>
 		static final String UPDATED_AT = "updated_at";
 	}
 
-	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
-
 	public static class Schema
 	implements SchemaProvider
 	{
@@ -130,6 +128,8 @@ extends AbstractCassandraRepository<Index, IndexStatements>
 		}
 	}
 
+	private static final String IDENTITY_CQL = " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ? and " + Columns.NAME + " = ?";
+
 	public interface IndexStatements
 	extends StatementFactory
 	{
@@ -170,8 +170,11 @@ extends AbstractCassandraRepository<Index, IndexStatements>
 		@Query("select * from %s." + Tables.BY_ID)
 		PreparedStatement readAll();
 
+		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DB_NAME + "= ?")
+		PreparedStatement readForDatabase();
+
 		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DB_NAME + "= ? and " + Columns.TBL_NAME + " = ?")
-		PreparedStatement readFor();
+		PreparedStatement readForTable();
 	}
 
 	private static final BucketedViewStatementFactory.Schema BUCKETED_VIEW_SCHEMA = new BucketedViewStatementFactory.Schema();
@@ -249,7 +252,7 @@ extends AbstractCassandraRepository<Index, IndexStatements>
 	}
 
 	@Override
-	public void deleteAsync(Identifier id, FutureCallback<Index> callback)
+	public void delete(Identifier id, FutureCallback<Index> callback)
 	{
 		try
 		{

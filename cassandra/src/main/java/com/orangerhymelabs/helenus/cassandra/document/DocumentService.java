@@ -18,8 +18,10 @@ package com.orangerhymelabs.helenus.cassandra.document;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -44,20 +46,20 @@ public class DocumentService
 		this.factory = repositoryFactory;
 	}
 
-	public Document create(String database, String table, Document document)
+	public ListenableFuture<Document> create(String database, String table, Document document)
 	{
 		ValidationEngine.validateAndThrow(document);
 		DocumentRepository docs = acquireRepositoryFor(database, table);
 		return docs.create(document);
 	}
 
-	public void createAsync(String database, String table, Document document, FutureCallback<Document> callback)
+	public void create(String database, String table, Document document, FutureCallback<Document> callback)
 	{
 		try
 		{
 			ValidationEngine.validateAndThrow(document);
 			DocumentRepository docs = acquireRepositoryFor(database, table);
-			docs.createAsync(document, callback);
+			return docs.create(document, callback);
 		}
 		catch(ValidationException e)
 		{
@@ -132,20 +134,21 @@ public class DocumentService
 		docs.delete(new Identifier(id));
 	}
 
-	public void deleteAsync(String database, String table, Object id, FutureCallback<Document> callback)
+	public void delete(String database, String table, Object id, FutureCallback<Document> callback)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.deleteAsync(new Identifier(id), callback);
+		docs.delete(new Identifier(id), callback);
 	}
 
 	private DocumentRepository acquireRepositoryFor(String database, String table)
+	throws InterruptedException, ExecutionException
     {
 		String cacheKey = String.format("%s_%s", database, table);
 		DocumentRepository repo = repoCache.get(cacheKey);
 
 		if (repo == null)
 		{
-			Table t = tables.read(database, table);
+			Table t = tables.read(database, table).get();
 			repo = factory.newDocumentRepositoryFor(t);
 			repoCache.put(cacheKey, repo);
 		}
