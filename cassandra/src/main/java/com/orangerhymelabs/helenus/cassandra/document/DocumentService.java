@@ -21,12 +21,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
-import com.strategicgains.syntaxe.ValidationException;
 
 /**
  * @author tfredrich
@@ -35,6 +36,7 @@ import com.strategicgains.syntaxe.ValidationException;
 public class DocumentService
 {
 	//TODO: this should be a distributed cache, perhaps?
+	//TODO: Must be invalidatable via events.
 	private Map<String, DocumentRepository> repoCache = new HashMap<String, DocumentRepository>();
 	private TableService tables;
 	private DocumentRepositoryFactory factory;
@@ -55,31 +57,21 @@ public class DocumentService
 
 	public void create(String database, String table, Document document, FutureCallback<Document> callback)
 	{
-		try
-		{
-			ValidationEngine.validateAndThrow(document);
-			DocumentRepository docs = acquireRepositoryFor(database, table);
-			return docs.create(document, callback);
-		}
-		catch(ValidationException e)
-		{
-			callback.onFailure(e);
-		}
+		Futures.addCallback(create(database, table, document), callback);
 	}
 
-	public Document read(String database, String table, Object id)
+	public ListenableFuture<Document> read(String database, String table, Object id)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
 		return docs.read(new Identifier(id));
 	}
 
-	public void readAsync(String database, String table, Object id, FutureCallback<Document> callback)
+	public void read(String database, String table, Object id, FutureCallback<Document> callback)
 	{
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.readAsync(new Identifier(id), callback);
+		Futures.addCallback(read(database, table, id), callback);
 	}
 
-	public List<Document> readIn(String database, String table, Object... ids)
+	public ListenableFuture<List<Document>> readIn(String database, String table, Object... ids)
 	{
 		Identifier[] inIds = new Identifier[ids.length];
 		int i = 0;
@@ -93,64 +85,51 @@ public class DocumentService
 		return docs.readIn(inIds);
 	}
 
-	public void readInAsync(FutureCallback<Document> callback, String database, String table, Object... ids)
+	public void readIn(FutureCallback<List<Document>> callback, String database, String table, Object... ids)
 	{
-		Identifier[] inIds = new Identifier[ids.length];
-		int i = 0;
-
-		for (Object id : ids)
-		{
-			inIds[i++] = new Identifier(id);
-		}
-
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.readInAsync(callback, inIds);
+		Futures.addCallback(readIn(database, table, ids), callback);
 	}
 
-	public Document update(String database, String table, Document document)
+	public ListenableFuture<Document> update(String database, String table, Document document)
 	{
 		ValidationEngine.validateAndThrow(document);
 		DocumentRepository docs = acquireRepositoryFor(database, table);
 		return docs.update(document);
 	}
 
-	public void updateAsync(String database, String table, Document document, FutureCallback<Document> callback)
+	public void update(String database, String table, Document document, FutureCallback<Document> callback)
     {
-		try
-		{
-			ValidationEngine.validateAndThrow(document);
-			DocumentRepository docs = acquireRepositoryFor(database, table);
-			docs.updateAsync(document, callback);
-		}
-		catch(ValidationException e)
-		{
-			callback.onFailure(e);
-		}
+		Futures.addCallback(update(database, table, document), callback);
     }
 
-	public void delete(String database, String table, Object id)
+	public ListenableFuture<Boolean> delete(String database, String table, Object id)
 	{
 		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.delete(new Identifier(id));
+		return docs.delete(new Identifier(id));
 	}
 
-	public void delete(String database, String table, Object id, FutureCallback<Document> callback)
+	public void delete(String database, String table, Object id, FutureCallback<Boolean> callback)
 	{
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		docs.delete(new Identifier(id), callback);
+		Futures.addCallback(delete(database, table, id), callback);
 	}
 
 	private DocumentRepository acquireRepositoryFor(String database, String table)
-	throws InterruptedException, ExecutionException
     {
 		String cacheKey = String.format("%s_%s", database, table);
 		DocumentRepository repo = repoCache.get(cacheKey);
 
 		if (repo == null)
 		{
-			Table t = tables.read(database, table).get();
-			repo = factory.newDocumentRepositoryFor(t);
-			repoCache.put(cacheKey, repo);
+			try
+			{
+				Table t = tables.read(database, table).get();
+				repo = factory.newInstance(t);
+				repoCache.put(cacheKey, repo);
+			}
+			catch (InterruptedException | ExecutionException e)
+			{
+				throw new StorageException(e);
+			}
 		}
 
 		return repo;

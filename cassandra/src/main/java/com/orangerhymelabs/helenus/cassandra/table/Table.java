@@ -15,13 +15,10 @@
  */
 package com.orangerhymelabs.helenus.cassandra.table;
 
-import java.util.List;
-
 import com.orangerhymelabs.helenus.cassandra.Constants;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseReference;
-import com.orangerhymelabs.helenus.cassandra.index.Index;
 import com.orangerhymelabs.helenus.persistence.AbstractEntity;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -52,26 +49,9 @@ extends AbstractEntity
 	// How long should the table's data live?
 	private long ttl;
 
-	private transient List<Index> indexes;
-
 	public Table()
 	{
 		super();
-	}
-
-	public boolean hasIndexes()
-    {
-	    return (indexes() != null && !indexes().isEmpty());
-    }
-
-	public List<Index> indexes()
-	{
-		return indexes;
-	}
-
-	public void indexes(List<Index> indexes)
-	{
-		this.indexes = indexes;
 	}
 
 	public boolean hasDatabase()

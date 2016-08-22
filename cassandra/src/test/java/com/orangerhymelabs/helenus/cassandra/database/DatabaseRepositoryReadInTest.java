@@ -94,19 +94,8 @@ public class DatabaseRepositoryReadInTest
 	private void shouldReturnListAsynchronously()
 	throws Exception
     {
-		List<ListenableFuture<Database>> dbs = databases.readIn(IDS);
-		List<Database> list = new ArrayList<>(dbs.size());
-
-		for(ListenableFuture<Database> db : dbs)
-		{
-			Database d = db.get();
-
-			if (d != null)
-			{
-				list.add(d);
-			}
-		}
-
+		ListenableFuture<List<Database>> dbs = databases.readIn(IDS);
+		List<Database> list = new ArrayList<>(dbs.get());
 		assertDatabases(list);
     }
 
@@ -114,19 +103,22 @@ public class DatabaseRepositoryReadInTest
     {
 	    assertNotNull(dbs);
 		assertFalse(dbs.isEmpty());
-		assertEquals(4, dbs.size());
+		assertEquals(5, dbs.size());
 		Collections.sort(dbs, new Comparator<Database>()
 		{
 			@Override
             public int compare(Database o1, Database o2)
             {
+				if (o1 == null && o2 == null) return 0;
+				if (o1 == null && o2 != null) return -1;
+				if (o1 != null && o2 == null) return 1;
 	            return o1.name().compareTo(o2.name());
             }
 		});
 
-		assertEquals("dba1", dbs.get(0).name());
-		assertEquals("dba3", dbs.get(1).name());
-		assertEquals("dba5", dbs.get(2).name());
-		assertEquals("dba7", dbs.get(3).name());
+		assertEquals("dba1", dbs.get(1).name());
+		assertEquals("dba3", dbs.get(2).name());
+		assertEquals("dba5", dbs.get(3).name());
+		assertEquals("dba7", dbs.get(4).name());
     }
 }

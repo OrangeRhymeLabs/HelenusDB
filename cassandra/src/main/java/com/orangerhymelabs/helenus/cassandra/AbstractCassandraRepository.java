@@ -154,7 +154,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	 * @param callback a FutureCallback to notify for each ID in the ids array.
 	 * @param ids the partition keys (identifiers) to select.
 	 */
-	public List<ListenableFuture<T>> readIn(Identifier... ids)
+	public ListenableFuture<List<T>> readIn(Identifier... ids)
 	{
 		List<ListenableFuture<ResultSet>> futures = submitReadIn(ids);
 
@@ -177,7 +177,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 			}));
 		}
 
-		return results;
+		return Futures.allAsList(results);
 	}
 
 	public Session session()

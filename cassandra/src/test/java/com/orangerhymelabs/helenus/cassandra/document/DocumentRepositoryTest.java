@@ -83,7 +83,7 @@ public class DocumentRepositoryTest
 		uuids.database("db1");
 		uuids.description("a test UUID-keyed table");
 		Table uuidTable = tables.create(uuids);
-		uuidDocs = factory.newDocumentRepositoryFor(uuidTable);
+		uuidDocs = factory.newInstance(uuidTable);
 
 		Table dates = new Table();
 		dates.name("dates");
@@ -91,7 +91,7 @@ public class DocumentRepositoryTest
 		dates.idType(DataTypes.TIMESTAMP);
 		dates.description("a test date-keyed table");
 		Table dateTable = tables.create(dates);
-		dateDocs = factory.newDocumentRepositoryFor(dateTable);
+		dateDocs = factory.newInstance(dateTable);
 	}
 
 	@AfterClass

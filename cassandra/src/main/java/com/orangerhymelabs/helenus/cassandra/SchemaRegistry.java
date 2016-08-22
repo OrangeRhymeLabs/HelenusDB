@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.helenus.cassandra.bucket.IndexControlRepository;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
-import com.orangerhymelabs.helenus.cassandra.index.IndexRepository;
 import com.orangerhymelabs.helenus.cassandra.meta.MetadataRepository;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 
@@ -42,8 +40,6 @@ public class SchemaRegistry
 		INSTANCE.register(new MetadataRepository.Schema());
 		INSTANCE.register(new DatabaseRepository.Schema());
 		INSTANCE.register(new TableRepository.Schema());
-		INSTANCE.register(new IndexRepository.Schema());
-		INSTANCE.register(new IndexControlRepository.Schema());
 	}
 
 	private List<SchemaProvider> schemas = new ArrayList<SchemaProvider>();
