@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -33,16 +34,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Futures;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
-import com.orangerhymelabs.helenus.cassandra.document.Document;
-import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository;
-import com.orangerhymelabs.helenus.cassandra.document.DocumentRepositoryFactory;
-import com.orangerhymelabs.helenus.cassandra.document.DocumentRepositoryFactoryImpl;
-import com.orangerhymelabs.helenus.cassandra.index.IndexRepository;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
@@ -65,7 +62,7 @@ public class DocumentRepositoryTest
 
 	@BeforeClass
 	public static void beforeClass()
-	throws ConfigurationException, TTransportException, IOException, InterruptedException
+	throws ConfigurationException, TTransportException, IOException, InterruptedException, ExecutionException
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
@@ -74,15 +71,13 @@ public class DocumentRepositoryTest
 		new TableRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
 		TableRepository tables = new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
 
-		new IndexRepository.Schema().create(CassandraManager.session(), CassandraManager.keyspace());
-		IndexRepository indexes = new IndexRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
-		DocumentRepositoryFactory factory = new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace(), indexes);
+		DocumentRepositoryFactory factory = new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace());
 
 		Table uuids = new Table();
 		uuids.name("uuids");
 		uuids.database("db1");
 		uuids.description("a test UUID-keyed table");
-		Table uuidTable = tables.create(uuids);
+		Table uuidTable = tables.create(uuids).get();
 		uuidDocs = factory.newInstance(uuidTable);
 
 		Table dates = new Table();
@@ -90,7 +85,7 @@ public class DocumentRepositoryTest
 		dates.database("db1");
 		dates.idType(DataTypes.TIMESTAMP);
 		dates.description("a test date-keyed table");
-		Table dateTable = tables.create(dates);
+		Table dateTable = tables.create(dates).get();
 		dateDocs = factory.newInstance(dateTable);
 	}
 
@@ -108,24 +103,24 @@ public class DocumentRepositoryTest
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
 		doc.id(id);
-		Document createResult = uuidDocs.create(doc);
+		Document createResult = uuidDocs.create(doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = uuidDocs.read(doc.identifier());
+		Document result = uuidDocs.read(doc.identifier()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		doc.object(BSON);
-		Document updateResult = uuidDocs.update(doc);
+		Document updateResult = uuidDocs.update(doc).get();
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = uuidDocs.read(doc.identifier());
+		Document result2 = uuidDocs.read(doc.identifier()).get();
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -155,24 +150,24 @@ public class DocumentRepositoryTest
 		Date now = new Date();
 		Document doc = new Document();
 		doc.id(now);
-		Document createResult = dateDocs.create(doc);
+		Document createResult = dateDocs.create(doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = dateDocs.read(doc.identifier());
+		Document result = dateDocs.read(doc.identifier()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		doc.object(BSON);
-		Document updateResult = dateDocs.update(doc);
+		Document updateResult = dateDocs.update(doc).get();
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = dateDocs.read(doc.identifier());
+		Document result2 = dateDocs.read(doc.identifier()).get();
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -204,14 +199,14 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		uuidDocs.createAsync(doc, callback);
+		Futures.addCallback(uuidDocs.create(doc), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		uuidDocs.readAsync(doc.identifier(), callback);
+		Futures.addCallback(uuidDocs.read(doc.identifier()), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -219,14 +214,14 @@ public class DocumentRepositoryTest
 		// Update
 		callback.clear();
 		doc.object(BSON);
-		uuidDocs.updateAsync(doc, callback);
+		Futures.addCallback(uuidDocs.update(doc), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		uuidDocs.readAsync(doc.identifier(), callback);
+		Futures.addCallback(uuidDocs.read(doc.identifier()), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -236,15 +231,15 @@ public class DocumentRepositoryTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		uuidDocs.deleteAsync(doc.identifier(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<>();
+		Futures.addCallback(uuidDocs.delete(doc.identifier()), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		uuidDocs.readAsync(doc.identifier(), callback);
+		Futures.addCallback(uuidDocs.read(doc.identifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -261,14 +256,14 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		dateDocs.createAsync(doc, callback);
+		Futures.addCallback(dateDocs.create(doc), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		dateDocs.readAsync(doc.identifier(), callback);
+		Futures.addCallback(dateDocs.read(doc.identifier()), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -276,14 +271,14 @@ public class DocumentRepositoryTest
 		// Update
 		callback.clear();
 		doc.object(BSON);
-		dateDocs.updateAsync(doc, callback);
+		Futures.addCallback(dateDocs.update(doc), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		dateDocs.readAsync(doc.identifier(), callback);
+		Futures.addCallback(dateDocs.read(doc.identifier()), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -293,15 +288,15 @@ public class DocumentRepositoryTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		dateDocs.deleteAsync(doc.identifier(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<>();
+		Futures.addCallback(dateDocs.delete(doc.identifier()), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		dateDocs.readAsync(doc.identifier(), callback);
+		Futures.addCallback(dateDocs.read(doc.identifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -310,12 +305,13 @@ public class DocumentRepositoryTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
+	throws InterruptedException, ExecutionException
 	{
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
 		doc.id(id);
-		Document createResult = uuidDocs.create(doc);
+		Document createResult = uuidDocs.create(doc).get();
 		assertEquals(doc, createResult);
 
 		uuidDocs.create(doc);
@@ -331,13 +327,13 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		uuidDocs.createAsync(doc, callback);
+		Futures.addCallback(uuidDocs.create(doc), callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Create Duplicate
-		uuidDocs.createAsync(doc, callback);
+		Futures.addCallback(uuidDocs.create(doc), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -362,7 +358,7 @@ public class DocumentRepositoryTest
 		doc.id(id);
 		TestCallback<Document> callback = new TestCallback<Document>();
 
-		dateDocs.createAsync(doc, callback);
+		Futures.addCallback(dateDocs.create(doc), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -388,7 +384,7 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		dateDocs.updateAsync(doc, callback);
+		Futures.addCallback(dateDocs.update(doc), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -412,7 +408,7 @@ public class DocumentRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		uuidDocs.readAsync(new Identifier(UUID.randomUUID()), callback);
+		Futures.addCallback(uuidDocs.read(new Identifier(UUID.randomUUID())), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -424,7 +420,7 @@ public class DocumentRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		dateDocs.readAsync(new Identifier(new Date()), callback);
+		Futures.addCallback(dateDocs.read(new Identifier(new Date())), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -446,14 +442,14 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
 		doc.id(UUID.randomUUID());
-		uuidDocs.updateAsync(doc, callback);
+		Futures.addCallback(uuidDocs.update(doc), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 	}
 
-	private void waitFor(TestCallback<Document> callback)
+	private void waitFor(TestCallback<?> callback)
 	throws InterruptedException
     {
 		synchronized(callback)

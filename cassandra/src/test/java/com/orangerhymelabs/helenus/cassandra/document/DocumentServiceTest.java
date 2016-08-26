@@ -33,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.util.concurrent.Futures;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
@@ -40,6 +41,7 @@ import com.orangerhymelabs.helenus.cassandra.SchemaRegistry;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
+import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.cassandra.document.Document;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepositoryFactoryImpl;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentService;
@@ -72,9 +74,9 @@ public class DocumentServiceTest
 		CassandraManager.start();
 		SchemaRegistry.instance().createAll(CassandraManager.session(), CassandraManager.keyspace());
 		
-		DatabaseRepository dbs = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
-		TableService tables = new TableService(dbs,
-			new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace()));
+		DatabaseRepository dbr = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
+		DatabaseService dbs = new DatabaseService(dbr);
+		TableService tables = new TableService(dbs, new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace()));
 
 		Database db = new Database();
 		db.name(DB_NAME);
@@ -94,9 +96,7 @@ public class DocumentServiceTest
 		dates.description("a test date-keyed table");
 		tables.create(dates);
 
-		allDocs = new DocumentService(tables,
-			new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace(),
-				new IndexRepository(CassandraManager.session(), CassandraManager.keyspace())));
+		allDocs = new DocumentService(tables, new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace()));
 	}
 
 	@AfterClass
@@ -113,24 +113,24 @@ public class DocumentServiceTest
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
 		doc.id(id);
-		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc);
+		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = allDocs.read(DB_NAME, UUIDS_TABLE, doc.id());
+		Document result = allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		doc.object(BSON);
-		Document updateResult = allDocs.update(DB_NAME, UUIDS_TABLE, doc);
+		Document updateResult = allDocs.update(DB_NAME, UUIDS_TABLE, doc).get();
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = allDocs.read(DB_NAME, UUIDS_TABLE, doc.id());
+		Document result2 = allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()).get();
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -160,24 +160,24 @@ public class DocumentServiceTest
 		Date now = new Date();
 		Document doc = new Document();
 		doc.id(now);
-		Document createResult = allDocs.create(DB_NAME, DATES_TABLE, doc);
+		Document createResult = allDocs.create(DB_NAME, DATES_TABLE, doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = allDocs.read(DB_NAME, DATES_TABLE, doc.id());
+		Document result = allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
 		doc.object(BSON);
-		Document updateResult = allDocs.update(DB_NAME, DATES_TABLE, doc);
+		Document updateResult = allDocs.update(DB_NAME, DATES_TABLE, doc).get();
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = allDocs.read(DB_NAME, DATES_TABLE, doc.id());
+		Document result2 = allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
@@ -216,7 +216,7 @@ public class DocumentServiceTest
 
 		// Read
 		callback.clear();
-		allDocs.readAsync(DB_NAME, UUIDS_TABLE, doc.id(), callback);
+		Futures.addCallback(allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());

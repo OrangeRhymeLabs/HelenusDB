@@ -122,6 +122,7 @@ public class DocumentService
 		{
 			try
 			{
+				// TODO: Handle this asynchronously
 				Table t = tables.read(database, table).get();
 				repo = factory.newInstance(t);
 				repoCache.put(cacheKey, repo);
