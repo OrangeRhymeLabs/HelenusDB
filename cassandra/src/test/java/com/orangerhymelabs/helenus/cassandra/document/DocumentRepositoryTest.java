@@ -127,16 +127,16 @@ public class DocumentRepositoryTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		uuidDocs.delete(doc.identifier());
+		uuidDocs.delete(doc.identifier()).get();
 
 		// Re-Read
 		try
 		{
-			uuidDocs.read(doc.identifier());
+			uuidDocs.read(doc.identifier()).get();
 		}
-		catch (ItemNotFoundException e)
+		catch (ExecutionException e)
 		{
-			return;
+			if (e.getCause() instanceof ItemNotFoundException) return;
 		}
 
 		fail("Document not deleted: " + doc.identifier().toString());
@@ -174,16 +174,16 @@ public class DocumentRepositoryTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		dateDocs.delete(doc.identifier());
+		dateDocs.delete(doc.identifier()).get();
 
 		// Re-Read
 		try
 		{
-			dateDocs.read(doc.identifier());
+			dateDocs.read(doc.identifier()).get();
 		}
-		catch (ItemNotFoundException e)
+		catch (ExecutionException e)
 		{
-			return;
+			if (e.getCause() instanceof ItemNotFoundException) return;
 		}
 
 		fail("Document not deleted: " + doc.identifier().toString());
@@ -305,7 +305,7 @@ public class DocumentRepositoryTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
-	throws InterruptedException, ExecutionException
+	throws Throwable
 	{
 		// Create
 		UUID id = UUID.randomUUID();
@@ -314,7 +314,14 @@ public class DocumentRepositoryTest
 		Document createResult = uuidDocs.create(doc).get();
 		assertEquals(doc, createResult);
 
-		uuidDocs.create(doc);
+		try
+		{
+			uuidDocs.create(doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -330,7 +337,8 @@ public class DocumentRepositoryTest
 		Futures.addCallback(uuidDocs.create(doc), callback);
 		waitFor(callback);
 
-		assertTrue(callback.isEmpty());
+		assertNotNull(callback.entity());
+		assertNull(callback.throwable());
 
 		// Create Duplicate
 		Futures.addCallback(uuidDocs.create(doc), callback);
@@ -349,7 +357,7 @@ public class DocumentRepositoryTest
 		dateDocs.create(doc);
 	}
 
-	@Test
+	@Test(expected=InvalidIdentifierException.class)
 	public void shouldThrowOnCreateInvalidIdAynchronously()
 	throws InterruptedException
 	{
@@ -359,10 +367,10 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		Futures.addCallback(dateDocs.create(doc), callback);
-		waitFor(callback);
-
-		assertNotNull(callback.throwable());
-		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
+//		waitFor(callback);
+//
+//		assertNotNull(callback.throwable());
+//		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
 	@Test(expected=InvalidIdentifierException.class)
@@ -374,7 +382,7 @@ public class DocumentRepositoryTest
 		dateDocs.update(doc);
 	}
 
-	@Test
+	@Test(expected=InvalidIdentifierException.class)
 	public void shouldThrowOnUpdateInvalidIdAynchronously()
 	throws InterruptedException
 	{
@@ -385,22 +393,38 @@ public class DocumentRepositoryTest
 
 		// Create
 		Futures.addCallback(dateDocs.update(doc), callback);
-		waitFor(callback);
-
-		assertNotNull(callback.throwable());
-		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
+//		waitFor(callback);
+//
+//		assertNotNull(callback.throwable());
+//		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentSynchronously()
+	throws Throwable
 	{
-		uuidDocs.read(new Identifier(UUID.randomUUID()));
+		try
+		{
+			uuidDocs.read(new Identifier(UUID.randomUUID())).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentAltIdSynchronously()
+	throws Throwable
 	{
-		dateDocs.read(new Identifier(new Date()));
+		try
+		{
+			dateDocs.read(new Identifier(new Date())).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -429,10 +453,18 @@ public class DocumentRepositoryTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentSynchronously()
+	throws Throwable
 	{
 		Document doc = new Document();
 		doc.id(UUID.randomUUID());
-		uuidDocs.update(doc);
+		try
+		{
+			uuidDocs.update(doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test

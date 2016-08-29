@@ -130,7 +130,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 
 	public DocumentRepository(Session session, String keyspace, Table table)
 	{
-		super(session, keyspace, DocumentStatements.class);
+		super(session, keyspace, table.toDbTable(), DocumentStatements.class);
 		this.table = table;
 	}
 

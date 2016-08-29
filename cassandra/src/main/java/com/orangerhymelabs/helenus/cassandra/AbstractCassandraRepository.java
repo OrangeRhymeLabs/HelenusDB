@@ -51,9 +51,14 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 	public AbstractCassandraRepository(Session session, String keyspace, Class<F> factoryClass)
 	{
+		this(session, keyspace, null, factoryClass);
+	}
+
+	public AbstractCassandraRepository(Session session, String keyspace, String table, Class<F> factoryClass)
+	{
 		this.session = session;
 		this.keyspace = keyspace;
-		this.statementFactory = newStatementFactory(factoryClass, session, keyspace);
+		this.statementFactory = newStatementFactory(factoryClass, session, keyspace, table);
 	}
 
 	public ListenableFuture<T> create(T entity)
@@ -289,8 +294,8 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	}
 
 	@SuppressWarnings("unchecked")
-	private F newStatementFactory(Class<F> factoryClass, Session session, String keyspace)
+	private F newStatementFactory(Class<F> factoryClass, Session session, String keyspace, String table)
 	{
-		return (F) Proxy.newProxyInstance(factoryClass.getClassLoader(), (Class<F>[]) new Class[]{factoryClass}, new StatementFactoryHandler(session, keyspace));
+		return (F) Proxy.newProxyInstance(factoryClass.getClassLoader(), (Class<F>[]) new Class[]{factoryClass}, new StatementFactoryHandler(session, keyspace, table));
 	}
 }

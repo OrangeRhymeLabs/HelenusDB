@@ -33,13 +33,30 @@ implements InvocationHandler
 {
 	private Session session;
 	private String keyspace;
+	private String table;
 	private Map<Method, PreparedStatement> statements = new HashMap<>();
 
 	public StatementFactoryHandler(Session session, String keyspace)
 	{
+		this(session, keyspace, null);
+	}
+
+	public StatementFactoryHandler(Session session, String keyspace, String table)
+	{
 		super();
 		this.session = session;
 		this.keyspace = keyspace;
+		table(table);
+	}
+
+	public boolean hasTable()
+	{
+		return table != null;
+	}
+
+	public void table(String table)
+	{
+		this.table = table;
 	}
 
 	@Override
@@ -54,8 +71,15 @@ implements InvocationHandler
 
 		if (cql == null) throw new StorageException("No @Query annotation for '" + method.getName() + "'");
 
-		
-		ps = session.prepareAsync(String.format(cql.value(), keyspace)).get();
+		if (hasTable())
+		{
+			ps = session.prepareAsync(String.format(cql.value(), keyspace, table)).get();
+		}
+		else
+		{
+			ps = session.prepareAsync(String.format(cql.value(), keyspace)).get();
+		}
+
 		statements.put(method, ps);
 		return ps;
 	}
