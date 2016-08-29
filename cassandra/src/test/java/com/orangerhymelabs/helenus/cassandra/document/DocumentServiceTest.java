@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
@@ -42,10 +43,6 @@ import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
-import com.orangerhymelabs.helenus.cassandra.document.Document;
-import com.orangerhymelabs.helenus.cassandra.document.DocumentRepositoryFactoryImpl;
-import com.orangerhymelabs.helenus.cassandra.document.DocumentService;
-import com.orangerhymelabs.helenus.cassandra.index.IndexRepository;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
@@ -209,7 +206,7 @@ public class DocumentServiceTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		allDocs.createAsync(DB_NAME, UUIDS_TABLE, doc, callback);
+		allDocs.create(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -224,14 +221,14 @@ public class DocumentServiceTest
 		// Update
 		callback.clear();
 		doc.object(BSON);
-		allDocs.updateAsync(DB_NAME, UUIDS_TABLE, doc, callback);
+		allDocs.update(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		allDocs.readAsync(DB_NAME, UUIDS_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, UUIDS_TABLE, doc.id(), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -241,15 +238,15 @@ public class DocumentServiceTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		allDocs.deleteAsync(DB_NAME, UUIDS_TABLE, doc.id(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<>();
+		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.id(), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		allDocs.readAsync(DB_NAME, UUIDS_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, UUIDS_TABLE, doc.id(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -266,14 +263,14 @@ public class DocumentServiceTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		allDocs.createAsync(DB_NAME, DATES_TABLE, doc, callback);
+		allDocs.create(DB_NAME, DATES_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		allDocs.readAsync(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -281,14 +278,14 @@ public class DocumentServiceTest
 		// Update
 		callback.clear();
 		doc.object(BSON);
-		allDocs.updateAsync(DB_NAME, DATES_TABLE, doc, callback);
+		allDocs.update(DB_NAME, DATES_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		allDocs.readAsync(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -298,15 +295,15 @@ public class DocumentServiceTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		callback.clear();
-		allDocs.deleteAsync(DB_NAME, DATES_TABLE, doc.id(), callback);
-		waitFor(callback);
+		TestCallback<Boolean> deleteCallback = new TestCallback<>();
+		allDocs.delete(DB_NAME, DATES_TABLE, doc.id(), deleteCallback);
+		waitFor(deleteCallback);
 
-		assertTrue(callback.isEmpty());
+		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		allDocs.readAsync(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -315,12 +312,13 @@ public class DocumentServiceTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
+	throws InterruptedException, ExecutionException
 	{
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
 		doc.id(id);
-		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc);
+		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 		assertEquals(doc, createResult);
 
 		allDocs.create(DB_NAME, UUIDS_TABLE, doc);
@@ -336,13 +334,13 @@ public class DocumentServiceTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		allDocs.createAsync(DB_NAME, UUIDS_TABLE, doc, callback);
+		allDocs.create(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertTrue(callback.isEmpty());
 
 		// Create Duplicate
-		allDocs.createAsync(DB_NAME, UUIDS_TABLE, doc, callback);
+		allDocs.create(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -367,7 +365,7 @@ public class DocumentServiceTest
 		doc.id(id);
 		TestCallback<Document> callback = new TestCallback<Document>();
 
-		allDocs.createAsync(DB_NAME, DATES_TABLE, doc, callback);
+		allDocs.create(DB_NAME, DATES_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -393,7 +391,7 @@ public class DocumentServiceTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		allDocs.updateAsync(DB_NAME, DATES_TABLE, doc, callback);
+		allDocs.update(DB_NAME, DATES_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -417,7 +415,7 @@ public class DocumentServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		allDocs.readAsync(DB_NAME, UUIDS_TABLE, UUID.randomUUID(), callback);
+		allDocs.read(DB_NAME, UUIDS_TABLE, UUID.randomUUID(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -429,7 +427,7 @@ public class DocumentServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		allDocs.readAsync(DB_NAME, DATES_TABLE, new Date(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, new Date(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -451,7 +449,7 @@ public class DocumentServiceTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
 		doc.id(UUID.randomUUID());
-		allDocs.updateAsync(DB_NAME, UUIDS_TABLE, doc, callback);
+		allDocs.update(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -473,14 +471,14 @@ public class DocumentServiceTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
 		doc.id(UUID.randomUUID());
-		allDocs.readAsync(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
-	private void waitFor(TestCallback<Document> callback)
+	private void waitFor(TestCallback<?> callback)
 	throws InterruptedException
     {
 		synchronized(callback)

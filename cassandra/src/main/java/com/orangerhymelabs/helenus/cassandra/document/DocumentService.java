@@ -129,6 +129,13 @@ public class DocumentService
 			}
 			catch (InterruptedException | ExecutionException e)
 			{
+				Throwable cause = e.getCause();
+
+				if (cause != null)
+				{
+					throw new StorageException(cause);
+				}
+
 				throw new StorageException(e);
 			}
 		}

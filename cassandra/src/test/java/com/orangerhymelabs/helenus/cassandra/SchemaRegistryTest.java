@@ -67,11 +67,11 @@ public class SchemaRegistryTest
 		assertTrue("Table not created: sys_tbl", tableExists("sys_tbl"));
 	}
 
-	@Test
-	public void indexTableShouldExist()
-	{
-		assertTrue("Table not created: sys_idx", tableExists("sys_idx"));
-	}
+//	@Test
+//	public void indexTableShouldExist()
+//	{
+//		assertTrue("Table not created: sys_idx", tableExists("sys_idx"));
+//	}
 
 	private boolean tableExists(String tableName)
     {
