@@ -102,7 +102,7 @@ public class CassandraManager
 		throw new IllegalStateException("Call CassandraManager.start() before accessing metadata");
 	}
 
-	private void _start(boolean isEmbedded)
+	private synchronized void _start(boolean isEmbedded)
 	throws ConfigurationException, TTransportException, IOException, InterruptedException
 	{
 		if (isStarted) return;

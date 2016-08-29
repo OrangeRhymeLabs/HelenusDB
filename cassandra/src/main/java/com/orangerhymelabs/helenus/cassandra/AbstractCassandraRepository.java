@@ -28,7 +28,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
@@ -64,17 +64,18 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	public ListenableFuture<T> create(T entity)
 	{
 		ListenableFuture<ResultSet> future = submitCreate(entity);
-		return Futures.transform(future, new Function<ResultSet, T>()
+		return Futures.transformAsync(future, new AsyncFunction<ResultSet, T>()
 		{
 			@Override
-			public T apply(ResultSet result)
+			public ListenableFuture<T> apply(ResultSet result)
+			throws Exception
 			{
 				if (result.wasApplied())
 				{
-					return entity;
+					return Futures.immediateFuture(entity);
 				}
 
-				throw new DuplicateItemException(entity.toString());
+				return Futures.immediateFailedFuture(new DuplicateItemException(entity.toString()));
 			}
 		});
 	}
@@ -82,17 +83,17 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	public ListenableFuture<T> update(T entity)
 	{
 		ListenableFuture<ResultSet> future = submitUpdate(entity);
-		return Futures.transform(future, new Function<ResultSet, T>()
+		return Futures.transformAsync(future, new AsyncFunction<ResultSet, T>()
 		{
 			@Override
-			public T apply(ResultSet result)
+			public ListenableFuture<T> apply(ResultSet result)
 			{
 				if (result.wasApplied())
 				{
-					return entity;
+					return Futures.immediateFuture(entity);
 				}
 
-				throw new ItemNotFoundException(entity.toString());
+				return Futures.immediateFailedFuture(new ItemNotFoundException(entity.toString()));
 			}
 		});		
 	}
@@ -100,17 +101,17 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	public ListenableFuture<Boolean> delete(Identifier id)
 	{
 		ListenableFuture<ResultSet> future = submitDelete(id);
-		return Futures.transform(future, new Function<ResultSet, Boolean>()
+		return Futures.transformAsync(future, new AsyncFunction<ResultSet, Boolean>()
 		{
 			@Override
-			public Boolean apply(ResultSet result)
+			public ListenableFuture<Boolean> apply(ResultSet result)
 			{
 				if (!result.wasApplied())
 				{
-					throw new ItemNotFoundException(id.toString());
+					return Futures.immediateFailedFuture(new ItemNotFoundException(id.toString()));
 				}
 
-				return true;
+				return Futures.immediateFuture(true);
 			}
 		});
 	}
@@ -118,17 +119,17 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	public ListenableFuture<T> read(Identifier id)
 	{
 		ListenableFuture<ResultSet> rs = submitRead(id);
-		return Futures.transform(rs, new Function<ResultSet, T>()
+		return Futures.transformAsync(rs, new AsyncFunction<ResultSet, T>()
 		{
 			@Override
-			public T apply(ResultSet result)
+			public ListenableFuture<T> apply(ResultSet result)
 			{
 				if (result.isExhausted())
 				{
-					throw new ItemNotFoundException(id.toString());
+					return Futures.immediateFailedFuture(new ItemNotFoundException(id.toString()));
 				}
 
-				return marshalRow(result.one());
+				return Futures.immediateFuture(marshalRow(result.one()));
 			}
 		});
 	}
@@ -136,12 +137,12 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	public ListenableFuture<List<T>> readAll(Object... parms)
 	{
 		ListenableFuture<ResultSet> future = submitReadAll(parms);
-		return Futures.transform(future, new Function<ResultSet, List<T>>()
+		return Futures.transformAsync(future, new AsyncFunction<ResultSet, List<T>>()
 		{
 			@Override
-			public List<T> apply(ResultSet input)
+			public ListenableFuture<List<T>> apply(ResultSet input)
 			{
-				return marshalAll(input);
+				return Futures.immediateFuture(marshalAll(input));
 			}
 		});
 	}
@@ -167,17 +168,17 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 		for (ListenableFuture<ResultSet> future : futures)
 		{
-			results.add(Futures.transform(future, new Function<ResultSet, T>()
+			results.add(Futures.transformAsync(future, new AsyncFunction<ResultSet, T>()
 			{
 				@Override
-				public T apply(ResultSet input)
+				public ListenableFuture<T> apply(ResultSet input)
 				{
 					if (!input.isExhausted())
 					{
-						return marshalRow(input.one());
+						return Futures.immediateFuture(marshalRow(input.one()));
 					}
 
-					return null;
+					return Futures.immediateFuture(null);
 				}
 			}));
 		}

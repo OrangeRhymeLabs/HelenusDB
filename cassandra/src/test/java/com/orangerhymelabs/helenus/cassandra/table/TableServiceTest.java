@@ -92,6 +92,7 @@ public class TableServiceTest
 		waitFor(callback);
 
 		assertNull(callback.throwable());
+		assertNotNull("Table creation returned null entity", callback.entity());
 
 		// Read
 		callback.clear();
@@ -107,6 +108,7 @@ public class TableServiceTest
 		waitFor(callback);
 
 		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
 
 		// Re-Read
 		callback.clear();
@@ -149,8 +151,8 @@ public class TableServiceTest
 		tables.create(entity, callback);
 		waitFor(callback);
 
-		assertNull(callback.throwable());
-		assertNotNull(callback.entity());
+		assertNull("Table creation threw exception", callback.throwable());
+		assertNotNull("Table creation returned null", callback.entity());
 
 		// Create Duplicate
 		tables.create(entity, callback);
@@ -192,7 +194,7 @@ public class TableServiceTest
 		tables.update(entity, callback);
 		waitFor(callback);
 
-		assertNotNull(callback.throwable());
+		assertNotNull("Update failed to throw exception", callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
 
 		callback.clear();
