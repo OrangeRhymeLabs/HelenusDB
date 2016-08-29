@@ -66,7 +66,7 @@ public class DocumentServiceTest
 
 	@BeforeClass
 	public static void beforeClass()
-	throws ConfigurationException, TTransportException, IOException, InterruptedException
+	throws ConfigurationException, TTransportException, IOException, InterruptedException, ExecutionException
 	{
 		CassandraManager.start();
 		SchemaRegistry.instance().createAll(CassandraManager.session(), CassandraManager.keyspace());
@@ -78,20 +78,20 @@ public class DocumentServiceTest
 		Database db = new Database();
 		db.name(DB_NAME);
 		db.description("DB for DocumentServiceTest Documents");
-		dbs.create(db);
+		dbs.create(db).get();
 
 		Table uuids = new Table();
 		uuids.name(UUIDS_TABLE);
 		uuids.database(DB_NAME);
 		uuids.description("a test UUID-keyed table");
-		tables.create(uuids);
+		tables.create(uuids).get();
 
 		Table dates = new Table();
 		dates.name(DATES_TABLE);
 		dates.database(DB_NAME);
 		dates.idType(DataTypes.TIMESTAMP);
 		dates.description("a test date-keyed table");
-		tables.create(dates);
+		tables.create(dates).get();
 
 		allDocs = new DocumentService(tables, new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace()));
 	}
@@ -134,16 +134,16 @@ public class DocumentServiceTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.id());
+		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.id()).get();
 
 		// Re-Read
 		try
 		{
-			allDocs.read(DB_NAME, UUIDS_TABLE, doc.id());
+			allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()).get();
 		}
-		catch (ItemNotFoundException e)
+		catch (ExecutionException e)
 		{
-			return;
+			if (e.getCause() instanceof ItemNotFoundException) return;
 		}
 
 		fail("Document not deleted: " + doc.identifier().toString());
@@ -181,16 +181,16 @@ public class DocumentServiceTest
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		allDocs.delete(DB_NAME, DATES_TABLE, doc.id());
+		allDocs.delete(DB_NAME, DATES_TABLE, doc.id()).get();
 
 		// Re-Read
 		try
 		{
-			allDocs.read(DB_NAME, DATES_TABLE, doc.id());
+			allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
 		}
-		catch (ItemNotFoundException e)
+		catch (ExecutionException e)
 		{
-			return;
+			if (e.getCause() instanceof ItemNotFoundException) return;
 		}
 
 		fail("Document not deleted: " + doc.identifier().toString());
@@ -312,7 +312,7 @@ public class DocumentServiceTest
 
 	@Test(expected=DuplicateItemException.class)
 	public void shouldThrowOnDuplicateSynchronously()
-	throws InterruptedException, ExecutionException
+	throws Throwable
 	{
 		// Create
 		UUID id = UUID.randomUUID();
@@ -321,7 +321,14 @@ public class DocumentServiceTest
 		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 		assertEquals(doc, createResult);
 
-		allDocs.create(DB_NAME, UUIDS_TABLE, doc);
+		try
+		{
+			allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -337,7 +344,8 @@ public class DocumentServiceTest
 		allDocs.create(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
-		assertTrue(callback.isEmpty());
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
 
 		// Create Duplicate
 		allDocs.create(DB_NAME, UUIDS_TABLE, doc, callback);
@@ -349,11 +357,19 @@ public class DocumentServiceTest
 
 	@Test(expected=InvalidIdentifierException.class)
 	public void shouldThrowOnCreateInvalidIdSynchronously()
+	throws Throwable
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
 		doc.id(id);
-		allDocs.create(DB_NAME, DATES_TABLE, doc);
+		try
+		{
+			allDocs.create(DB_NAME, DATES_TABLE, doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -374,11 +390,19 @@ public class DocumentServiceTest
 
 	@Test(expected=InvalidIdentifierException.class)
 	public void shouldThrowOnUpdateInvalidIdSynchronously()
+	throws Throwable
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
 		doc.id(id);
-		allDocs.update(DB_NAME, DATES_TABLE, doc);
+		try
+		{
+			allDocs.update(DB_NAME, DATES_TABLE, doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -400,14 +424,30 @@ public class DocumentServiceTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentSynchronously()
+	throws Throwable
 	{
-		allDocs.read(DB_NAME, UUIDS_TABLE, UUID.randomUUID());
+		try
+		{
+			allDocs.read(DB_NAME, UUIDS_TABLE, UUID.randomUUID()).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentAltIdSynchronously()
+	throws Throwable
 	{
-		allDocs.read(DB_NAME, DATES_TABLE, new Date());
+		try
+		{
+			allDocs.read(DB_NAME, DATES_TABLE, new Date()).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -436,10 +476,18 @@ public class DocumentServiceTest
 
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnUpdateNonExistentSynchronously()
+	throws Throwable
 	{
 		Document doc = new Document();
 		doc.id(UUID.randomUUID());
-		allDocs.update(DB_NAME, UUIDS_TABLE, doc);
+		try
+		{
+			allDocs.update(DB_NAME, UUIDS_TABLE, doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test
@@ -458,10 +506,19 @@ public class DocumentServiceTest
 
 	@Test(expected=InvalidIdentifierException.class)
 	public void shouldThrowOnReadInvalidIdSynchronously()
+	throws Throwable
 	{
 		Document doc = new Document();
 		doc.id(UUID.randomUUID());
-		allDocs.read(DB_NAME, DATES_TABLE, doc.id());
+
+		try
+		{
+			allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
 	}
 
 	@Test

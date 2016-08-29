@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,8 +29,11 @@ import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
+import com.strategicgains.syntaxe.ValidationException;
 
 /**
+ * Caches all the DocumentRepository instances by table name. When a cache miss occurs, table is validated for existence.
+ * 
  * @author tfredrich
  * @since Jun 8, 2015
  */
@@ -50,9 +54,24 @@ public class DocumentService
 
 	public ListenableFuture<Document> create(String database, String table, Document document)
 	{
-		ValidationEngine.validateAndThrow(document);
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		return docs.create(document);
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(DocumentRepository input)
+			throws Exception
+			{
+				try
+				{
+					ValidationEngine.validateAndThrow(document);
+					return input.create(document);
+				}
+				catch(ValidationException e)
+				{
+					return Futures.immediateFailedFuture(e);
+				}
+			}
+		});
 	}
 
 	public void create(String database, String table, Document document, FutureCallback<Document> callback)
@@ -62,8 +81,16 @@ public class DocumentService
 
 	public ListenableFuture<Document> read(String database, String table, Object id)
 	{
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		return docs.read(new Identifier(id));
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(DocumentRepository input)
+			throws Exception
+			{
+				return input.read(new Identifier(id));
+			}
+		});
 	}
 
 	public void read(String database, String table, Object id, FutureCallback<Document> callback)
@@ -81,8 +108,16 @@ public class DocumentService
 			inIds[i++] = new Identifier(id);
 		}
 
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		return docs.readIn(inIds);
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, List<Document>>()
+		{
+			@Override
+			public ListenableFuture<List<Document>> apply(DocumentRepository input)
+			throws Exception
+			{
+				return input.readIn(inIds);
+			}
+		});
 	}
 
 	public void readIn(FutureCallback<List<Document>> callback, String database, String table, Object... ids)
@@ -92,9 +127,24 @@ public class DocumentService
 
 	public ListenableFuture<Document> update(String database, String table, Document document)
 	{
-		ValidationEngine.validateAndThrow(document);
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		return docs.update(document);
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(DocumentRepository input)
+			throws Exception
+			{
+				try
+				{
+					ValidationEngine.validateAndThrow(document);
+					return input.update(document);
+				}
+				catch(ValidationException e)
+				{
+					return Futures.immediateFailedFuture(e);
+				}
+			}
+		});
 	}
 
 	public void update(String database, String table, Document document, FutureCallback<Document> callback)
@@ -104,8 +154,17 @@ public class DocumentService
 
 	public ListenableFuture<Boolean> delete(String database, String table, Object id)
 	{
-		DocumentRepository docs = acquireRepositoryFor(database, table);
-		return docs.delete(new Identifier(id));
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Boolean>()
+		{
+			@Override
+			public ListenableFuture<Boolean> apply(DocumentRepository input)
+			throws Exception
+			{
+				return input.delete(new Identifier(id));
+			}
+		});
+
 	}
 
 	public void delete(String database, String table, Object id, FutureCallback<Boolean> callback)
@@ -113,33 +172,27 @@ public class DocumentService
 		Futures.addCallback(delete(database, table, id), callback);
 	}
 
-	private DocumentRepository acquireRepositoryFor(String database, String table)
+	private ListenableFuture<DocumentRepository> acquireRepositoryFor(String database, String table)
     {
 		String cacheKey = String.format("%s_%s", database, table);
 		DocumentRepository repo = repoCache.get(cacheKey);
 
-		if (repo == null)
+		if (repo != null)
 		{
-			try
-			{
-				// TODO: Handle this asynchronously
-				Table t = tables.read(database, table).get();
-				repo = factory.newInstance(t);
-				repoCache.put(cacheKey, repo);
-			}
-			catch (InterruptedException | ExecutionException e)
-			{
-				Throwable cause = e.getCause();
-
-				if (cause != null)
-				{
-					throw new StorageException(cause);
-				}
-
-				throw new StorageException(e);
-			}
+			return Futures.immediateFuture(repo);
 		}
 
-		return repo;
+		ListenableFuture<Table> futureTable = tables.read(database, table);
+		return Futures.transformAsync(futureTable, new AsyncFunction<Table, DocumentRepository>()
+		{
+			@Override
+			public ListenableFuture<DocumentRepository> apply(Table input)
+			throws Exception
+			{
+				DocumentRepository repo = factory.newInstance(input);
+				repoCache.put(cacheKey, repo);
+				return Futures.immediateFuture(repo);
+			}
+		});
     }
 }
