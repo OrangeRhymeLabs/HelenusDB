@@ -16,6 +16,7 @@
 package com.orangerhymelabs.helenus.cassandra.document;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -355,6 +356,30 @@ public class DocumentServiceTest
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
 	}
 
+	@Test
+	public void shouldUpsert()
+	throws InterruptedException
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		TestCallback<Document> callback = new TestCallback<Document>();
+
+		// Create
+		allDocs.upsert(DB_NAME, UUIDS_TABLE, doc, callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
+
+		// Create Duplicate
+		allDocs.upsert(DB_NAME, UUIDS_TABLE, doc, callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
+	}
+
 	@Test(expected=InvalidIdentifierException.class)
 	public void shouldThrowOnCreateInvalidIdSynchronously()
 	throws Throwable
@@ -422,6 +447,40 @@ public class DocumentServiceTest
 		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
+	@Test(expected=InvalidIdentifierException.class)
+	public void shouldThrowOnUpsertInvalidIdSynchronously()
+	throws Throwable
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		try
+		{
+			allDocs.upsert(DB_NAME, DATES_TABLE, doc).get();
+		}
+		catch (ExecutionException e)
+		{
+			throw e.getCause();
+		}
+	}
+
+	@Test
+	public void shouldThrowOnUpsertInvalidIdAynchronously()
+	throws InterruptedException
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		TestCallback<Document> callback = new TestCallback<Document>();
+
+		// Create
+		allDocs.upsert(DB_NAME, DATES_TABLE, doc, callback);
+		waitFor(callback);
+
+		assertNotNull(callback.throwable());
+		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
+	}
+
 	@Test(expected=ItemNotFoundException.class)
 	public void shouldThrowOnReadNonExistentSynchronously()
 	throws Throwable
@@ -460,6 +519,36 @@ public class DocumentServiceTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
+	}
+
+	@Test
+	public void shouldReturnExistsBoolean()
+	throws InterruptedException
+	{
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+		TestCallback<Document> callback = new TestCallback<Document>();
+
+		// Create
+		allDocs.create(DB_NAME, UUIDS_TABLE, doc, callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
+
+		TestCallback<Boolean> existsCallback = new TestCallback<Boolean>();
+		allDocs.exists(DB_NAME, UUIDS_TABLE, id, existsCallback);
+		waitFor(existsCallback);
+
+		assertNull(existsCallback.throwable());
+		assertTrue(existsCallback.entity());
+
+		allDocs.exists(DB_NAME, UUIDS_TABLE, UUID.randomUUID(), existsCallback);
+		waitFor(existsCallback);
+
+		assertNull(existsCallback.throwable());
+		assertFalse(existsCallback.entity());
 	}
 
 	@Test

@@ -18,7 +18,6 @@ package com.orangerhymelabs.helenus.cassandra.document;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
@@ -26,7 +25,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
-import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -152,6 +150,33 @@ public class DocumentService
 		Futures.addCallback(update(database, table, document), callback);
     }
 
+	public ListenableFuture<Document> upsert(String database, String table, Document document)
+	{
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(DocumentRepository input)
+			throws Exception
+			{
+				try
+				{
+					ValidationEngine.validateAndThrow(document);
+					return input.upsert(document);
+				}
+				catch(ValidationException e)
+				{
+					return Futures.immediateFailedFuture(e);
+				}
+			}
+		});
+	}
+
+	public void upsert(String database, String table, Document document, FutureCallback<Document> callback)
+    {
+		Futures.addCallback(upsert(database, table, document), callback);
+    }
+
 	public ListenableFuture<Boolean> delete(String database, String table, Object id)
 	{
 		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
@@ -164,12 +189,30 @@ public class DocumentService
 				return input.delete(new Identifier(id));
 			}
 		});
-
 	}
 
 	public void delete(String database, String table, Object id, FutureCallback<Boolean> callback)
 	{
 		Futures.addCallback(delete(database, table, id), callback);
+	}
+
+	public ListenableFuture<Boolean> exists(String database, String table, Object id)
+	{
+		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Boolean>()
+		{
+			@Override
+			public ListenableFuture<Boolean> apply(DocumentRepository input)
+			throws Exception
+			{
+				return input.exists(new Identifier(id));
+			}
+		});
+	}
+
+	public void exists(String database, String table, Object id, FutureCallback<Boolean> callback)
+	{
+		Futures.addCallback(exists(database, table, id), callback);
 	}
 
 	private ListenableFuture<DocumentRepository> acquireRepositoryFor(String database, String table)
