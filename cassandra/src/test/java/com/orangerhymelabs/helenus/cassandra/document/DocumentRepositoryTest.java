@@ -16,6 +16,7 @@
 package com.orangerhymelabs.helenus.cassandra.document;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -322,6 +323,62 @@ public class DocumentRepositoryTest
 		{
 			throw e.getCause();
 		}
+	}
+
+	@Test
+	public void shouldReturnExistsBoolean()
+	throws InterruptedException
+	{
+		// Create
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+
+		TestCallback<Document> callback = new TestCallback<Document>();
+		Futures.addCallback(uuidDocs.create(doc), callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
+
+		TestCallback<Boolean> existsCallback = new TestCallback<>();
+		Futures.addCallback(uuidDocs.exists(new Identifier(id)), existsCallback);
+		waitFor(existsCallback);
+		assertTrue(existsCallback.entity());
+
+		existsCallback.clear();
+		Futures.addCallback(uuidDocs.exists(new Identifier(UUID.randomUUID())), existsCallback);
+		waitFor(existsCallback);
+		assertFalse(existsCallback.entity());
+	}
+
+	@Test
+	public void shouldUpsert()
+	throws InterruptedException
+	{
+		// Create
+		UUID id = UUID.randomUUID();
+		Document doc = new Document();
+		doc.id(id);
+
+		TestCallback<Document> callback = new TestCallback<Document>();
+		Futures.addCallback(uuidDocs.upsert(doc), callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
+
+		callback.clear();
+		Futures.addCallback(uuidDocs.upsert(doc), callback);
+		waitFor(callback);
+
+		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
+
+		TestCallback<Boolean> existsCallback = new TestCallback<>();
+		Futures.addCallback(uuidDocs.exists(new Identifier(id)), existsCallback);
+		waitFor(existsCallback);
+		assertTrue(existsCallback.entity());
 	}
 
 	@Test

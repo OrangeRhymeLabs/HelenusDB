@@ -23,20 +23,24 @@ import org.bson.BSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.BatchStatement.Type;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
 import com.orangerhymelabs.helenus.persistence.StatementFactory;
@@ -73,6 +77,8 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			Columns.CREATED_AT + " timestamp," +
 		    Columns.UPDATED_AT + " timestamp," +
 			"primary key (" + Columns.ID + ")" +
+		    // TODO: historical documents
+//		    "primary key ((" + Columns.ID + "), " + Columns.UPDATED_AT + ")" +
 		")";
 
 		public boolean drop(Session session, String keyspace, String table)
@@ -117,9 +123,15 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		@Query("delete from %s.%s where " + Columns.ID + " = ?")
 		PreparedStatement delete();
 
+		@Query("select count(*) from %s.%s where " + Columns.ID + " = ? limit 1")
+		PreparedStatement exists();
+
 		@Override
 		@Query("update %s.%s set " + Columns.OBJECT + " = ?, " + Columns.UPDATED_AT + " = ? where " + Columns.ID + " = ? if exists")
 		PreparedStatement update();
+
+		@Query("insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?)")
+		PreparedStatement upsert();
 
 		@Override
 		@Query("select * from %s.%s where " + Columns.ID + " = ?")
@@ -139,57 +151,75 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		return table.toDbTable();
 	}
 
-	@Override
-	protected ResultSetFuture submitCreate(Document document)
+	public ListenableFuture<Boolean> exists(Identifier id)
 	{
-		BatchStatement batch = new BatchStatement(Type.UNLOGGED);
-		BoundStatement create = new BoundStatement(statementFactory().create());
-		bindCreate(create, document);
-		batch.add(create);
+		ListenableFuture<ResultSet> future = submitExists(id);
+		return Futures.transform(future, new Function<ResultSet, Boolean>()
+		{
+			@Override
+			public Boolean apply(ResultSet result)
+			{
+				return result.one().getLong(0) > 0;
+			}
+		});
+	}
 
-//		if (table.hasIndexes())
-//		{
-//			batch.addAll(iTableStmtFactory.createIndexEntryCreateStatements(document));
-//		}
+	public ListenableFuture<Document> upsert(Document entity)
+	{
+		ListenableFuture<ResultSet> future = submitUpsert(entity);
+		return Futures.transformAsync(future, new AsyncFunction<ResultSet, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(ResultSet result)
+			throws Exception
+			{
+				if (result.wasApplied())
+				{
+					return Futures.immediateFuture(entity);
+				}
 
-		return session().executeAsync(batch);
+				//TODO: This doesn't provide any informational value... what should it be?
+				return Futures.immediateFailedFuture(new StorageException(String.format("Table %s failed to store document: %s", table.toDbTable(), entity.toString())));
+			}
+		});
 	}
 
 	@Override
-	protected ResultSetFuture submitUpdate(Document document)
+	protected ResultSetFuture submitCreate(Document document)
 	{
-		BatchStatement batch = new BatchStatement(Type.UNLOGGED);
-		BoundStatement update = new BoundStatement(statementFactory().update());
-		bindUpdate(update, document);
-		batch.add(update);
-
-//		if (table.hasIndexes())
-//		{
-			// TODO: make this lookup non-blocking (asynchronous).
-//			Document previous = read(document.getIdentifier()).get();
-//			read(document.getIdentifier());
-//			batch.addAll(iTableStmtFactory.createIndexEntryUpdateStatements(document, previous));
-//		}
-
-		return session().executeAsync(batch);
+		BoundStatement create = new BoundStatement(statementFactory().create());
+		bindCreate(create, document);
+		return session().executeAsync(create);
 	}
 
 	@Override
 	protected ResultSetFuture submitDelete(Identifier id)
 	{
-		BatchStatement batch = new BatchStatement(Type.UNLOGGED);
 		BoundStatement delete = new BoundStatement(statementFactory().delete());
 		bindIdentity(delete, id);
-		batch.add(delete);
+		return session().executeAsync(delete);
+	}
 
-//		if (table.hasIndexes())
-//		{
-			// TODO: make this lookup non-blocking (asynchronous).
-//			Document previous = read(id);
-//			batch.addAll(iTableStmtFactory.createIndexEntryDeleteStatements(previous));
-//		}
+	protected ListenableFuture<ResultSet> submitExists(Identifier id)
+	{
+		BoundStatement bs = new BoundStatement(statementFactory().exists());
+		bindIdentity(bs, id);
+		return session().executeAsync(bs);
+	}
 
-		return session().executeAsync(batch);
+	@Override
+	protected ResultSetFuture submitUpdate(Document document)
+	{
+		BoundStatement update = new BoundStatement(statementFactory().update());
+		bindUpdate(update, document);
+		return session().executeAsync(update);
+	}
+
+	protected ResultSetFuture submitUpsert(Document document)
+	{
+		BoundStatement upsert = new BoundStatement(statementFactory().upsert());
+		bindCreate(upsert, document);
+		return session().executeAsync(upsert);
 	}
 
 	@Override
