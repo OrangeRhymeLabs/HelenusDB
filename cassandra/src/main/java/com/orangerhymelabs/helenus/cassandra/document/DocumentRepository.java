@@ -77,8 +77,10 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			Columns.CREATED_AT + " timestamp," +
 		    Columns.UPDATED_AT + " timestamp," +
 			"primary key (" + Columns.ID + ")" +
+
 		    // TODO: historical documents
 //		    "primary key ((" + Columns.ID + "), " + Columns.UPDATED_AT + ")" +
+//			" with clustering order by (" + Columns.UPDATED_AT + " DESC)" +
 		")";
 
 		public boolean drop(Session session, String keyspace, String table)
@@ -141,6 +143,11 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 	private Table table;
 
 	public DocumentRepository(Session session, String keyspace, Table table)
+	{
+		this(session, keyspace, table, DocumentStatements.class);
+	}
+
+	protected DocumentRepository(Session session, String keyspace, Table table, Class<? extends DocumentStatements> factoryClass)
 	{
 		super(session, keyspace, table.toDbTable(), DocumentStatements.class);
 		this.table = table;
