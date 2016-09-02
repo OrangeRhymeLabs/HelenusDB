@@ -145,6 +145,10 @@ extends AbstractCassandraRepository<Table, TableStatements>
 		PreparedStatement read();
 
 		@Override
+		@Query("select count(*) from %s." + Tables.BY_ID + IDENTITY_CQL + " limit 1")
+		PreparedStatement exists();
+
+		@Override
 		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DATABASE + " = ?")
 		PreparedStatement readAll();
 	}

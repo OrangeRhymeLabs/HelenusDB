@@ -43,6 +43,16 @@ public class TableService
 		this.tables = tableRepository;
 	}
 
+	public void exists(String database, String table, FutureCallback<Boolean> callback)
+	{
+		Futures.addCallback(exists(database, table), callback);
+	}
+
+	public ListenableFuture<Boolean> exists(String database, String table)
+	{
+		return tables.exists(new Identifier(database, table));
+	}
+
 	public void create(Table table, FutureCallback<Table> callback)
 	{
 		Futures.addCallback(create(table), callback);
@@ -50,7 +60,7 @@ public class TableService
 
 	public ListenableFuture<Table> create(Table table)
 	{
-		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().identifier());
+		ListenableFuture<Boolean> dbFuture = databases.exists(table.databaseName());
 		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, Table>()
 		{
 			@Override
@@ -89,7 +99,7 @@ public class TableService
 
 	public ListenableFuture<List<Table>> readAll(String database, Object... parms)
 	{
-		ListenableFuture<Boolean> dbFuture = databases.exists(new Identifier(database));
+		ListenableFuture<Boolean> dbFuture = databases.exists(database);
 		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, List<Table>>()
 		{
 			@Override
@@ -115,7 +125,7 @@ public class TableService
 
 	public ListenableFuture<Table> update(Table table)
 	{
-		ListenableFuture<Boolean> dbFuture = databases.exists(table.database().identifier());
+		ListenableFuture<Boolean> dbFuture = databases.exists(table.databaseName());
 		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, Table>()
 		{
 			@Override

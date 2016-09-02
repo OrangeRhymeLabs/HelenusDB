@@ -28,7 +28,6 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.Futures;
@@ -36,13 +35,11 @@ import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 
 /**
  * @author tfredrich
  * @since Jun 8, 2015
  */
-@Ignore
 public class ViewRepositoryReadAllTest
 {
 	private static final int CALLBACK_TIMEOUT = 2000;
@@ -81,7 +78,7 @@ public class ViewRepositoryReadAllTest
 	private void shouldReturnEmptyListSynchronously()
 	throws Throwable
     {
-		List<Table> tbs = views.readAll("database1").get();
+		List<View> tbs = views.readAll("database1").get();
 		assertNotNull(tbs);
 		assertTrue(tbs.isEmpty());
     }
@@ -89,7 +86,7 @@ public class ViewRepositoryReadAllTest
 	private void shouldReturnEmptyListAsynchronously()
 	throws InterruptedException
     {
-		TestCallback<List<Table>> callback = new TestCallback<List<Table>>();
+		TestCallback<List<View>> callback = new TestCallback<List<View>>();
 		Futures.addCallback(views.readAll("database1"), callback);
 		waitFor(callback);
 
@@ -102,23 +99,28 @@ public class ViewRepositoryReadAllTest
 		Table table = new Table();
 		table.database("database1");
 		table.name("table1");
-		views.create(table);
-		table.name("table2");
-		views.create(table);
-		table.name("table3");
-		views.create(table);
-		table.name("table4");
-		views.create(table);
+		
+		View view = new View();
+		view.table(table);
+		view.name("view1");
+		views.create(view);
+		view.name("view2");
+		views.create(view);
+		view.name("view3");
+		views.create(view);
+		view.name("view4");
+		views.create(view);
 
 		table.database("database2");
 		table.name("table1");
-		views.create(table);
+		view.table(table);
+		views.create(view);
     }
 
 	private void shouldReturnListSynchronously()
 	throws InterruptedException, ExecutionException
     {
-		List<Table> entities = views.readAll("database1").get();
+		List<View> entities = views.readAll("database1").get();
 		assertNotNull(entities);
 		assertFalse(entities.isEmpty());
 		assertEquals(4, entities.size());
@@ -127,17 +129,17 @@ public class ViewRepositoryReadAllTest
 	private void shouldReturnListAsynchronously()
 	throws InterruptedException
     {
-		TestCallback<List<Table>> callback = new TestCallback<List<Table>>();
+		TestCallback<List<View>> callback = new TestCallback<List<View>>();
 		Futures.addCallback(views.readAll("database1"), callback);
 		waitFor(callback);
 
-		List<Table> entities = callback.entity();
+		List<View> entities = callback.entity();
 		assertNotNull(entities);
 		assertFalse(entities.isEmpty());
 		assertEquals(4, entities.size());
     }
 
-	private void waitFor(TestCallback<List<Table>> callback)
+	private void waitFor(TestCallback<List<View>> callback)
 	throws InterruptedException
     {
 		synchronized(callback)

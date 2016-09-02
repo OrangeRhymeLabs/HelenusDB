@@ -23,17 +23,12 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository.DatabaseStatements;
-import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
 import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
@@ -137,26 +132,6 @@ extends AbstractCassandraRepository<Database, DatabaseStatements>
 	public DatabaseRepository(Session session, String keyspace)
 	{
 		super(session, keyspace, DatabaseStatements.class);
-	}
-
-	public ListenableFuture<Boolean> exists(Identifier id)
-	{
-		ListenableFuture<ResultSet> future = submitExists(id);
-		return Futures.transform(future, new Function<ResultSet, Boolean>()
-		{
-			@Override
-			public Boolean apply(ResultSet result)
-			{
-				return result.one().getLong(0) > 0;
-			}
-		});
-	}
-
-	private ListenableFuture<ResultSet> submitExists(Identifier id)
-	{
-		BoundStatement bs = new BoundStatement(statementFactory().exists());
-		bindIdentity(bs, id);
-		return session().executeAsync(bs);
 	}
 
 	@Override

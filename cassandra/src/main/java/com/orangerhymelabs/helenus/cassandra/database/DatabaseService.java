@@ -38,14 +38,14 @@ public class DatabaseService
 		this.databases = databaseRepository;
 	}
 
-	public void exists(Identifier id, FutureCallback<Boolean> callback)
+	public void exists(String name, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(exists(id), callback);
+		Futures.addCallback(exists(name), callback);
 	}
 
-	public ListenableFuture<Boolean> exists(Identifier id)
+	public ListenableFuture<Boolean> exists(String name)
 	{
-		return databases.exists(id);
+		return databases.exists(new Identifier(name));
 	}
 
 	public void create(Database database, FutureCallback<Database> callback)
@@ -68,12 +68,12 @@ public class DatabaseService
 
 	public void read(String name, FutureCallback<Database> callback)
 	{
-		Futures.addCallback(read(new Identifier(name)), callback);
+		Futures.addCallback(read(name), callback);
 	}
 
-	private ListenableFuture<Database> read(Identifier identifier)
+	private ListenableFuture<Database> read(String name)
 	{
-		return databases.read(identifier);
+		return databases.read(new Identifier(name));
 	}
 
 	public void readAll(FutureCallback<List<Database>> callback, Object... parms)
@@ -106,11 +106,11 @@ public class DatabaseService
 
 	public void delete(String name, FutureCallback<Boolean> callback)
     {
-		Futures.addCallback(delete(new Identifier(name)), callback);
+		Futures.addCallback(delete(name), callback);
     }
 
-	private ListenableFuture<Boolean> delete(Identifier identifier)
+	private ListenableFuture<Boolean> delete(String name)
 	{
-		return databases.delete(identifier);
+		return databases.delete(new Identifier(name));
 	}
 }

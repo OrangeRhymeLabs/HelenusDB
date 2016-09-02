@@ -13,6 +13,7 @@ public interface StatementFactory
 {
 	PreparedStatement create();
 	PreparedStatement delete();
+	PreparedStatement exists();
 	PreparedStatement update();
 	PreparedStatement read();
 	PreparedStatement readAll();

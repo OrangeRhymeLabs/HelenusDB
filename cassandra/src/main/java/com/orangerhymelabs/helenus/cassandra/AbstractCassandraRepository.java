@@ -29,6 +29,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -89,6 +90,19 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 				}
 
 				return Futures.immediateFailedFuture(new DuplicateItemException(entity.toString()));
+			}
+		});
+	}
+
+	public ListenableFuture<Boolean> exists(Identifier id)
+	{
+		ListenableFuture<ResultSet> future = submitExists(id);
+		return Futures.transform(future, new Function<ResultSet, Boolean>()
+		{
+			@Override
+			public Boolean apply(ResultSet result)
+			{
+				return result.one().getLong(0) > 0;
 			}
 		});
 	}
@@ -265,6 +279,13 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 		BoundStatement bs = new BoundStatement(statementFactory.delete());
 		bindIdentity(bs, id);
 		return session.executeAsync(bs);
+	}
+
+	private ListenableFuture<ResultSet> submitExists(Identifier id)
+	{
+		BoundStatement bs = new BoundStatement(statementFactory().exists());
+		bindIdentity(bs, id);
+		return session().executeAsync(bs);
 	}
 
 	private ResultSetFuture submitRead(Identifier id)
