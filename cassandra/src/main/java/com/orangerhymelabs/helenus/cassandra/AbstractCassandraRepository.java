@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
@@ -59,6 +60,18 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 		this.session = session;
 		this.keyspace = keyspace;
 		this.statementFactory = newStatementFactory(factoryClass, session, keyspace, table);
+	}
+
+	public AbstractCassandraRepository(Session session, String keyspace, F factory)
+	{
+		this.session = session;
+		this.keyspace = keyspace;
+		this.statementFactory = factory;
+	}
+
+	protected AbstractCassandraRepository(Session session, String keyspace)
+	{
+		this(session, keyspace, (F) null);
 	}
 
 	public ListenableFuture<T> create(T entity)
@@ -136,7 +149,12 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 	public ListenableFuture<List<T>> readAll(Object... parms)
 	{
-		ListenableFuture<ResultSet> future = submitReadAll(parms);
+		return readAll(statementFactory.readAll(), parms);
+	}
+
+	public ListenableFuture<List<T>> readAll(PreparedStatement statement, Object... parms)
+	{
+		ListenableFuture<ResultSet> future = submitStatement(statement, parms);
 		return Futures.transformAsync(future, new AsyncFunction<ResultSet, List<T>>()
 		{
 			@Override
@@ -201,6 +219,11 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 		return statementFactory;
 	}
 
+	protected void statementFactory(F factory)
+	{
+		this.statementFactory = factory;
+	}
+
 	protected void bindIdentity(BoundStatement bs, Identifier id)
 	{
 		try
@@ -251,9 +274,9 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 		return session.executeAsync(bs);
 	}
 
-	private ResultSetFuture submitReadAll(Object... parms)
+	protected ResultSetFuture submitStatement(PreparedStatement statement, Object... parms)
 	{
-		BoundStatement bs = new BoundStatement(statementFactory.readAll());
+		BoundStatement bs = new BoundStatement(statement);
 
 		if (parms != null)
 		{

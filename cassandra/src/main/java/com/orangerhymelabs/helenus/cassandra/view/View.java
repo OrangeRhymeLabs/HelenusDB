@@ -13,12 +13,11 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenus.cassandra.table;
+package com.orangerhymelabs.helenus.cassandra.view;
 
 import com.orangerhymelabs.helenus.cassandra.Constants;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.orangerhymelabs.helenus.cassandra.database.Database;
-import com.orangerhymelabs.helenus.cassandra.database.DatabaseReference;
+import com.orangerhymelabs.helenus.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.table.TableReference;
 import com.orangerhymelabs.helenus.persistence.AbstractEntity;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -26,58 +25,57 @@ import com.strategicgains.syntaxe.annotation.RegexValidation;
 import com.strategicgains.syntaxe.annotation.Required;
 
 /**
+ * Defines a materialized view of a Table.
+ * 
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public class Table
+public class View
 extends AbstractEntity
 {
-	@Required("Database")
+	@Required("Table")
 	@ChildValidation
-	private DatabaseReference database;
+	private TableReference table;
 
-	@RegexValidation(name = "Table Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
+	@RegexValidation(name = "View Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 	private String description;
 
-	@Required("Table Type")
-	private TableType type = TableType.DOCUMENT;
+	@Required("Key Definition")
+	private String keys;
 
-	@Required("ID Type")
-	private DataTypes idType = DataTypes.UUID;
-
-	// How long should the table's data live? (0 implies forever)
+	// How long should the view's data live? (0 implies forever)
 	private long ttl;
 
-	public Table()
+	public View()
 	{
 		super();
 	}
 
-	public boolean hasDatabase()
+	public boolean hasTable()
 	{
-		return (database != null);
+		return (table != null);
 	}
 
-	public Database database()
+	public Table table()
 	{
-		return database.asObject();
+		return table.toTable();
 	}
 
-	public void database(Database database)
+	public void table(Table table)
 	{
-		this.database = new DatabaseReference(database);
+		this.table = new TableReference(table);
 	}
-
-	public void database(String name)
-    {
-		this.database = new DatabaseReference(name);
-    }
 
 	public String databaseName()
-    {
-		return (hasDatabase() ? database.name() : null);
-    }
+	{
+		return (hasTable() ? table.database() : null);
+	}
+
+	public String tableName()
+	{
+		return (hasTable() ? table.name() : null);
+	}
 
 	public boolean hasName()
 	{
@@ -109,14 +107,14 @@ extends AbstractEntity
 		this.description = description;
 	}
 
-	public TableType type()
+	public String keys()
 	{
-		return type;
+		return keys;
 	}
 
-	public void type(TableType type)
+	public void keys(String keys)
 	{
-		this.type = type;
+		this.keys = keys;
 	}
 
 	public long ttl()
@@ -132,18 +130,8 @@ extends AbstractEntity
 	@Override
     public Identifier identifier()
     {
-	    return (hasDatabase() & hasName() ? new Identifier(database.name(), name) : null);
+	    return (hasTable() & hasName() ? new Identifier(table.database(), table.name(), name) : null);
     }
-
-	public DataTypes idType()
-	{
-		return idType;
-	}
-
-	public void idType(DataTypes idType)
-	{
-		this.idType = idType;
-	}
 
 	public String toDbTable()
 	{
@@ -159,10 +147,10 @@ extends AbstractEntity
 		{
 			sb.append("=(");
 			sb.append(description());
-			sb.append(", Type=");
-			sb.append(type());
-			sb.append(", ID Type=");
-			sb.append(idType());
+			sb.append(", Table=");
+			sb.append(table().name());
+			sb.append(", Keys=");
+			sb.append(keys());
 			sb.append(", TTL=");
 			sb.append(ttl());
 			sb.append(")");

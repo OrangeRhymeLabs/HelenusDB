@@ -15,12 +15,10 @@
  */
 package com.orangerhymelabs.helenus.cassandra.table;
 
-import com.orangerhymelabs.helenus.cassandra.Constants;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.strategicgains.syntaxe.annotation.RegexValidation;
-import com.strategicgains.syntaxe.annotation.Required;
-
 import java.util.Objects;
+
+import com.orangerhymelabs.helenus.cassandra.Constants;
+import com.strategicgains.syntaxe.annotation.RegexValidation;
 
 /**
  * @author tfredrich
@@ -34,19 +32,15 @@ public class TableReference
 	@RegexValidation(name = "Table Name", nullable = false, pattern = Constants.NAME_PATTERN, message = Constants.NAME_MESSAGE)
 	private String name;
 
-	@Required("ID Type")
-	private DataTypes idType = DataTypes.UUID;
-
-	public TableReference(String database, String table, DataTypes idType)
+	public TableReference(String database, String table)
 	{
 		this.database = database;
 		this.name = table;
-		this.idType = idType;
 	}
 
 	public TableReference(Table table)
 	{
-		this(table.databaseName(), table.name(), table.idType());
+		this(table.databaseName(), table.name());
 	}
 
 	public String database()
@@ -59,17 +53,11 @@ public class TableReference
 		return name;
 	}
 
-	public DataTypes idType()
-	{
-		return idType;
-	}
-
 	public Table toTable()
 	{
 		Table t = new Table();
 		t.database(database);
 		t.name(name);
-		t.idType(idType);
 		return t;
 	}
 
@@ -79,7 +67,6 @@ public class TableReference
 		int hash = 5;
 		hash = 59 * hash + Objects.hashCode(this.database);
 		hash = 59 * hash + Objects.hashCode(this.name);
-		hash = 59 * hash + Objects.hashCode(this.idType);
 		return hash;
 	}
 
@@ -108,17 +95,12 @@ public class TableReference
 			return false;
 		}
 
-		if (this.idType != other.idType)
-		{
-			return false;
-		}
-
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "TableReference{" + "database=" + database + ", name=" + name +  ", idType=" + idType.toString() + '}';
+		return "TableReference{" + "database=" + database + ", name=" + name +  '}';
 	}
 }
