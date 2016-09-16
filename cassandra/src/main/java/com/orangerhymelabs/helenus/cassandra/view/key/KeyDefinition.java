@@ -1,4 +1,4 @@
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.view.key;
 
 import java.util.ArrayList;
 import java.util.Arrays;

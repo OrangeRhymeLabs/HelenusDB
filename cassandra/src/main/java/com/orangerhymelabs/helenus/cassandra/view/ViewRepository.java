@@ -33,6 +33,8 @@ import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.view.ViewRepository.ViewStatements;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
