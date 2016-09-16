@@ -46,6 +46,7 @@ public class ViewRepository
 extends AbstractCassandraRepository<View, ViewStatements>
 {
 	private static final Logger LOG = LoggerFactory.getLogger(ViewRepository.class);
+	private static final KeyDefinitionParser KEY_PARSER = new KeyDefinitionParser();
 
 	private class Tables
 	{
@@ -114,7 +115,7 @@ extends AbstractCassandraRepository<View, ViewStatements>
 	    }
 	}
 
-	private static final String IDENTITY_CQL = " where " + Columns.DATABASE + " = ? and " + Columns.TABLE + " = ?" + Columns.NAME + " = ?";
+	private static final String IDENTITY_CQL = " where " + Columns.DATABASE + " = ? and " + Columns.TABLE + " = ? and " + Columns.NAME + " = ?";
 
 	public interface ViewStatements
 	extends StatementFactory
@@ -152,7 +153,7 @@ extends AbstractCassandraRepository<View, ViewStatements>
 		PreparedStatement readAllForTable();
 	}
 
-//	private static final ViewDocumentRepository.Schema DOCUMENT_SCHEMA = new ViewDocumentRepository.Schema();
+	private static final ViewDocumentRepository.Schema DOCUMENT_SCHEMA = new ViewDocumentRepository.Schema();
 
 	public ViewRepository(Session session, String keyspace)
 	{
@@ -240,15 +241,20 @@ extends AbstractCassandraRepository<View, ViewStatements>
 		return v;
 	}
 
-	private boolean createDocumentSchema(View table)
+	private boolean createDocumentSchema(View view)
     {
-//    	return DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
-		return true;
+		try
+		{
+			return DOCUMENT_SCHEMA.create(session(), keyspace(), view.toDbTable(), KEY_PARSER.parse(view.keys()));
+		}
+		catch (KeyDefinitionException e)
+		{
+			throw new StorageException(e);
+		}
     }
 
 	private boolean dropDocumentSchema(Identifier id)
     {
-//		return DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
-		return true;
+		return DOCUMENT_SCHEMA.drop(session(), keyspace(), id.toDbName());
     }
 }

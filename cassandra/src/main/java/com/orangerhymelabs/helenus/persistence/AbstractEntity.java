@@ -57,6 +57,7 @@ implements Identifiable, Timestamped
 	public boolean equals(Object object)
 	{
 		AbstractEntity that = (AbstractEntity) object;
+		if (that == null) return false;
 
 		if (!Objects.equals(this.createdAt, that.createdAt))
 		{

@@ -73,8 +73,9 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 		    Columns.OBJECT + " blob," +
 			Columns.CREATED_AT + " timestamp," +
 		    Columns.UPDATED_AT + " timestamp," +
-			"%s," +									// primary key and clustering order
-		")";
+			"%s" +									// primary key
+		")" +
+		" %s";										// clustering order (optional)
 
 		public boolean drop(Session session, String keyspace, String table)
         {
@@ -93,7 +94,7 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 
         public boolean create(Session session, String keyspace, String table, KeyDefinition key)
         {
-			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace, table, key.asColumns(), key.asPrimaryKey()));
+			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace, table, key.asColumns(), key.asPrimaryKey(), key.asClusteringKey()));
 			try
 			{
 				return rs.get().wasApplied();

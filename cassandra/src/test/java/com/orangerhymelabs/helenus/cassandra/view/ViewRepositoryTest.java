@@ -30,13 +30,11 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.Futures;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
@@ -48,7 +46,6 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
  * @author tfredrich
  * @since Jun 8, 2015
  */
-@Ignore
 public class ViewRepositoryTest
 {
 	private static final int CALLBACK_TIMEOUT = 2000;
@@ -81,48 +78,53 @@ public class ViewRepositoryTest
 		Table table = new Table();
 		table.name("table1");
 		table.database("db1");
-		table.description("a test table");
-		Table createResult = views.create(table).get();
-		assertEquals(table, createResult);
+
+		View view = new View();
+		view.table(table);
+		view.name("view1");
+		view.description("a test view");
+		view.keys("(id:uuid), -foo:timestamp");
+		View createResult = views.create(view).get();
+		assertEquals(view, createResult);
 
 		// Document table should exist.
-		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
+		assertTrue("View table not created: " + view.toDbTable(), tableExists(view.toDbTable()));
 
 		// Read
-		Table result = views.read(table.identifier()).get();
-		assertEquals(table, result);
+		View result = views.read(view.identifier()).get();
+		assertEquals(view, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
 
 		// Update
-		table.description("an updated test table");
-		Table updateResult = views.update(table).get();
-		assertEquals(table, updateResult);
+		view.description("an updated test view");
+		View updateResult = views.update(view).get();
+		assertEquals(view, updateResult);
 
 		// Re-Read
-		Table result2 = views.read(table.identifier()).get();
-		assertEquals(table, result2);
+		View result2 = views.read(view.identifier()).get();
+		assertEquals(view, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		views.delete(table.identifier());
+		views.delete(view.identifier()).get();
 
-		// Document table should no longer exist.
-		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
+		// View table should no longer exist.
+		assertFalse("View table not deleted: " + view.toDbTable(), tableExists(view.toDbTable()));
 
 		// Re-Read table
 		try
 		{
-			views.read(table.identifier()).get();
+			views.read(view.identifier()).get();
 		}
 		catch (ExecutionException e)
 		{
 			if (ItemNotFoundException.class.equals(e.getCause().getClass())) return;
 		}
 
-		fail("Table not deleted: " + table.identifier().toString());
+		fail("View not deleted: " + view.identifier().toString());
 	}
 
 	@Test
@@ -133,39 +135,47 @@ public class ViewRepositoryTest
 		table.database("db2");
 		table.name("table2");
 		table.description("another test table");
-		TestCallback<Table> callback = new TestCallback<Table>();
+
+		View view = new View();
+		view.table(table);
+		view.name("view1");
+		view.description("a test view");
+		view.keys("(day:int, hour:int), -minute:int");
+
+		TestCallback<View> callback = new TestCallback<View>();
 
 		// Create
-		Futures.addCallback(views.create(table), callback);
+		Futures.addCallback(views.create(view), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
+		assertNotNull(callback.entity());
 
 		// Document table should exist.
-		assertTrue("Document table not created: " + table.toDbTable(), tableExists(table.toDbTable()));
+		assertTrue("View table not created: " + view.toDbTable(), tableExists(view.toDbTable()));
 
 		// Read
 		callback.clear();
-		Futures.addCallback(views.read(table.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback);
 		waitFor(callback);
 
-		assertEquals(table, callback.entity());
+		assertEquals(view, callback.entity());
 
 		// Update
 		callback.clear();
-		table.description("an updated test table");
-		Futures.addCallback(views.update(table), callback);
+		table.description("an updated test view");
+		Futures.addCallback(views.update(view), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(views.read(table.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback);
 		waitFor(callback);
 
-		Table result2 = callback.entity();
-		assertEquals(table, result2);
+		View result2 = callback.entity();
+		assertEquals(view, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
@@ -173,17 +183,17 @@ public class ViewRepositoryTest
 		// Delete
 		waitFor(callback);
 		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
-		Futures.addCallback(views.delete(table.identifier()), deleteCallback);
+		Futures.addCallback(views.delete(view.identifier()), deleteCallback);
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Document table should no longer exist.
-		assertFalse("Document table not deleted: " + table.toDbTable(), tableExists(table.toDbTable()));
+		assertFalse("View table not deleted: " + view.toDbTable(), tableExists(view.toDbTable()));
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(views.read(table.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -198,12 +208,17 @@ public class ViewRepositoryTest
 		Table table = new Table();
 		table.name("table3");
 		table.database("db3");
-		Table createResult = views.create(table).get();
-		assertEquals(table, createResult);
+
+		View view = new View();
+		view.table(table);
+		view.name("v1");
+		view.keys("(id:uuid)");
+		View createResult = views.create(view).get();
+		assertEquals(view, createResult);
 
 		try
 		{
-			views.create(table).get();
+			views.create(view).get();
 		}
 		catch(ExecutionException e)
 		{
@@ -218,17 +233,22 @@ public class ViewRepositoryTest
 		Table table = new Table();
 		table.name("table4");
 		table.database("db4");
-		TestCallback<Table> callback = new TestCallback<Table>();
+
+		View view = new View();
+		view.table(table);
+		view.name("v1");
+		view.keys("(id:uuid)");
+		TestCallback<View> callback = new TestCallback<View>();
 
 		// Create
-		Futures.addCallback(views.create(table), callback);
+		Futures.addCallback(views.create(view), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.entity());
 		assertNull(callback.throwable());
 
 		// Create Duplicate
-		Futures.addCallback(views.create(table), callback);
+		Futures.addCallback(views.create(view), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -243,32 +263,38 @@ public class ViewRepositoryTest
 		Table table = new Table();
 		table.name("table5");
 		table.database("db5");
-		table.idType(DataTypes.BIGINT);
-		Table createResult = views.create(table).get();
-		assertEquals(table, createResult);
 
-		Table sync = views.read(table.identifier()).get();
-		assertEquals(table.createdAt(), sync.createdAt());
-		assertEquals(table.updatedAt(), sync.updatedAt());
-		assertEquals(table.databaseName(), sync.databaseName());
-		assertEquals(table.description(), sync.description());
-		assertEquals(table.idType(), sync.idType());
-		assertEquals(table.name(), sync.name());
-		assertEquals(table.ttl(), sync.ttl());
+		View view = new View();
+		view.table(table);
+		view.name("v1");
+		view.keys("(id:uuid)");
+		View createResult = views.create(view).get();
+		assertEquals(view, createResult);
 
-		TestCallback<Table> callback = new TestCallback<Table>();
-		Futures.addCallback(views.read(table.identifier()), callback);
+		View sync = views.read(view.identifier()).get();
+		assertEquals(view.createdAt(), sync.createdAt());
+		assertEquals(view.updatedAt(), sync.updatedAt());
+		assertEquals(view.databaseName(), sync.databaseName());
+		assertEquals(view.tableName(), sync.tableName());
+		assertEquals(view.description(), sync.description());
+		assertEquals(view.keys(), sync.keys());
+		assertEquals(view.name(), sync.name());
+		assertEquals(view.ttl(), sync.ttl());
+
+		TestCallback<View> callback = new TestCallback<View>();
+		Futures.addCallback(views.read(view.identifier()), callback);
 		waitFor(callback);
 
 		assertNull(callback.throwable());
-		Table async = callback.entity();
-		assertEquals(table.createdAt(), async.createdAt());
-		assertEquals(table.updatedAt(), async.updatedAt());
-		assertEquals(table.databaseName(), async.databaseName());
-		assertEquals(table.description(), async.description());
-		assertEquals(table.idType(), async.idType());
-		assertEquals(table.name(), async.name());
-		assertEquals(table.ttl(), async.ttl());
+		View async = callback.entity();
+		assertEquals(view.createdAt(), async.createdAt());
+		assertEquals(view.updatedAt(), async.updatedAt());
+		assertEquals(view.databaseName(), async.databaseName());
+		assertEquals(view.tableName(), async.tableName());
+		assertEquals(view.description(), async.description());
+		assertEquals(view.keys(), async.keys());
+		assertEquals(view.name(), async.name());
+		assertEquals(view.ttl(), async.ttl());
 	}
 
 	@Test(expected=ItemNotFoundException.class)
@@ -277,7 +303,7 @@ public class ViewRepositoryTest
 	{
 		try
 		{
-			views.read(new Identifier("db5", "doesn't exist")).get();
+			views.read(new Identifier("db5", "table5", "doesn't exist")).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -289,8 +315,8 @@ public class ViewRepositoryTest
 	public void shouldThrowOnReadNonExistentAsynchronously()
 	throws InterruptedException
 	{
-		TestCallback<Table> callback = new TestCallback<Table>();
-		Futures.addCallback(views.read(new Identifier("db6", "doesn't exist")), callback);
+		TestCallback<View> callback = new TestCallback<View>();
+		Futures.addCallback(views.read(new Identifier("db6", "table6", "doesn't exist")), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -303,11 +329,15 @@ public class ViewRepositoryTest
 	{
 		Table table = new Table();
 		table.database("db7");
-		table.name("doesn't exist");
+		table.name("tbl1");
+		View view = new View();
+		view.table(table);
+		view.name("doesn't exist");
+		view.keys("id:uuid");
 
 		try
 		{
-			views.update(table).get();
+			views.update(view).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -319,11 +349,16 @@ public class ViewRepositoryTest
 	public void shouldThrowOnUpdateNonExistentAsynchronously()
 	throws InterruptedException
 	{
-		TestCallback<Table> callback = new TestCallback<Table>();
 		Table table = new Table();
 		table.database("db8");
-		table.name("doesn't exist");
-		Futures.addCallback(views.update(table), callback);
+		table.name("tbl1");
+		View view = new View();
+		view.table(table);
+		view.name("doesn't exist");
+		view.keys("id:uuid");
+
+		TestCallback<View> callback = new TestCallback<View>();
+		Futures.addCallback(views.update(view), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

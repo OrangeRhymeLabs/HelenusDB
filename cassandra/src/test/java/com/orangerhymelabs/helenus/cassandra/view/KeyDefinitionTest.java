@@ -37,6 +37,7 @@ public class KeyDefinitionTest
 		assertTrue(kd.isValid());
 		assertEquals("alpha uuid,beta text", kd.asColumns());
 		assertEquals("primary key (alpha,beta)", kd.asPrimaryKey());
+		assertEquals("", kd.asClusteringKey());
 		assertTrue(kd.isValid());
 	}
 
@@ -49,7 +50,8 @@ public class KeyDefinitionTest
 			.addClusteringKey(new ClusteringKeyComponent("chi", DataTypes.TIMESTAMP, Ordering.DESC))
 			.addClusteringKey(new ClusteringKeyComponent("delta", DataTypes.INTEGER, Ordering.ASC));
 		assertEquals("alpha uuid,beta text,chi timestamp,delta int", kd.asColumns());
-		assertEquals("primary key ((alpha,beta),chi,delta) with clustering order (chi DESC,delta ASC)", kd.asPrimaryKey());
+		assertEquals("primary key ((alpha,beta),chi,delta)", kd.asPrimaryKey());
+		assertEquals("with clustering order by (chi DESC,delta ASC)", kd.asClusteringKey());
 		assertTrue(kd.isValid());
 	}
 

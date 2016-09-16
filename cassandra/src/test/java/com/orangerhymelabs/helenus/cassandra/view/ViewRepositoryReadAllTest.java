@@ -102,6 +102,7 @@ public class ViewRepositoryReadAllTest
 		
 		View view = new View();
 		view.table(table);
+		view.keys("id:uuid");
 		view.name("view1");
 		views.create(view);
 		view.name("view2");

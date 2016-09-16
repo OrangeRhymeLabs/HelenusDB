@@ -123,11 +123,18 @@ public class KeyDefinition
 		}
 
 		sb.append(")");
+		return sb.toString();
+	}
+
+	public String asClusteringKey()
+	{
+		StringBuilder sb = new StringBuilder();
 
 		if (hasDescendingSort(clusteringKey))
 		{
 			appendClusteringOrderPhrase(clusteringKey, sb);
 		}
+
 		return sb.toString();
 	}
 
@@ -271,7 +278,7 @@ public class KeyDefinition
 
 	private void appendClusteringOrderPhrase(List<ClusteringKeyComponent> components, StringBuilder builder)
 	{
-		builder.append(" with clustering order (");
+		builder.append("with clustering order by (");
 		components.forEach(new Consumer<ClusteringKeyComponent>()
 		{
 			private boolean isFirst = true;
