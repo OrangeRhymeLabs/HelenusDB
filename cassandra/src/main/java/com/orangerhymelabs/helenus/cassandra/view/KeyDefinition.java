@@ -63,22 +63,30 @@ public class KeyDefinition
 	 * 
 	 * @param bson a BSONObject.
 	 * @return an Identifier instance or null.
+	 * @throws KeyDefinitionException if the bson document is missing any properties in the key definition identifier. 
 	 */
 	public Identifier identifier(BSONObject bson)
+	throws KeyDefinitionException
 	{
 		Identifier identifier = new Identifier();
+		List<String> missingProperties = new ArrayList<>(0);
 
 		if (hasPartitionKey())
 		{
-			buildIdentifierFromBson(partitionKey, bson, identifier);
+			appendToIdentifierFromBson(partitionKey, bson, identifier, missingProperties);
 		}
 
 		if (hasClusteringKey())
 		{
-			buildIdentifierFromBson(clusteringKey, bson, identifier);
+			appendToIdentifierFromBson(clusteringKey, bson, identifier, missingProperties);
 		}
 		
-		return (identifier.size() == size() ? identifier : null);
+		if (identifier.size() != size())
+		{
+			throw new KeyDefinitionException("BSON missing properties: " + String.join(", ", missingProperties));
+		}
+
+		return identifier;
 	}
 
 	public boolean isValid()
@@ -188,7 +196,7 @@ public class KeyDefinition
 		return sb.toString();
 	}
 
-	private void buildIdentifierFromBson(List<? extends KeyComponent> components, BSONObject bson, Identifier identifier)
+	private void appendToIdentifierFromBson(List<? extends KeyComponent> components, BSONObject bson, Identifier identifier, List<String> missingProperties)
 	{
 		components.forEach(new Consumer<KeyComponent>()
 		{
@@ -200,6 +208,10 @@ public class KeyDefinition
 				if (o != null)
 				{
 					identifier.add(o);
+				}
+				else
+				{
+					missingProperties.add(t.property());
 				}
 			}
 		});

@@ -1,13 +1,14 @@
 package com.orangerhymelabs.helenus.cassandra.view;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
 import org.bson.BSONObject;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
@@ -70,6 +71,7 @@ public class KeyDefinitionTest
 
 	@Test
 	public void shouldReturnIdentifier()
+	throws KeyDefinitionException
 	{
 		KeyDefinition kd = new KeyDefinition();
 		kd.addPartitionKey(new KeyComponent("alpha", DataTypes.TEXT))
@@ -87,6 +89,7 @@ public class KeyDefinitionTest
 
 	@Test
 	public void shouldReturnSmallIdentifier()
+	throws KeyDefinitionException
 	{
 		KeyDefinition kd = new KeyDefinition();
 		kd.addPartitionKey(new KeyComponent("alpha", DataTypes.TEXT))
@@ -98,25 +101,45 @@ public class KeyDefinitionTest
 		assertEquals(3.14159, components.get(1));
 	}
 
-	@Test
-	public void shouldReturnNullWithMissingClusteringProperty()
+	@Test(expected=KeyDefinitionException.class)
+	public void shouldThrowWithMissingClusteringProperty()
+	throws KeyDefinitionException
 	{
 		KeyDefinition kd = new KeyDefinition();
 		kd.addPartitionKey(new KeyComponent("alpha", DataTypes.TEXT))
 			.addPartitionKey(new KeyComponent("beta", DataTypes.INTEGER))
 			.addClusteringKey(new ClusteringKeyComponent("chi", DataTypes.TEXT, Ordering.ASC))
 			.addClusteringKey(new ClusteringKeyComponent("not_there", DataTypes.DECIMAL, Ordering.ASC));
-		assertNull(kd.identifier(BSON));
+		kd.identifier(BSON);
 	}
 
-	@Test
-	public void shouldReturnNullWithMissingPartitionProperty()
+	@Test(expected=KeyDefinitionException.class)
+	public void shouldThrowWithMissingPartitionProperty()
+	throws KeyDefinitionException
 	{
 		KeyDefinition kd = new KeyDefinition();
 		kd.addPartitionKey(new KeyComponent("not_there", DataTypes.TEXT))
 			.addPartitionKey(new KeyComponent("beta", DataTypes.INTEGER))
 			.addClusteringKey(new ClusteringKeyComponent("chi", DataTypes.TEXT, Ordering.ASC))
 			.addClusteringKey(new ClusteringKeyComponent("delta", DataTypes.DECIMAL, Ordering.ASC));
-		assertNull(kd.identifier(BSON));
+		kd.identifier(BSON);
+	}
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
+	@Test
+	public void shouldContainMissingPropertiesInMessage()
+	throws KeyDefinitionException
+	{
+		KeyDefinition kd = new KeyDefinition();
+		kd.addPartitionKey(new KeyComponent("not_there", DataTypes.TEXT))
+			.addPartitionKey(new KeyComponent("beta", DataTypes.INTEGER))
+			.addClusteringKey(new ClusteringKeyComponent("chi", DataTypes.TEXT, Ordering.ASC))
+			.addClusteringKey(new ClusteringKeyComponent("delta", DataTypes.DECIMAL, Ordering.ASC));
+
+		thrown.expect(KeyDefinitionException.class);
+	    thrown.expectMessage("BSON missing properties: not_there");
+	    kd.identifier(BSON);
 	}
 }
