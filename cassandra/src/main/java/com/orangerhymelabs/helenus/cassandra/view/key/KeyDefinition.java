@@ -83,7 +83,7 @@ public class KeyDefinition
 		
 		if (identifier.size() != size())
 		{
-			throw new KeyDefinitionException("BSON missing properties: " + String.join(", ", missingProperties));
+			throw new KeyDefinitionException("Missing properties: " + String.join(", ", missingProperties));
 		}
 
 		return identifier;

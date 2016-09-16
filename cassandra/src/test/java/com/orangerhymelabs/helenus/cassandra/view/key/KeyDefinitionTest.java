@@ -139,11 +139,12 @@ public class KeyDefinitionTest
 		KeyDefinition kd = new KeyDefinition();
 		kd.addPartitionKey(new KeyComponent("not_there", DataTypes.TEXT))
 			.addPartitionKey(new KeyComponent("beta", DataTypes.INTEGER))
+			.addPartitionKey(new KeyComponent("not_there_either", DataTypes.INTEGER))
 			.addClusteringKey(new ClusteringKeyComponent("chi", DataTypes.TEXT, Ordering.ASC))
 			.addClusteringKey(new ClusteringKeyComponent("delta", DataTypes.DECIMAL, Ordering.ASC));
 
 		thrown.expect(KeyDefinitionException.class);
-	    thrown.expectMessage("BSON missing properties: not_there");
+	    thrown.expectMessage("Missing properties: not_there, not_there_either");
 	    kd.identifier(BSON);
 	}
 }
