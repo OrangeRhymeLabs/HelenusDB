@@ -111,9 +111,18 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 			return false;
         }
 	}
+
 	public static class ViewDocumentStatements
 	implements StatementFactory
 	{
+		private static final String CREATE = "create";
+		private static final String DELETE = "delete";
+		private static final String EXISTS = "exists";
+		private static final String READ = "read";
+		private static final String READ_ALL = "readAll";
+		private static final String UPDATE = "update";
+		private static final String UPSERT = "upsert";
+
 		private KeyDefinition keys;
 		private Session session;
 		private String keyspace;
@@ -133,12 +142,19 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 		@Override
 		public PreparedStatement create()
 		{
-			PreparedStatement ps = statements.get("create");
+			PreparedStatement ps = statements.get(CREATE);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("insert into %s.%s (%s, " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (%s) if not exists", keyspace, tableName, keys.asSelectProperties(), keys.asQuestionMarks()));
-				statements.put("create", ps);
+				ps = session.prepare(String.format("insert into %s.%s (%s, %s, %s, %s) values (%s) if not exists",
+					keyspace,
+					tableName,
+					keys.asSelectProperties(),
+					Columns.OBJECT,
+					Columns.CREATED_AT,
+					Columns.UPDATED_AT,
+					keys.asQuestionMarks()));
+				statements.put(CREATE, ps);
 			}
 
 			return ps;
@@ -147,12 +163,15 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 		@Override
 		public PreparedStatement delete()
 		{
-			PreparedStatement ps = statements.get("delete");
+			PreparedStatement ps = statements.get(DELETE);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("delete from %s.%s where %s", keyspace, tableName, keys.asIdentityClause()));
-				statements.put("delete", ps);
+				ps = session.prepare(String.format("delete from %s.%s where %s",
+					keyspace,
+					tableName,
+					keys.asIdentityClause()));
+				statements.put(DELETE, ps);
 			}
 
 			return ps;
@@ -160,12 +179,15 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 
 		public PreparedStatement exists()
 		{
-			PreparedStatement ps = statements.get("create");
+			PreparedStatement ps = statements.get(EXISTS);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("select count(*) from %s.%s  where %s limit 1", keyspace, tableName, keys.asIdentityClause()));
-				statements.put("create", ps);
+				ps = session.prepare(String.format("select count(*) from %s.%s  where %s limit 1",
+					keyspace,
+					tableName,
+					keys.asIdentityClause()));
+				statements.put(EXISTS, ps);
 			}
 
 			return ps;
@@ -174,12 +196,16 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 		@Override
 		public PreparedStatement update()
 		{
-			PreparedStatement ps = statements.get("update");
+			PreparedStatement ps = statements.get(UPDATE);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("update %s.%s set %s where %s if exists", keyspace, tableName, keys.asUpdateProperties(), keys.asIdentityClause()));
-				statements.put("update", ps);
+				ps = session.prepare(String.format("update %s.%s set %s where %s if exists",
+					keyspace,
+					tableName,
+					keys.asUpdateProperties(),
+					keys.asIdentityClause()));
+				statements.put(UPDATE, ps);
 			}
 
 			return ps;
@@ -187,12 +213,19 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 
 		public PreparedStatement upsert()
 		{
-			PreparedStatement ps = statements.get("upsert");
+			PreparedStatement ps = statements.get(UPSERT);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("insert into %s.%s (%s, " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (%s)", keyspace, tableName, keys.asSelectProperties(), keys.asQuestionMarks()));
-				statements.put("upsert", ps);
+				ps = session.prepare(String.format("insert into %s.%s (%s, %s, %s, %s) values (%s)",
+					keyspace,
+					tableName,
+					keys.asSelectProperties(),
+					Columns.OBJECT,
+					Columns.CREATED_AT,
+					Columns.UPDATED_AT,
+					keys.asQuestionMarks()));
+				statements.put(UPSERT, ps);
 			}
 
 			return ps;
@@ -201,12 +234,15 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 		@Override
 		public PreparedStatement read()
 		{
-			PreparedStatement ps = statements.get("read");
+			PreparedStatement ps = statements.get(READ);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("select * from %s.%s where %s limit 1", keyspace, tableName, keys.asIdentityClause()));
-				statements.put("read", ps);
+				ps = session.prepare(String.format("select * from %s.%s where %s limit 1",
+					keyspace,
+					tableName,
+					keys.asIdentityClause()));
+				statements.put(READ, ps);
 			}
 
 			return ps;
@@ -215,12 +251,15 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 		@Override
 		public PreparedStatement readAll()
 		{
-			PreparedStatement ps = statements.get("readAll");
+			PreparedStatement ps = statements.get(READ_ALL);
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("select * from %s.%s where %s", keyspace, tableName, keys.asPartitionIdentityClause()));
-				statements.put("readAll", ps);
+				ps = session.prepare(String.format("select * from %s.%s where %s",
+					keyspace,
+					tableName,
+					keys.asPartitionIdentityClause()));
+				statements.put(READ_ALL, ps);
 			}
 
 			return ps;
