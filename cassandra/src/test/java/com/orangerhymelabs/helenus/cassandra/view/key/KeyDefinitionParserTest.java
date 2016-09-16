@@ -1,8 +1,12 @@
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.view.key;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
 
 public class KeyDefinitionParserTest
 {

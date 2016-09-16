@@ -1,10 +1,10 @@
 /**
  * 
  */
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.view.key;
 
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.orangerhymelabs.helenus.cassandra.view.ClusteringKeyComponent.Ordering;
+import com.orangerhymelabs.helenus.cassandra.view.key.ClusteringKeyComponent.Ordering;
 
 /**
  * Used to parse the View.keys property into something that can pull values from a BSONObject.

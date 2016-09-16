@@ -1,4 +1,4 @@
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.view.key;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -12,7 +12,11 @@ import org.junit.rules.ExpectedException;
 
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.orangerhymelabs.helenus.cassandra.view.ClusteringKeyComponent.Ordering;
+import com.orangerhymelabs.helenus.cassandra.view.key.ClusteringKeyComponent;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyComponent;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.view.key.ClusteringKeyComponent.Ordering;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 public class KeyDefinitionTest

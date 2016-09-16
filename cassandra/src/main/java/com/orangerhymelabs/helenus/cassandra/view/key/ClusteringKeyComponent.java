@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.view.key;
 
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 
