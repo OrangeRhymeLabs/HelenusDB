@@ -12,11 +12,11 @@ import org.junit.rules.ExpectedException;
 
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.orangerhymelabs.helenus.cassandra.view.key.ClusteringKeyComponent;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyComponent;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinition;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
-import com.orangerhymelabs.helenus.cassandra.view.key.ClusteringKeyComponent.Ordering;
+import com.orangerhymelabs.helenus.cassandra.table.key.ClusteringKeyComponent;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.table.key.ClusteringKeyComponent.Ordering;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 public class KeyDefinitionTest

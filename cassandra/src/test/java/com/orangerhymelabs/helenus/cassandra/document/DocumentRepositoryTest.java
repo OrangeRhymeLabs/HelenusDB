@@ -42,7 +42,7 @@ import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;

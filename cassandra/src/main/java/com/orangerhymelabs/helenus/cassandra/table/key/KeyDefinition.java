@@ -1,4 +1,4 @@
-package com.orangerhymelabs.helenus.cassandra.view.key;
+package com.orangerhymelabs.helenus.cassandra.table.key;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.orangerhymelabs.helenus.cassandra.view.key;
+package com.orangerhymelabs.helenus.cassandra.table.key;
 
 /**
  * @author tfredrich

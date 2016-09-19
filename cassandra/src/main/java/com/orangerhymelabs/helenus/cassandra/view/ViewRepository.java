@@ -31,10 +31,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
+import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.cassandra.view.ViewRepository.ViewStatements;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
@@ -155,7 +156,7 @@ extends AbstractCassandraRepository<View, ViewStatements>
 		PreparedStatement readAllForTable();
 	}
 
-	private static final ViewDocumentRepository.Schema DOCUMENT_SCHEMA = new ViewDocumentRepository.Schema();
+	private static final DocumentRepository.Schema DOCUMENT_SCHEMA = new DocumentRepository.Schema();
 
 	public ViewRepository(Session session, String keyspace)
 	{
@@ -227,20 +228,20 @@ extends AbstractCassandraRepository<View, ViewStatements>
 	{
 		if (row == null) return null;
 
-		View v = new View();
-		v.name(row.getString(Columns.NAME));
+		View view = new View();
+		view.name(row.getString(Columns.NAME));
 
 		Table t = new Table();
 		t.database(row.getString(Columns.DATABASE));
 		t.name(row.getString(Columns.TABLE));
-		v.table(t);
+		view.table(t);
 
-		v.description(row.getString(Columns.DESCRIPTION));
-		v.ttl(row.getLong(Columns.TTL));
-		v.keys(row.getString(Columns.KEYS));
-		v.createdAt(row.getTimestamp(Columns.CREATED_AT));
-		v.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
-		return v;
+		view.description(row.getString(Columns.DESCRIPTION));
+		view.ttl(row.getLong(Columns.TTL));
+		view.keys(row.getString(Columns.KEYS));
+		view.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		view.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
+		return view;
 	}
 
 	private boolean createDocumentSchema(View view)

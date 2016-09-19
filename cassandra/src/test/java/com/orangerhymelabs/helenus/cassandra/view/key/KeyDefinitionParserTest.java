@@ -4,9 +4,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinition;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionParser;
 
 public class KeyDefinitionParserTest
 {

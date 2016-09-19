@@ -45,10 +45,10 @@ import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyComponent;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinition;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
-import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -68,7 +68,6 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 	private class Columns
 	{
 		static final String OBJECT = "object";
-		static final String LUCENE = "lucene";
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
@@ -81,7 +80,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			"%s," +									// identifying properties
 		    Columns.OBJECT + " blob," +
 		    // TODO: Add Location details to Document.
-		    Columns.LUCENE + " text," + 			// Empty, but facilitates Lucene indexing / searches.
+		    // TODO: Add Lucene index capability to Document.
 			Columns.CREATED_AT + " timestamp," +
 		    Columns.UPDATED_AT + " timestamp," +
 			"%s" +									// primary key
