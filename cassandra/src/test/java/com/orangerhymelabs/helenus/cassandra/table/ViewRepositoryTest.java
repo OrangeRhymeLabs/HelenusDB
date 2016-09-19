@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.table;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,6 +38,8 @@ import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.table.View;
+import com.orangerhymelabs.helenus.cassandra.table.ViewRepository;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;

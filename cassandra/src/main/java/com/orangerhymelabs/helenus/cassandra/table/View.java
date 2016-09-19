@@ -13,11 +13,9 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenus.cassandra.view;
+package com.orangerhymelabs.helenus.cassandra.table;
 
 import com.orangerhymelabs.helenus.cassandra.Constants;
-import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.table.TableReference;
 import com.orangerhymelabs.helenus.persistence.AbstractEntity;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;

@@ -45,6 +45,7 @@ import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.table.View;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
@@ -134,6 +135,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		private String keyspace;
 		private String tableName;
 		private Map<String, PreparedStatement> statements = new ConcurrentHashMap<>();
+		private List<View> views;
 
 		public DocumentStatements(Session session, String keyspace, String tableName, KeyDefinition keys)
 		throws KeyDefinitionException

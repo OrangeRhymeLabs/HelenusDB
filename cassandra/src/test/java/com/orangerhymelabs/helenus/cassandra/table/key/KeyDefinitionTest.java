@@ -1,4 +1,4 @@
-package com.orangerhymelabs.helenus.cassandra.view.key;
+package com.orangerhymelabs.helenus.cassandra.table.key;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
