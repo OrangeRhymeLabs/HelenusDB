@@ -16,8 +16,14 @@
 package com.orangerhymelabs.helenus.cassandra.document;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 
 import org.bson.BSON;
 import org.slf4j.Logger;
@@ -39,10 +45,13 @@ import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyComponent;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
-import com.orangerhymelabs.helenus.persistence.Query;
 import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
@@ -58,7 +67,6 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 
 	private class Columns
 	{
-		static final String ID = "id";
 		static final String OBJECT = "object";
 		static final String LUCENE = "lucene";
 		static final String CREATED_AT = "created_at";
@@ -70,18 +78,15 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		private static final String DROP_TABLE = "drop table if exists %s.%s;";
 		private static final String CREATE_TABLE = "create table if not exists %s.%s" +
 		"(" +
-			Columns.ID + " %s," +
+			"%s," +									// identifying properties
 		    Columns.OBJECT + " blob," +
 		    // TODO: Add Location details to Document.
 		    Columns.LUCENE + " text," + 			// Empty, but facilitates Lucene indexing / searches.
 			Columns.CREATED_AT + " timestamp," +
 		    Columns.UPDATED_AT + " timestamp," +
-			"primary key (" + Columns.ID + ")" +
-
-		    // TODO: historical documents
-//		    "primary key ((" + Columns.ID + "), " + Columns.UPDATED_AT + ")" +
-//			" with clustering order by (" + Columns.UPDATED_AT + " DESC)" +
-		")";
+			"%s" +									// primary key
+		")" +
+		" %s";										// clustering order (optional)
 
 		public boolean drop(Session session, String keyspace, String table)
         {
@@ -98,59 +103,237 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 	        return false;
         }
 
-        public boolean create(Session session, String keyspace, String table, DataTypes idType)
+        public boolean create(Session session, String keyspace, String table, KeyDefinition key)
         {
-			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace, table, idType.cassandraType()));
+			ResultSetFuture rs = session.executeAsync(String.format(CREATE_TABLE, keyspace, table, key.asColumns(), key.asPrimaryKey(), key.asClusteringKey()));
 			try
 			{
 				return rs.get().wasApplied();
 			}
 			catch (InterruptedException | ExecutionException e)
 			{
-				LOG.error("Document schema create failed", e);
+				LOG.error("ViewDocument schema create failed", e);
 			}
 			
 			return false;
         }
 	}
 
-	public interface DocumentStatements
-	extends StatementFactory
+	public static class DocumentStatements
+	implements StatementFactory
 	{
-		@Override
-		@Query("insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?) if not exists")
-		PreparedStatement create();
+		private static final String CREATE = "create";
+		private static final String DELETE = "delete";
+		private static final String EXISTS = "exists";
+		private static final String READ = "read";
+		private static final String READ_ALL = "readAll";
+		private static final String UPDATE = "update";
+		private static final String UPSERT = "upsert";
+
+		private KeyDefinition keys;
+		private Session session;
+		private String keyspace;
+		private String tableName;
+		private Map<String, PreparedStatement> statements = new ConcurrentHashMap<>();
+
+		public DocumentStatements(Session session, String keyspace, String tableName, KeyDefinition keys)
+		throws KeyDefinitionException
+		{
+			super();
+			this.session = session;
+			this.keyspace = keyspace;
+			this.tableName = tableName;
+			this.keys = keys;
+		}
 
 		@Override
-		@Query("delete from %s.%s where " + Columns.ID + " = ?")
-		PreparedStatement delete();
+		public PreparedStatement create()
+		{
+			PreparedStatement ps = statements.get(CREATE);
 
-		@Query("select count(*) from %s.%s where " + Columns.ID + " = ? limit 1")
-		PreparedStatement exists();
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("insert into %s.%s (%s, %s, %s, %s) values (%s) if not exists",
+						keyspace,
+						tableName,
+						keys.asSelectProperties(),
+						Columns.OBJECT,
+						Columns.CREATED_AT,
+						Columns.UPDATED_AT,
+						keys.asQuestionMarks(3))).get();
+					statements.put(CREATE, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing create() statement", e);
+				}
+			}
+
+			return ps;
+		}
 
 		@Override
-		@Query("update %s.%s set " + Columns.OBJECT + " = ?, " + Columns.UPDATED_AT + " = ? where " + Columns.ID + " = ? if exists")
-		PreparedStatement update();
+		public PreparedStatement delete()
+		{
+			PreparedStatement ps = statements.get(DELETE);
 
-		@Query("insert into %s.%s (" + Columns.ID + ", " + Columns.OBJECT + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + ") values (?, ?, ?, ?)")
-		PreparedStatement upsert();
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("delete from %s.%s where %s",
+						keyspace,
+						tableName,
+						keys.asIdentityClause())).get();
+					statements.put(DELETE, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing delete() statement", e);
+				}
+			}
+
+			return ps;
+		}
+
+		public PreparedStatement exists()
+		{
+			PreparedStatement ps = statements.get(EXISTS);
+
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("select count(*) from %s.%s  where %s limit 1",
+						keyspace,
+						tableName,
+						keys.asIdentityClause())).get();
+					statements.put(EXISTS, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing exists() statement", e);
+				}
+			}
+
+			return ps;
+		}
 
 		@Override
-		@Query("select * from %s.%s where " + Columns.ID + " = ?")
-		PreparedStatement read();
+		public PreparedStatement update()
+		{
+			PreparedStatement ps = statements.get(UPDATE);
+
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("update %s.%s set %s = ?, %s = ? where %s if exists",
+						keyspace,
+						tableName,
+						Columns.OBJECT,
+						Columns.UPDATED_AT,
+						keys.asIdentityClause())).get();
+					statements.put(UPDATE, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing update() statement", e);
+				}
+			}
+
+			return ps;
+		}
+
+		public PreparedStatement upsert()
+		{
+			PreparedStatement ps = statements.get(UPSERT);
+
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("insert into %s.%s (%s, %s, %s, %s) values (%s)",
+						keyspace,
+						tableName,
+						keys.asSelectProperties(),
+						Columns.OBJECT,
+						Columns.CREATED_AT,
+						Columns.UPDATED_AT,
+						keys.asQuestionMarks(3))).get();
+					statements.put(UPSERT, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing upsert() statement", e);
+				}
+			}
+
+			return ps;
+		}
+
+		@Override
+		public PreparedStatement read()
+		{
+			PreparedStatement ps = statements.get(READ);
+
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("select * from %s.%s where %s limit 1",
+						keyspace,
+						tableName,
+						keys.asIdentityClause())).get();
+					statements.put(READ, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing read() statement", e);
+				}
+			}
+
+			return ps;
+		}
+
+		@Override
+		public PreparedStatement readAll()
+		{
+			PreparedStatement ps = statements.get(READ_ALL);
+
+			if (ps == null)
+			{
+				try
+				{
+					ps = session.prepareAsync(String.format("select * from %s.%s where %s",
+						keyspace,
+						tableName,
+						keys.asPartitionIdentityClause())).get();
+					statements.put(READ_ALL, ps);
+				}
+				catch (InterruptedException | ExecutionException e)
+				{
+					LOG.error("Error preparing readAll() statement", e);
+				}
+			}
+
+			return ps;
+		}
 	}
 
 	private Table table;
+	private KeyDefinition keys;
 
 	public DocumentRepository(Session session, String keyspace, Table table)
+	throws KeyDefinitionException
 	{
-		this(session, keyspace, table, DocumentStatements.class);
-	}
-
-	protected DocumentRepository(Session session, String keyspace, Table table, Class<? extends DocumentStatements> factoryClass)
-	{
-		super(session, keyspace, table.toDbTable(), DocumentStatements.class);
+		super(session, keyspace);
 		this.table = table;
+		this.keys = new KeyDefinitionParser().parse(table.keys());
+		statementFactory(new DocumentStatements(session, keyspace, tableName(), keys));
+
 	}
 
 	public String tableName()
@@ -240,23 +423,56 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		{
 			if (document.hasObject())
 			{
-				bs.bind(document.id(),
+				bs.bind(toArray(document.identifier(), true,
 					ByteBuffer.wrap(BSON.encode(document.object())),
 				    document.createdAt(),
-				    document.updatedAt());
+				    document.updatedAt()));
 			}
 			else
 			{
-				bs.bind(document.id(),
+				bs.bind(toArray(document.identifier(), true,
 					null,
 				    document.createdAt(),
-				    document.updatedAt());
+				    document.updatedAt()));
 			}
 		}
 		catch (InvalidTypeException | CodecNotFoundException e)
 		{
 			throw new InvalidIdentifierException(e);
 		}
+	}
+
+	Object[] toArray(Identifier id, boolean isIdFirst, Object... objects)
+	{
+		List<Object> values = new ArrayList<>(id.size() + objects.length);
+
+		if (isIdFirst)
+		{
+			id.components().forEach(new Consumer<Object>()
+			{
+				@Override
+				public void accept(Object t)
+				{
+					values.add(t);
+				}
+			});
+		}
+
+		values.addAll(Arrays.asList(objects));
+
+		if (!isIdFirst)
+		{
+			id.components().forEach(new Consumer<Object>()
+			{
+				@Override
+				public void accept(Object t)
+				{
+					values.add(t);
+				}
+			});
+		}
+
+		return values.toArray();
 	}
 
 	@Override
@@ -268,15 +484,13 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		{
 			if (document.hasObject())
 			{
-				bs.bind(ByteBuffer.wrap(BSON.encode(document.object())),
-					document.updatedAt(),
-				    document.id());
+				bs.bind(toArray(document.identifier(), false,
+					ByteBuffer.wrap(BSON.encode(document.object())),
+					document.updatedAt()));
 			}
 			else
 			{
-				bs.bind(null,
-					document.updatedAt(),
-				    document.id());
+				bs.bind(toArray(document.identifier(), false, null, document.updatedAt()));
 			}
 		}
 		catch (InvalidTypeException | CodecNotFoundException e)
@@ -294,7 +508,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		}
 
 		Document d = new Document();
-		d.id(marshalId(row));
+		d.identifier(marshalId(keys, row));
 		ByteBuffer b = row.getBytes(Columns.OBJECT);
 
 		if (b != null && b.hasArray())
@@ -309,20 +523,34 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		return d;
 	}
 
-	private Object marshalId(Row row)
-    {
-		switch(table.idType())
+	private Identifier marshalId(KeyDefinition keyDefinition, Row row)
+	{
+		Identifier id = new Identifier();
+		keyDefinition.components().forEach(new Consumer<KeyComponent>()
 		{
-			case BIGINT: return row.getLong(Columns.ID);
-			case DECIMAL: return row.getDecimal(Columns.ID);
-			case DOUBLE: return row.getDouble(Columns.ID);
-			case FLOAT: return row.getFloat(Columns.ID);
-			case INTEGER: return row.getInt(Columns.ID);
-			case TEXT: return row.getString(Columns.ID);
-			case TIMESTAMP: return row.getTimestamp(Columns.ID);
+			@Override
+			public void accept(KeyComponent t)
+			{
+				id.add(marshalIdProperty(t.property(), t.type(), row));
+			}
+		});
+		return id;
+	}
+
+	private Object marshalIdProperty(String property, DataTypes type, Row row)
+    {
+		switch(type)
+		{
+			case BIGINT: return row.getLong(property);
+			case DECIMAL: return row.getDecimal(property);
+			case DOUBLE: return row.getDouble(property);
+			case FLOAT: return row.getFloat(property);
+			case INTEGER: return row.getInt(property);
+			case TEXT: return row.getString(property);
+			case TIMESTAMP: return row.getTimestamp(property);
 			case TIMEUUID:
-			case UUID:  return row.getUUID(Columns.ID);
-			default: throw new UnsupportedOperationException("Conversion of ID type: " + table.idType().toString());
+			case UUID:  return row.getUUID(property);
+			default: throw new UnsupportedOperationException("Conversion of property type: " + type.toString());
 		}
     }
 }

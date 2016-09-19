@@ -29,7 +29,7 @@ public class Document
 extends AbstractEntity
 {
 	@Required("Document ID")
-	private Object id;
+	private Identifier identifier;
 
 	// The BSON document.
 	private BSONObject bson;
@@ -48,17 +48,12 @@ extends AbstractEntity
 	@Override
 	public Identifier identifier()
 	{
-		return new Identifier(id);
+		return (identifier != null ? new Identifier(identifier) : null);
 	}
 
-	public Object id()
+	public void identifier(Identifier id)
 	{
-		return id;
-	}
-
-	public void id(Object id)
-	{
-		this.id = id;
+		this.identifier = (id != null ? new Identifier(id) : null);
 	}
 
 	public boolean hasObject()
@@ -79,7 +74,7 @@ extends AbstractEntity
 	@Override
 	public String toString()
 	{
-		return "Document{" + "id=" + id + ", object=" + object() + '}';
+		return "Document{" + "id=" + identifier.toString() + ", object=" + object() + '}';
 	}
 
 }

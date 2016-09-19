@@ -145,6 +145,7 @@ public class TableServiceTest
 		Table entity = new Table();
 		entity.database(DATABASE);
 		entity.name("table4");
+		entity.keys("id:uuid");
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create

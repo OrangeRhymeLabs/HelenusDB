@@ -16,7 +16,6 @@
 package com.orangerhymelabs.helenus.cassandra.table;
 
 import com.orangerhymelabs.helenus.cassandra.Constants;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseReference;
 import com.orangerhymelabs.helenus.persistence.AbstractEntity;
@@ -32,6 +31,8 @@ import com.strategicgains.syntaxe.annotation.Required;
 public class Table
 extends AbstractEntity
 {
+	private static final String DEFAULT_KEYS = "id:uuid";
+
 	@Required("Database")
 	@ChildValidation
 	private DatabaseReference database;
@@ -43,8 +44,8 @@ extends AbstractEntity
 	@Required("Table Type")
 	private TableType type = TableType.DOCUMENT;
 
-	@Required("ID Type")
-	private DataTypes idType = DataTypes.UUID;
+	@Required("Key Definition")
+	private String keys = DEFAULT_KEYS;
 
 	// How long should the table's data live? (0 implies forever)
 	private long ttl;
@@ -119,6 +120,16 @@ extends AbstractEntity
 		this.type = type;
 	}
 
+	public String keys()
+	{
+		return keys;
+	}
+
+	public void keys(String keys)
+	{
+		this.keys = keys;
+	}
+
 	public long ttl()
 	{
 		return ttl;
@@ -134,16 +145,6 @@ extends AbstractEntity
     {
 	    return (hasDatabase() & hasName() ? new Identifier(database.name(), name) : null);
     }
-
-	public DataTypes idType()
-	{
-		return idType;
-	}
-
-	public void idType(DataTypes idType)
-	{
-		this.idType = idType;
-	}
 
 	public String toDbTable()
 	{
@@ -161,8 +162,8 @@ extends AbstractEntity
 			sb.append(description());
 			sb.append(", Type=");
 			sb.append(type());
-			sb.append(", ID Type=");
-			sb.append(idType());
+			sb.append(", Keys=");
+			sb.append(keys());
 			sb.append(", TTL=");
 			sb.append(ttl());
 			sb.append(")");

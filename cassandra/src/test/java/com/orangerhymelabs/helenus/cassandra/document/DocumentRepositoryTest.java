@@ -38,11 +38,11 @@ import org.junit.Test;
 import com.google.common.util.concurrent.Futures;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
@@ -63,7 +63,7 @@ public class DocumentRepositoryTest
 
 	@BeforeClass
 	public static void beforeClass()
-	throws ConfigurationException, TTransportException, IOException, InterruptedException, ExecutionException
+	throws ConfigurationException, TTransportException, IOException, InterruptedException, ExecutionException, KeyDefinitionException
 	{
 		CassandraManager.start();
 		keyspace = new KeyspaceSchema();
@@ -84,7 +84,7 @@ public class DocumentRepositoryTest
 		Table dates = new Table();
 		dates.name("dates");
 		dates.database("db1");
-		dates.idType(DataTypes.TIMESTAMP);
+		dates.keys("id:timestamp");
 		dates.description("a test date-keyed table");
 		Table dateTable = tables.create(dates).get();
 		dateDocs = factory.newInstance(dateTable);
@@ -103,7 +103,7 @@ public class DocumentRepositoryTest
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		Document createResult = uuidDocs.create(doc).get();
 
 		assertNotNull(createResult);
@@ -150,7 +150,7 @@ public class DocumentRepositoryTest
 		// Create
 		Date now = new Date();
 		Document doc = new Document();
-		doc.id(now);
+		doc.identifier(new Identifier(now));
 		Document createResult = dateDocs.create(doc).get();
 
 		assertNotNull(createResult);
@@ -196,7 +196,7 @@ public class DocumentRepositoryTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -253,7 +253,7 @@ public class DocumentRepositoryTest
 	{
 		Date now = new Date();
 		Document doc = new Document();
-		doc.id(now);
+		doc.identifier(new Identifier(now));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -311,7 +311,7 @@ public class DocumentRepositoryTest
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		Document createResult = uuidDocs.create(doc).get();
 		assertEquals(doc, createResult);
 
@@ -332,7 +332,7 @@ public class DocumentRepositoryTest
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Futures.addCallback(uuidDocs.create(doc), callback);
@@ -359,7 +359,7 @@ public class DocumentRepositoryTest
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Futures.addCallback(uuidDocs.upsert(doc), callback);
@@ -387,7 +387,7 @@ public class DocumentRepositoryTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -410,7 +410,7 @@ public class DocumentRepositoryTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		dateDocs.create(doc);
 	}
 
@@ -420,14 +420,10 @@ public class DocumentRepositoryTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		Futures.addCallback(dateDocs.create(doc), callback);
-//		waitFor(callback);
-//
-//		assertNotNull(callback.throwable());
-//		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
 	@Test(expected=InvalidIdentifierException.class)
@@ -435,7 +431,7 @@ public class DocumentRepositoryTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		dateDocs.update(doc);
 	}
 
@@ -445,15 +441,11 @@ public class DocumentRepositoryTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
 		Futures.addCallback(dateDocs.update(doc), callback);
-//		waitFor(callback);
-//
-//		assertNotNull(callback.throwable());
-//		assertTrue(callback.throwable() instanceof InvalidIdentifierException);
 	}
 
 	@Test(expected=ItemNotFoundException.class)
@@ -513,7 +505,7 @@ public class DocumentRepositoryTest
 	throws Throwable
 	{
 		Document doc = new Document();
-		doc.id(UUID.randomUUID());
+		doc.identifier(new Identifier(UUID.randomUUID()));
 		try
 		{
 			uuidDocs.update(doc).get();
@@ -530,7 +522,7 @@ public class DocumentRepositoryTest
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
-		doc.id(UUID.randomUUID());
+		doc.identifier(new Identifier(UUID.randomUUID()));
 		Futures.addCallback(uuidDocs.update(doc), callback);
 		waitFor(callback);
 

@@ -38,7 +38,6 @@ import org.junit.Test;
 import com.google.common.util.concurrent.Futures;
 import com.mongodb.util.JSON;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.SchemaRegistry;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
@@ -50,6 +49,7 @@ import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
+import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
  * @author tfredrich
@@ -90,7 +90,7 @@ public class DocumentServiceTest
 		Table dates = new Table();
 		dates.name(DATES_TABLE);
 		dates.database(DB_NAME);
-		dates.idType(DataTypes.TIMESTAMP);
+		dates.keys("id:timestamp");
 		dates.description("a test date-keyed table");
 		tables.create(dates).get();
 
@@ -110,14 +110,14 @@ public class DocumentServiceTest
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()).get();
+		Document result = allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -128,19 +128,19 @@ public class DocumentServiceTest
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()).get();
+		Document result2 = allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier()).get();
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.id()).get();
+		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.identifier()).get();
 
 		// Re-Read
 		try
 		{
-			allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()).get();
+			allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier()).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -157,14 +157,14 @@ public class DocumentServiceTest
 		// Create
 		Date now = new Date();
 		Document doc = new Document();
-		doc.id(now);
+		doc.identifier(new Identifier(now));
 		Document createResult = allDocs.create(DB_NAME, DATES_TABLE, doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
 		// Read
-		Document result = allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
+		Document result = allDocs.read(DB_NAME, DATES_TABLE, doc.identifier()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
@@ -175,19 +175,19 @@ public class DocumentServiceTest
 		assertEquals(doc, updateResult);
 
 		// Re-Read
-		Document result2 = allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
+		Document result2 = allDocs.read(DB_NAME, DATES_TABLE, doc.identifier()).get();
 		assertEquals(doc, result2);
 		assertNotEquals(result2.createdAt(), result2.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
 
 		// Delete
-		allDocs.delete(DB_NAME, DATES_TABLE, doc.id()).get();
+		allDocs.delete(DB_NAME, DATES_TABLE, doc.identifier()).get();
 
 		// Re-Read
 		try
 		{
-			allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
+			allDocs.read(DB_NAME, DATES_TABLE, doc.identifier()).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -203,7 +203,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -214,7 +214,7 @@ public class DocumentServiceTest
 
 		// Read
 		callback.clear();
-		Futures.addCallback(allDocs.read(DB_NAME, UUIDS_TABLE, doc.id()), callback);
+		Futures.addCallback(allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier()), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -229,7 +229,7 @@ public class DocumentServiceTest
 
 		// Re-Read
 		callback.clear();
-		allDocs.read(DB_NAME, UUIDS_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier(), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -240,14 +240,14 @@ public class DocumentServiceTest
 
 		// Delete
 		TestCallback<Boolean> deleteCallback = new TestCallback<>();
-		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.id(), deleteCallback);
+		allDocs.delete(DB_NAME, UUIDS_TABLE, doc.identifier(), deleteCallback);
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		allDocs.read(DB_NAME, UUIDS_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -260,7 +260,7 @@ public class DocumentServiceTest
 	{
 		Date now = new Date();
 		Document doc = new Document();
-		doc.id(now);
+		doc.identifier(new Identifier(now));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -271,7 +271,7 @@ public class DocumentServiceTest
 
 		// Read
 		callback.clear();
-		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.identifier(), callback);
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -286,7 +286,7 @@ public class DocumentServiceTest
 
 		// Re-Read
 		callback.clear();
-		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.identifier(), callback);
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -297,14 +297,14 @@ public class DocumentServiceTest
 
 		// Delete
 		TestCallback<Boolean> deleteCallback = new TestCallback<>();
-		allDocs.delete(DB_NAME, DATES_TABLE, doc.id(), deleteCallback);
+		allDocs.delete(DB_NAME, DATES_TABLE, doc.identifier(), deleteCallback);
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, doc.identifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -318,7 +318,7 @@ public class DocumentServiceTest
 		// Create
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		Document createResult = allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 		assertEquals(doc, createResult);
 
@@ -338,7 +338,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -362,7 +362,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -386,7 +386,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		try
 		{
 			allDocs.create(DB_NAME, DATES_TABLE, doc).get();
@@ -403,7 +403,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		allDocs.create(DB_NAME, DATES_TABLE, doc, callback);
@@ -419,7 +419,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		try
 		{
 			allDocs.update(DB_NAME, DATES_TABLE, doc).get();
@@ -436,7 +436,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -453,7 +453,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		try
 		{
 			allDocs.upsert(DB_NAME, DATES_TABLE, doc).get();
@@ -470,7 +470,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -487,7 +487,7 @@ public class DocumentServiceTest
 	{
 		try
 		{
-			allDocs.read(DB_NAME, UUIDS_TABLE, UUID.randomUUID()).get();
+			allDocs.read(DB_NAME, UUIDS_TABLE, new Identifier(UUID.randomUUID())).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -501,7 +501,7 @@ public class DocumentServiceTest
 	{
 		try
 		{
-			allDocs.read(DB_NAME, DATES_TABLE, new Date()).get();
+			allDocs.read(DB_NAME, DATES_TABLE, new Identifier(new Date())).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -514,7 +514,7 @@ public class DocumentServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		allDocs.read(DB_NAME, UUIDS_TABLE, UUID.randomUUID(), callback);
+		allDocs.read(DB_NAME, UUIDS_TABLE, new Identifier(UUID.randomUUID()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -527,7 +527,7 @@ public class DocumentServiceTest
 	{
 		UUID id = UUID.randomUUID();
 		Document doc = new Document();
-		doc.id(id);
+		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
@@ -538,13 +538,13 @@ public class DocumentServiceTest
 		assertNotNull(callback.entity());
 
 		TestCallback<Boolean> existsCallback = new TestCallback<Boolean>();
-		allDocs.exists(DB_NAME, UUIDS_TABLE, id, existsCallback);
+		allDocs.exists(DB_NAME, UUIDS_TABLE, new Identifier(id), existsCallback);
 		waitFor(existsCallback);
 
 		assertNull(existsCallback.throwable());
 		assertTrue(existsCallback.entity());
 
-		allDocs.exists(DB_NAME, UUIDS_TABLE, UUID.randomUUID(), existsCallback);
+		allDocs.exists(DB_NAME, UUIDS_TABLE, new Identifier(UUID.randomUUID()), existsCallback);
 		waitFor(existsCallback);
 
 		assertNull(existsCallback.throwable());
@@ -556,7 +556,7 @@ public class DocumentServiceTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		allDocs.read(DB_NAME, DATES_TABLE, new Date(), callback);
+		allDocs.read(DB_NAME, DATES_TABLE, new Identifier(new Date()), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -568,7 +568,7 @@ public class DocumentServiceTest
 	throws Throwable
 	{
 		Document doc = new Document();
-		doc.id(UUID.randomUUID());
+		doc.identifier(new Identifier(UUID.randomUUID()));
 		try
 		{
 			allDocs.update(DB_NAME, UUIDS_TABLE, doc).get();
@@ -585,7 +585,7 @@ public class DocumentServiceTest
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
-		doc.id(UUID.randomUUID());
+		doc.identifier(new Identifier(UUID.randomUUID()));
 		allDocs.update(DB_NAME, UUIDS_TABLE, doc, callback);
 		waitFor(callback);
 
@@ -598,11 +598,11 @@ public class DocumentServiceTest
 	throws Throwable
 	{
 		Document doc = new Document();
-		doc.id(UUID.randomUUID());
+		doc.identifier(new Identifier(UUID.randomUUID()));
 
 		try
 		{
-			allDocs.read(DB_NAME, DATES_TABLE, doc.id()).get();
+			allDocs.read(DB_NAME, DATES_TABLE, doc.identifier()).get();
 		}
 		catch (ExecutionException e)
 		{
@@ -616,8 +616,8 @@ public class DocumentServiceTest
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
-		doc.id(UUID.randomUUID());
-		allDocs.read(DB_NAME, DATES_TABLE, doc.id(), callback);
+		doc.identifier(new Identifier(UUID.randomUUID()));
+		allDocs.read(DB_NAME, DATES_TABLE, doc.identifier(), callback);
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

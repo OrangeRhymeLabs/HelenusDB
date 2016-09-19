@@ -153,7 +153,7 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 					Columns.OBJECT,
 					Columns.CREATED_AT,
 					Columns.UPDATED_AT,
-					keys.asQuestionMarks()));
+					keys.asQuestionMarks(3)));
 				statements.put(CREATE, ps);
 			}
 
@@ -200,10 +200,11 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 
 			if (ps == null)
 			{
-				ps = session.prepare(String.format("update %s.%s set %s where %s if exists",
+				ps = session.prepare(String.format("update %s.%s set %s = ?, $s = ? where %s if exists",
 					keyspace,
 					tableName,
-					keys.asUpdateProperties(),
+					Columns.OBJECT,
+					Columns.UPDATED_AT,
 					keys.asIdentityClause()));
 				statements.put(UPDATE, ps);
 			}
@@ -224,7 +225,7 @@ extends AbstractCassandraRepository<ViewDocument, ViewDocumentStatements>
 					Columns.OBJECT,
 					Columns.CREATED_AT,
 					Columns.UPDATED_AT,
-					keys.asQuestionMarks()));
+					keys.asQuestionMarks(3)));
 				statements.put(UPSERT, ps);
 			}
 

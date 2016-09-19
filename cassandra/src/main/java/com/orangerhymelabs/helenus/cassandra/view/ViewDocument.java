@@ -19,7 +19,7 @@ extends AbstractEntity
 	private Identifier identifier;
 
 	@Required("Document ID")
-	private Object documentId;
+	private Identifier documentId;
 
 	// The BSON document.
 	private BSONObject bson;
@@ -37,34 +37,34 @@ extends AbstractEntity
 
 	public void document(Document document)
 	{
-		documentId(document.id());
+		documentId(document.identifier());
 		object(document.object());
 	}
 
 	public Document document()
 	{
 		Document d = new Document(object());
-		d.id(documentId());
+		d.identifier(documentId());
 		return d;
 	}
 
 	@Override
 	public Identifier identifier()
 	{
-		return new Identifier(identifier);
+		return (identifier != null ? new Identifier(identifier) : null);
 	}
 
 	public void identifier(Identifier id)
 	{
-		this.identifier = id;
+		this.identifier = (id != null ? new Identifier(id) : null);
 	}
 
-	public Object documentId()
+	public Identifier documentId()
 	{
 		return documentId;
 	}
 
-	public void documentId(Object id)
+	public void documentId(Identifier id)
 	{
 		this.documentId = id;
 	}

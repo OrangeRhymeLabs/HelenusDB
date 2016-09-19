@@ -17,6 +17,7 @@ package com.orangerhymelabs.helenus.cassandra.document;
 
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
 
 /**
  * @author tfredrich
@@ -37,6 +38,7 @@ implements DocumentRepositoryFactory
 
 	@Override
 	public DocumentRepository newInstance(Table table)
+	throws KeyDefinitionException
 	{
 		return new DocumentRepository(session, keyspace, table);
 	}

@@ -29,10 +29,11 @@ import com.datastax.driver.core.Session;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository.TableStatements;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.view.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
@@ -46,6 +47,7 @@ public class TableRepository
 extends AbstractCassandraRepository<Table, TableStatements>
 {
 	private static final Logger LOG = LoggerFactory.getLogger(TableRepository.class);
+	private static final KeyDefinitionParser KEY_PARSER = new KeyDefinitionParser();
 
 	private class Tables
 	{
@@ -58,8 +60,8 @@ extends AbstractCassandraRepository<Table, TableStatements>
 		static final String DATABASE = "db_name";
 		static final String DESCRIPTION = "description";
 		static final String TYPE = "tbl_type";
+		static final String KEYS = "keys";
 		static final String TTL = "tbl_ttl";
-		static final String ID_TYPE = "id_type";
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
@@ -74,8 +76,8 @@ extends AbstractCassandraRepository<Table, TableStatements>
 				Columns.NAME + " text," +
 				Columns.DESCRIPTION + " text," +
 				Columns.TYPE + " text," +
+				Columns.KEYS + " text," +
 				Columns.TTL + " bigint," +
-				Columns.ID_TYPE + " text," +
 				Columns.CREATED_AT + " timestamp," +
 				Columns.UPDATED_AT + " timestamp," +
 				"primary key ((" + Columns.DATABASE + "), " + Columns.NAME + ")" +
@@ -125,8 +127,8 @@ extends AbstractCassandraRepository<Table, TableStatements>
 		+ Columns.DATABASE + ", "
 		+ Columns.DESCRIPTION + ", "
 		+ Columns.TYPE + ", "
+		+ Columns.KEYS + ", "
 		+ Columns.TTL + ", "
-		+ Columns.ID_TYPE + ", "
 		+ Columns.CREATED_AT + ", "
 		+ Columns.UPDATED_AT
 		+") values (?, ?, ?, ?, ?, ?, ?, ?) if not exists")
@@ -198,8 +200,8 @@ extends AbstractCassandraRepository<Table, TableStatements>
 			table.database().name(),
 			table.description(),
 			table.type().name(),
+			table.keys(),
 			table.ttl(),
-			table.idType().name(),
 		    table.createdAt(),
 		    table.updatedAt());
 	}
@@ -225,7 +227,7 @@ extends AbstractCassandraRepository<Table, TableStatements>
 		t.description(row.getString(Columns.DESCRIPTION));
 		t.ttl(row.getLong(Columns.TTL));
 		t.type(TableType.from(row.getString(Columns.TYPE)));
-		t.idType(DataTypes.from(row.getString(Columns.ID_TYPE)));
+		t.keys(row.getString(Columns.KEYS));
 		t.createdAt(row.getTimestamp(Columns.CREATED_AT));
 		t.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return t;
@@ -233,7 +235,14 @@ extends AbstractCassandraRepository<Table, TableStatements>
 
 	private boolean createDocumentSchema(Table table)
     {
-    	return DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), table.idType());
+		try
+		{
+			return DOCUMENT_SCHEMA.create(session(), keyspace(), table.toDbTable(), KEY_PARSER.parse(table.keys()));
+		}
+		catch (KeyDefinitionException e)
+		{
+			throw new StorageException(e);
+		}
     }
 
 	private boolean dropDocumentSchema(Identifier id)

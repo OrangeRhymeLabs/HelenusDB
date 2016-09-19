@@ -35,11 +35,8 @@ import org.junit.Test;
 import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.Futures;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
-import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -242,7 +239,7 @@ public class TableRepositoryTest
 		Table table = new Table();
 		table.name("table5");
 		table.database("db5");
-		table.idType(DataTypes.BIGINT);
+		table.keys("id:uuid");
 		Table createResult = tables.create(table).get();
 		assertEquals(table, createResult);
 
@@ -251,7 +248,7 @@ public class TableRepositoryTest
 		assertEquals(table.updatedAt(), sync.updatedAt());
 		assertEquals(table.databaseName(), sync.databaseName());
 		assertEquals(table.description(), sync.description());
-		assertEquals(table.idType(), sync.idType());
+		assertEquals(table.keys(), sync.keys());
 		assertEquals(table.name(), sync.name());
 		assertEquals(table.ttl(), sync.ttl());
 
@@ -265,7 +262,7 @@ public class TableRepositoryTest
 		assertEquals(table.updatedAt(), async.updatedAt());
 		assertEquals(table.databaseName(), async.databaseName());
 		assertEquals(table.description(), async.description());
-		assertEquals(table.idType(), async.idType());
+		assertEquals(table.keys(), async.keys());
 		assertEquals(table.name(), async.name());
 		assertEquals(table.ttl(), async.ttl());
 	}

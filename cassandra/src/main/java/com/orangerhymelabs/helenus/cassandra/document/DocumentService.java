@@ -77,7 +77,7 @@ public class DocumentService
 		Futures.addCallback(create(database, table, document), callback);
 	}
 
-	public ListenableFuture<Document> read(String database, String table, Object id)
+	public ListenableFuture<Document> read(String database, String table, Identifier id)
 	{
 		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
 		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
@@ -91,21 +91,13 @@ public class DocumentService
 		});
 	}
 
-	public void read(String database, String table, Object id, FutureCallback<Document> callback)
+	public void read(String database, String table, Identifier id, FutureCallback<Document> callback)
 	{
 		Futures.addCallback(read(database, table, id), callback);
 	}
 
-	public ListenableFuture<List<Document>> readIn(String database, String table, Object... ids)
+	public ListenableFuture<List<Document>> readIn(String database, String table, Identifier... ids)
 	{
-		Identifier[] inIds = new Identifier[ids.length];
-		int i = 0;
-
-		for (Object id : ids)
-		{
-			inIds[i++] = new Identifier(id);
-		}
-
 		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
 		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, List<Document>>()
 		{
@@ -113,12 +105,12 @@ public class DocumentService
 			public ListenableFuture<List<Document>> apply(DocumentRepository input)
 			throws Exception
 			{
-				return input.readIn(inIds);
+				return input.readIn(ids);
 			}
 		});
 	}
 
-	public void readIn(FutureCallback<List<Document>> callback, String database, String table, Object... ids)
+	public void readIn(FutureCallback<List<Document>> callback, String database, String table, Identifier... ids)
 	{
 		Futures.addCallback(readIn(database, table, ids), callback);
 	}
@@ -177,7 +169,7 @@ public class DocumentService
 		Futures.addCallback(upsert(database, table, document), callback);
     }
 
-	public ListenableFuture<Boolean> delete(String database, String table, Object id)
+	public ListenableFuture<Boolean> delete(String database, String table, Identifier id)
 	{
 		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
 		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Boolean>()
@@ -191,12 +183,12 @@ public class DocumentService
 		});
 	}
 
-	public void delete(String database, String table, Object id, FutureCallback<Boolean> callback)
+	public void delete(String database, String table, Identifier id, FutureCallback<Boolean> callback)
 	{
 		Futures.addCallback(delete(database, table, id), callback);
 	}
 
-	public ListenableFuture<Boolean> exists(String database, String table, Object id)
+	public ListenableFuture<Boolean> exists(String database, String table, Identifier id)
 	{
 		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
 		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Boolean>()
@@ -210,7 +202,7 @@ public class DocumentService
 		});
 	}
 
-	public void exists(String database, String table, Object id, FutureCallback<Boolean> callback)
+	public void exists(String database, String table, Identifier id, FutureCallback<Boolean> callback)
 	{
 		Futures.addCallback(exists(database, table, id), callback);
 	}

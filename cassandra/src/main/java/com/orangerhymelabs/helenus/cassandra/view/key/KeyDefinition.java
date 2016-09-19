@@ -154,24 +154,24 @@ public class KeyDefinition
 		return sb.toString();
 	}
 
-	public Object asUpdateProperties()
+//	public Object asUpdateProperties()
+//	{
+//		StringBuilder sb = new StringBuilder();
+//		appendAsAssignments(partitionKey, sb, ",");
+//
+//		if (hasClusteringKey())
+//		{
+//			sb.append(",");
+//			appendAsAssignments(clusteringKey, sb, ",");
+//		}
+//
+//		return sb.toString();
+//	}
+
+	public String asQuestionMarks(int extras)
 	{
-		StringBuilder sb = new StringBuilder();
-		appendAsAssignments(partitionKey, sb, ",");
-
-		if (hasClusteringKey())
-		{
-			sb.append(",");
-			appendAsAssignments(clusteringKey, sb, ",");
-		}
-
-		return sb.toString();
-	}
-
-	public String asQuestionMarks()
-	{
-		String[] qms = new String[size()];
-		Arrays.fill(qms, '?');
+		String[] qms = new String[size() + extras];
+		Arrays.fill(qms, "?");
 		return String.join(",", qms);
 	}
 
@@ -316,7 +316,12 @@ public class KeyDefinition
 	{
 		ArrayList<KeyComponent> c = new ArrayList<>(size());
 		c.addAll(partitionKey);
-		c.addAll(clusteringKey);
+
+		if (clusteringKey != null)
+		{
+			c.addAll(clusteringKey);
+		}
+
 		return c;
 	}
 }
