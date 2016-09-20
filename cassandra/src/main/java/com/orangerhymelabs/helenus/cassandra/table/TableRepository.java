@@ -79,7 +79,7 @@ extends AbstractCassandraRepository<Table, TableStatements>
 				Columns.TYPE + " text," +
 				Columns.KEYS + " text," +
 				Columns.TTL + " bigint," +
-				Columns.VIEWS + " list<text>" +
+				Columns.VIEWS + " list<text>," +
 				Columns.CREATED_AT + " timestamp," +
 				Columns.UPDATED_AT + " timestamp," +
 				"primary key ((" + Columns.DATABASE + "), " + Columns.NAME + ")" +
