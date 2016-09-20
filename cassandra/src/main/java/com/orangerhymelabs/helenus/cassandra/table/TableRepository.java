@@ -62,6 +62,7 @@ extends AbstractCassandraRepository<Table, TableStatements>
 		static final String TYPE = "tbl_type";
 		static final String KEYS = "keys";
 		static final String TTL = "tbl_ttl";
+		static final String VIEWS = "views";
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
 	}
@@ -78,6 +79,7 @@ extends AbstractCassandraRepository<Table, TableStatements>
 				Columns.TYPE + " text," +
 				Columns.KEYS + " text," +
 				Columns.TTL + " bigint," +
+				Columns.VIEWS + " list<text>" +
 				Columns.CREATED_AT + " timestamp," +
 				Columns.UPDATED_AT + " timestamp," +
 				"primary key ((" + Columns.DATABASE + "), " + Columns.NAME + ")" +
@@ -221,16 +223,17 @@ extends AbstractCassandraRepository<Table, TableStatements>
 	{
 		if (row == null) return null;
 
-		Table t = new Table();
-		t.name(row.getString(Columns.NAME));
-		t.database(row.getString(Columns.DATABASE));
-		t.description(row.getString(Columns.DESCRIPTION));
-		t.ttl(row.getLong(Columns.TTL));
-		t.type(TableType.from(row.getString(Columns.TYPE)));
-		t.keys(row.getString(Columns.KEYS));
-		t.createdAt(row.getTimestamp(Columns.CREATED_AT));
-		t.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
-		return t;
+		Table table = new Table();
+		table.name(row.getString(Columns.NAME));
+		table.database(row.getString(Columns.DATABASE));
+		table.description(row.getString(Columns.DESCRIPTION));
+		table.ttl(row.getLong(Columns.TTL));
+		table.type(TableType.from(row.getString(Columns.TYPE)));
+		table.keys(row.getString(Columns.KEYS));
+		table.views(row.getList(Columns.VIEWS, String.class));
+		table.createdAt(row.getTimestamp(Columns.CREATED_AT));
+		table.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
+		return table;
 	}
 
 	private boolean createDocumentSchema(Table table)
