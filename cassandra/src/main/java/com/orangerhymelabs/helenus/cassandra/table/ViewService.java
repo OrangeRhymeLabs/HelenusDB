@@ -49,8 +49,8 @@ public class ViewService
 
 	public ListenableFuture<View> create(View view)
 	{
-		ListenableFuture<Boolean> dbFuture = tables.exists(view.databaseName(), view.tableName());
-		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, View>()
+		ListenableFuture<Boolean> tableFuture = tables.exists(view.databaseName(), view.tableName());
+		return Futures.transformAsync(tableFuture, new AsyncFunction<Boolean, View>()
 		{
 			@Override
 			public ListenableFuture<View> apply(Boolean exists)
@@ -88,8 +88,8 @@ public class ViewService
 
 	public ListenableFuture<List<View>> readAll(String database, String table, Object... parms)
 	{
-		ListenableFuture<Boolean> dbFuture = tables.exists(database, table);
-		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, List<View>>()
+		ListenableFuture<Boolean> tableFuture = tables.exists(database, table);
+		return Futures.transformAsync(tableFuture, new AsyncFunction<Boolean, List<View>>()
 		{
 			@Override
 			public ListenableFuture<List<View>> apply(Boolean exists)
@@ -114,8 +114,8 @@ public class ViewService
 
 	public ListenableFuture<View> update(View view)
 	{
-		ListenableFuture<Boolean> dbFuture = tables.exists(view.databaseName(), view.tableName());
-		return Futures.transformAsync(dbFuture, new AsyncFunction<Boolean, View>()
+		ListenableFuture<Boolean> tableFuture = tables.exists(view.databaseName(), view.tableName());
+		return Futures.transformAsync(tableFuture, new AsyncFunction<Boolean, View>()
 		{
 			@Override
 			public ListenableFuture<View> apply(Boolean exists)
