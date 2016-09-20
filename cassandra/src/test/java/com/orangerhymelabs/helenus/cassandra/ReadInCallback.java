@@ -16,11 +16,8 @@
 package com.orangerhymelabs.helenus.cassandra;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Consumer;
 
 import com.google.common.util.concurrent.FutureCallback;
 

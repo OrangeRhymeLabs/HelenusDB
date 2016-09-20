@@ -21,7 +21,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
 import com.orangerhymelabs.helenus.exception.ConfigurationException;
 
 /**
