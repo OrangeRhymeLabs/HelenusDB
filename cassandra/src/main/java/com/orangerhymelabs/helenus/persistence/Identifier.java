@@ -70,14 +70,16 @@ implements Comparable<Identifier>
 	 * 
 	 * @param components
 	 */
-	public void add(Object... components)
+	public Identifier add(Object... components)
     {
-		if (components == null) return;
+		if (components == null) return this;
 
 		for (Object component : components)
 		{
 			add(component);
 		}
+
+		return this;
     }
 
 	/**
@@ -87,11 +89,12 @@ implements Comparable<Identifier>
 	 * 
 	 * @param component
 	 */
-	public void add(Object component)
+	public Identifier add(Object component)
     {
-		if (component == null) return;
+		if (component == null) return this;
 
 		components.add(component);
+		return this;
     }
 
 	/**
