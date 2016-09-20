@@ -16,10 +16,7 @@
 package com.orangerhymelabs.helenus.cassandra.document;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -417,84 +414,70 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		Date now = new Date();
 		document.createdAt(now);
 		document.updatedAt(now);
+		Identifier id = document.identifier();
+		Object[] values = new Object[id.size() + 3];
 
 		try
 		{
 			if (document.hasObject())
 			{
-				bs.bind(toArray(document.identifier(), true,
-					ByteBuffer.wrap(BSON.encode(document.object())),
-				    document.createdAt(),
-				    document.updatedAt()));
+				bind(values, 0, id.components().toArray());
+				bind(values, id.size(),
+						ByteBuffer.wrap(BSON.encode(document.object())),
+					    document.createdAt(),
+					    document.updatedAt());
 			}
 			else
 			{
-				bs.bind(toArray(document.identifier(), true,
+				bind(values, 0, id.components().toArray());
+				bind(values, id.size(),
 					null,
-				    document.createdAt(),
-				    document.updatedAt()));
+					document.createdAt(),
+					document.updatedAt());
 			}
+
+			bs.bind(values);
 		}
 		catch (InvalidTypeException | CodecNotFoundException e)
 		{
 			throw new InvalidIdentifierException(e);
 		}
-	}
-
-	Object[] toArray(Identifier id, boolean isIdFirst, Object... objects)
-	{
-		List<Object> values = new ArrayList<>(id.size() + objects.length);
-
-		if (isIdFirst)
-		{
-			id.components().forEach(new Consumer<Object>()
-			{
-				@Override
-				public void accept(Object t)
-				{
-					values.add(t);
-				}
-			});
-		}
-
-		values.addAll(Arrays.asList(objects));
-
-		if (!isIdFirst)
-		{
-			id.components().forEach(new Consumer<Object>()
-			{
-				@Override
-				public void accept(Object t)
-				{
-					values.add(t);
-				}
-			});
-		}
-
-		return values.toArray();
 	}
 
 	@Override
 	protected void bindUpdate(BoundStatement bs, Document document)
 	{
 		document.updatedAt(new Date());
+		Identifier id = document.identifier();
+		Object[] values = new Object[id.size() + 2];
 
 		try
 		{
 			if (document.hasObject())
 			{
-				bs.bind(toArray(document.identifier(), false,
-					ByteBuffer.wrap(BSON.encode(document.object())),
-					document.updatedAt()));
+				bind(values, 0, ByteBuffer.wrap(BSON.encode(document.object())),
+					document.updatedAt());
+				bind(values, 2, id.components().toArray());
 			}
 			else
 			{
-				bs.bind(toArray(document.identifier(), false, null, document.updatedAt()));
+				bind(values, 0, null, document.updatedAt());
+				bind(values, 2, id.components().toArray());
 			}
+
+			bs.bind(values);
 		}
 		catch (InvalidTypeException | CodecNotFoundException e)
 		{
 			throw new InvalidIdentifierException(e);
+		}
+	}
+
+	private void bind(Object[] array, int offset, Object... values)
+	{
+		for (int i = offset; i < values.length + offset; i++)
+		{
+			array[i] = values[i - offset];
 		}
 	}
 
