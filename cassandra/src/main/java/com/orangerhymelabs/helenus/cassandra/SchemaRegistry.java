@@ -22,6 +22,7 @@ import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenus.cassandra.meta.MetadataRepository;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
+import com.orangerhymelabs.helenus.cassandra.table.ViewRepository;
 
 /**
  * A Singleton object to drop and/or (re)create the database schema in Cassandra.
@@ -40,6 +41,7 @@ public class SchemaRegistry
 		INSTANCE.register(new MetadataRepository.Schema());
 		INSTANCE.register(new DatabaseRepository.Schema());
 		INSTANCE.register(new TableRepository.Schema());
+		INSTANCE.register(new ViewRepository.Schema());
 	}
 
 	private List<SchemaProvider> schemas = new ArrayList<SchemaProvider>();
