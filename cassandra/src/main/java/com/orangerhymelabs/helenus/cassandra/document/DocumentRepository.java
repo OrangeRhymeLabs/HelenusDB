@@ -39,7 +39,6 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenus.cassandra.DataTypes;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
@@ -513,26 +512,9 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			@Override
 			public void accept(KeyComponent t)
 			{
-				id.add(marshalIdProperty(t.property(), t.type(), row));
+				id.add(IdPropertyConverter.marshal(t.property(), t.type(), row));
 			}
 		});
 		return id;
 	}
-
-	private Object marshalIdProperty(String property, DataTypes type, Row row)
-    {
-		switch(type)
-		{
-			case BIGINT: return row.getLong(property);
-			case DECIMAL: return row.getDecimal(property);
-			case DOUBLE: return row.getDouble(property);
-			case FLOAT: return row.getFloat(property);
-			case INTEGER: return row.getInt(property);
-			case TEXT: return row.getString(property);
-			case TIMESTAMP: return row.getTimestamp(property);
-			case TIMEUUID:
-			case UUID:  return row.getUUID(property);
-			default: throw new UnsupportedOperationException("Conversion of property type: " + type.toString());
-		}
-    }
 }
