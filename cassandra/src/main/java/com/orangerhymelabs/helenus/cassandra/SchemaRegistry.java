@@ -22,7 +22,7 @@ import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseRepository;
 import com.orangerhymelabs.helenus.cassandra.meta.MetadataRepository;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
-import com.orangerhymelabs.helenus.cassandra.table.ViewRepository;
+import com.orangerhymelabs.helenus.cassandra.view.ViewRepository;
 
 /**
  * A Singleton object to drop and/or (re)create the database schema in Cassandra.

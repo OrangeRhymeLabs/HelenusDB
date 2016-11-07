@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenus.cassandra.table;
+package com.orangerhymelabs.helenus.cassandra.view;
 
 import java.util.Date;
 import java.util.List;
@@ -32,9 +32,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.SchemaProvider;
 import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository;
-import com.orangerhymelabs.helenus.cassandra.table.ViewRepository.ViewStatements;
+import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionParser;
+import com.orangerhymelabs.helenus.cassandra.view.ViewRepository.ViewStatements;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
