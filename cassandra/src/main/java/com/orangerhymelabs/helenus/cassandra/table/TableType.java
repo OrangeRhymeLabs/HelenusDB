@@ -29,6 +29,7 @@ package com.orangerhymelabs.helenus.cassandra.table;
 public enum TableType
 {
 	DOCUMENT,
+	HISTORICAL,
 	SCHEMA,
 	COUNTER,	// Cannot index counter tables.
 	TIME_SERIES;
@@ -38,6 +39,7 @@ public enum TableType
 		switch(name.toLowerCase())
 		{
 			case "document": return DOCUMENT;
+			case "historical" : return HISTORICAL;
 			case "schema": return SCHEMA;
 			case "counter": return COUNTER;
 			case "time_series": return TIME_SERIES;
