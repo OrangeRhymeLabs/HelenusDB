@@ -1,5 +1,5 @@
 /*
-    Copyright 2015, Strategic Gains, Inc.
+    Copyright 2016, Strategic Gains, Inc.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenus.cassandra.document;
+package com.orangerhymelabs.helenus.cassandra.document.historical;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -39,7 +39,8 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
-import com.orangerhymelabs.helenus.cassandra.document.DocumentRepository.DocumentStatements;
+import com.orangerhymelabs.helenus.cassandra.document.IdPropertyConverter;
+import com.orangerhymelabs.helenus.cassandra.document.historical.HistoricalDocumentRepository.HistoricalDocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
@@ -51,21 +52,24 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.StatementFactory;
 
 /**
- * Document repositories are unique per document/table and therefore must be cached by table.
+ * Historical documents are never 'created' or 'updated' in that it's always an upsert. They are also never deleted.
+ * Only marked as deleted.
  * 
  * @author tfredrich
- * @since Jun 8, 2015
+ * @since 7 Oct 2016
  */
-public class DocumentRepository
-extends AbstractCassandraRepository<Document, DocumentStatements>
+public class HistoricalDocumentRepository
+extends AbstractCassandraRepository<HistoricalDocument, HistoricalDocumentStatements>
 {
-	private static final Logger LOG = LoggerFactory.getLogger(DocumentRepository.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HistoricalDocumentRepository.class);
 
 	private class Columns
 	{
 		static final String OBJECT = "object";
 		static final String CREATED_AT = "created_at";
 		static final String UPDATED_AT = "updated_at";
+		static final String DELETED_AT = "deleted_at";
+		static final String IS_DELETED = "is_deleted";
 	}
 
 	public static class Schema
@@ -76,12 +80,13 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			"%s," +									// identifying properties
 		    Columns.OBJECT + " blob," +
 		    // TODO: Add Location details to Document.
-		    // TODO: Add Lucene index capability to Document.
+		    Columns.IS_DELETED + " boolean" +
 			Columns.CREATED_AT + " timestamp," +
 		    Columns.UPDATED_AT + " timestamp," +
+		    Columns.DELETED_AT + " timestamp," +
 			"%s" +									// primary key
 		")" +
-		" %s";										// clustering order (optional)
+		" %s";
 
 		public boolean drop(Session session, String keyspace, String table)
         {
@@ -114,15 +119,13 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
         }
 	}
 
-	public static class DocumentStatements
+	public static class HistoricalDocumentStatements
 	implements StatementFactory
 	{
-		private static final String CREATE = "create";
 		private static final String DELETE = "delete";
 		private static final String EXISTS = "exists";
 		private static final String READ = "read";
-		private static final String READ_ALL = "readAll";
-		private static final String UPDATE = "update";
+		private static final String READ_HISTORY = "readHistory";
 		private static final String UPSERT = "upsert";
 
 		private KeyDefinition keys;
@@ -131,7 +134,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		private String tableName;
 		private Map<String, PreparedStatement> statements = new ConcurrentHashMap<>();
 
-		public DocumentStatements(Session session, String keyspace, String tableName, KeyDefinition keys)
+		public HistoricalDocumentStatements(Session session, String keyspace, String tableName, KeyDefinition keys)
 		throws KeyDefinitionException
 		{
 			super();
@@ -139,34 +142,6 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			this.keyspace = keyspace;
 			this.tableName = tableName;
 			this.keys = keys;
-		}
-
-		@Override
-		public PreparedStatement create()
-		{
-			PreparedStatement ps = statements.get(CREATE);
-
-			if (ps == null)
-			{
-				try
-				{
-					ps = session.prepareAsync(String.format("insert into %s.%s (%s, %s, %s, %s) values (%s) if not exists",
-						keyspace,
-						tableName,
-						keys.asSelectProperties(),
-						Columns.OBJECT,
-						Columns.CREATED_AT,
-						Columns.UPDATED_AT,
-						keys.asQuestionMarks(3))).get();
-					statements.put(CREATE, ps);
-				}
-				catch (InterruptedException | ExecutionException e)
-				{
-					LOG.error("Error preparing create() statement", e);
-				}
-			}
-
-			return ps;
 		}
 
 		@Override
@@ -178,7 +153,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				try
 				{
-					ps = session.prepareAsync(String.format("delete from %s.%s where %s",
+					ps = session.prepareAsync(String.format("update %s.%s where %s",
 						keyspace,
 						tableName,
 						keys.asIdentityClause())).get();
@@ -201,7 +176,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				try
 				{
-					ps = session.prepareAsync(String.format("select count(*) from %s.%s  where %s limit 1",
+					ps = session.prepareAsync(String.format("select count(*) from %s.%s where %s limit 1",
 						keyspace,
 						tableName,
 						keys.asIdentityClause())).get();
@@ -210,32 +185,6 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 				catch (InterruptedException | ExecutionException e)
 				{
 					LOG.error("Error preparing exists() statement", e);
-				}
-			}
-
-			return ps;
-		}
-
-		@Override
-		public PreparedStatement update()
-		{
-			PreparedStatement ps = statements.get(UPDATE);
-
-			if (ps == null)
-			{
-				try
-				{
-					ps = session.prepareAsync(String.format("update %s.%s set %s = ?, %s = ? where %s if exists",
-						keyspace,
-						tableName,
-						Columns.OBJECT,
-						Columns.UPDATED_AT,
-						keys.asIdentityClause())).get();
-					statements.put(UPDATE, ps);
-				}
-				catch (InterruptedException | ExecutionException e)
-				{
-					LOG.error("Error preparing update() statement", e);
 				}
 			}
 
@@ -296,7 +245,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		@Override
 		public PreparedStatement readAll()
 		{
-			PreparedStatement ps = statements.get(READ_ALL);
+			PreparedStatement ps = statements.get(READ_HISTORY);
 
 			if (ps == null)
 			{
@@ -306,28 +255,40 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 						keyspace,
 						tableName,
 						keys.asPartitionIdentityClause())).get();
-					statements.put(READ_ALL, ps);
+					statements.put(READ_HISTORY, ps);
 				}
 				catch (InterruptedException | ExecutionException e)
 				{
-					LOG.error("Error preparing readAll() statement", e);
+					LOG.error("Error preparing readHistory() statement", e);
 				}
 			}
 
 			return ps;
+		}
+
+		@Override
+		public PreparedStatement create()
+		{
+			throw new UnsupportedOperationException("Historical documents don't support create(). Use upsert().");
+		}
+
+		@Override
+		public PreparedStatement update()
+		{
+			throw new UnsupportedOperationException("Historical documents don't support update(). Use upsert().");
 		}
 	}
 
 	private Table table;
 	private KeyDefinition keys;
 
-	public DocumentRepository(Session session, String keyspace, Table table)
+	public HistoricalDocumentRepository(Session session, String keyspace, Table table)
 	throws KeyDefinitionException
 	{
 		super(session, keyspace);
 		this.table = table;
 		this.keys = new KeyDefinitionParser().parse(table.keys());
-		statementFactory(new DocumentStatements(session, keyspace, tableName(), keys));
+		statementFactory(new HistoricalDocumentStatements(session, keyspace, tableName(), keys));
 
 	}
 
@@ -349,13 +310,13 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		});
 	}
 
-	public ListenableFuture<Document> upsert(Document entity)
+	public ListenableFuture<HistoricalDocument> upsert(HistoricalDocument entity)
 	{
 		ListenableFuture<ResultSet> future = submitUpsert(entity);
-		return Futures.transformAsync(future, new AsyncFunction<ResultSet, Document>()
+		return Futures.transformAsync(future, new AsyncFunction<ResultSet, HistoricalDocument>()
 		{
 			@Override
-			public ListenableFuture<Document> apply(ResultSet result)
+			public ListenableFuture<HistoricalDocument> apply(ResultSet result)
 			throws Exception
 			{
 				if (result.wasApplied())
@@ -367,14 +328,6 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 				return Futures.immediateFailedFuture(new StorageException(String.format("Table %s failed to store document: %s", table.toDbTable(), entity.toString())));
 			}
 		});
-	}
-
-	@Override
-	protected ResultSetFuture submitCreate(Document document)
-	{
-		BoundStatement create = new BoundStatement(statementFactory().create());
-		bindCreate(create, document);
-		return session().executeAsync(create);
 	}
 
 	@Override
@@ -392,23 +345,14 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		return session().executeAsync(bs);
 	}
 
-	@Override
-	protected ResultSetFuture submitUpdate(Document document)
-	{
-		BoundStatement update = new BoundStatement(statementFactory().update());
-		bindUpdate(update, document);
-		return session().executeAsync(update);
-	}
-
-	protected ResultSetFuture submitUpsert(Document document)
+	protected ResultSetFuture submitUpsert(HistoricalDocument document)
 	{
 		BoundStatement upsert = new BoundStatement(statementFactory().upsert());
-		bindCreate(upsert, document);
+		bindUpsert(upsert, document);
 		return session().executeAsync(upsert);
 	}
 
-	@Override
-	protected void bindCreate(BoundStatement bs, Document document)
+	protected void bindUpsert(BoundStatement bs, HistoricalDocument document)
 	{
 		Date now = new Date();
 		document.createdAt(now);
@@ -443,35 +387,6 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		}
 	}
 
-	@Override
-	protected void bindUpdate(BoundStatement bs, Document document)
-	{
-		document.updatedAt(new Date());
-		Identifier id = document.identifier();
-		Object[] values = new Object[id.size() + 2];
-
-		try
-		{
-			if (document.hasObject())
-			{
-				bind(values, 0, ByteBuffer.wrap(BSON.encode(document.object())),
-					document.updatedAt());
-				bind(values, 2, id.components().toArray());
-			}
-			else
-			{
-				bind(values, 0, null, document.updatedAt());
-				bind(values, 2, id.components().toArray());
-			}
-
-			bs.bind(values);
-		}
-		catch (InvalidTypeException | CodecNotFoundException e)
-		{
-			throw new InvalidIdentifierException(e);
-		}
-	}
-
 	private void bind(Object[] array, int offset, Object... values)
 	{
 		for (int i = offset; i < values.length + offset; i++)
@@ -481,14 +396,14 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 	}
 
 	@Override
-	protected Document marshalRow(Row row)
+	protected HistoricalDocument marshalRow(Row row)
 	{
 		if (row == null)
 		{
 			return null;
 		}
 
-		Document d = new Document();
+		HistoricalDocument d = new HistoricalDocument();
 		d.identifier(marshalId(keys, row));
 		ByteBuffer b = row.getBytes(Columns.OBJECT);
 
@@ -516,5 +431,17 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			}
 		});
 		return id;
+	}
+
+	@Override
+	protected void bindCreate(BoundStatement bs, HistoricalDocument entity)
+	{
+		throw new UnsupportedOperationException("Historical documents don't support create(). Use upsert().");
+	}
+
+	@Override
+	protected void bindUpdate(BoundStatement bs, HistoricalDocument entity)
+	{
+		throw new UnsupportedOperationException("Historical documents don't support update(). Use upsert().");
 	}
 }
