@@ -28,11 +28,11 @@ public class KeyDefinitionParser
 	/**
 	 * Used to parse the View.keys property into something that can retrieve values from a BSONObject.
 	 * 
-	 * Key string is of the form:
+	 * Key string is of the form (property name : type), just like Cassandra's 'key is' phrase:
 	 * a:uuid 									// partition key only
 	 * ((a:uuid, b:text), -c:timestamp, +d:int)	// partition key + clustering key, with (or without) sort order
 	 * 
-	 * @param keys a string defining the key structure of a View. Cannot be null or empty.
+	 * @param keys a string defining the key structure of a Table (or View). Cannot be null or empty.
 	 * @return a new KeyDefinition instance.
 	 * @throws KeyDefinitionException if the string is invalid.
 	 */

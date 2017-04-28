@@ -13,7 +13,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
  */
-package com.orangerhymelabs.helenus.cassandra.table;
+package com.orangerhymelabs.helenus.cassandra.view;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,10 +38,9 @@ import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.view.View;
-import com.orangerhymelabs.helenus.cassandra.view.ViewRepository;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
@@ -255,6 +254,22 @@ public class ViewRepositoryTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
+	}
+
+	@Test(expected=StorageException.class)
+	public void shouldThrowOnBadKeys()
+	throws InterruptedException
+	{
+		Table table = new Table();
+		table.name("table5");
+		table.database("db5");
+
+		View view = new View();
+		view.table(table);
+		view.name("v1");
+		view.keys("id:invalid_type");
+
+		views.create(view);
 	}
 
 	@Test

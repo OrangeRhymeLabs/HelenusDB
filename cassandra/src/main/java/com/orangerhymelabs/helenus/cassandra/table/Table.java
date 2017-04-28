@@ -174,7 +174,7 @@ extends AbstractEntity
 			@Override
 			public void accept(String view)
 			{
-				ids.add(identifier().add(view));
+				ids.add(new Identifier(databaseName(), name(), view));
 			}
 		});
 

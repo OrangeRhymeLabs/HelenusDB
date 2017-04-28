@@ -39,6 +39,7 @@ import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
+import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 /**
@@ -229,6 +230,18 @@ public class TableRepositoryTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof DuplicateItemException);
+	}
+
+	@Test(expected=StorageException.class)
+	public void shouldThrowOnBadKeys()
+	throws InterruptedException
+	{
+		Table table = new Table();
+		table.name("table4");
+		table.database("db4");
+		table.keys("id:invalid_type");
+
+		tables.create(table);
 	}
 
 	@Test
