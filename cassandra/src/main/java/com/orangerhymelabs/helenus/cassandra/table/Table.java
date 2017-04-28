@@ -15,11 +15,6 @@
  */
 package com.orangerhymelabs.helenus.cassandra.table;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Consumer;
-
 import com.orangerhymelabs.helenus.cassandra.Constants;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseReference;
@@ -54,9 +49,6 @@ extends AbstractEntity
 
 	// How long should the table's data live? (0 implies forever)
 	private long ttl;
-
-	// Read-only list of view names. Updated via creation of a new View for this table.
-	private List<String> views;
 
 	public Table()
 	{
@@ -146,39 +138,6 @@ extends AbstractEntity
 	public void ttl(long ttl)
 	{
 		this.ttl = ttl;
-	}
-
-	public boolean hasViews()
-	{
-		return (views != null);
-	}
-
-	public List<String> views()
-	{
-		return (hasViews() ? Collections.unmodifiableList(views) : Collections.emptyList());
-	}
-
-	public void views(List<String> views)
-	{
-		this.views = (views != null ? new ArrayList<>(views) : null);
-	}
-
-	public List<Identifier> viewIdentifiers()
-	{
-		if (!hasViews()) return Collections.emptyList();
-
-		List<Identifier> ids = new ArrayList<>(views.size());
-
-		views.forEach(new Consumer<String>()
-		{
-			@Override
-			public void accept(String view)
-			{
-				ids.add(new Identifier(databaseName(), name(), view));
-			}
-		});
-
-		return ids;
 	}
 
 	@Override

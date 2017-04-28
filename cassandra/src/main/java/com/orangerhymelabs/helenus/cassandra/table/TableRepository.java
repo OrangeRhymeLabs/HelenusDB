@@ -230,7 +230,6 @@ extends AbstractCassandraRepository<Table, TableStatements>
 		table.ttl(row.getLong(Columns.TTL));
 		table.type(TableType.from(row.getString(Columns.TYPE)));
 		table.keys(row.getString(Columns.KEYS));
-		table.views(row.getList(Columns.VIEWS, String.class));
 		table.createdAt(row.getTimestamp(Columns.CREATED_AT));
 		table.updatedAt(row.getTimestamp(Columns.UPDATED_AT));
 		return table;
