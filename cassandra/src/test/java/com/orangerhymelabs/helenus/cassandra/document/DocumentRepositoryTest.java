@@ -58,8 +58,8 @@ public class DocumentRepositoryTest
 	private static final BSONObject BSON = (BSONObject) JSON.parse("{'a':'some', 'b':1, 'c':'excitement'}");
 
 	private static KeyspaceSchema keyspace;
-	private static DocumentRepository uuidDocs;
-	private static DocumentRepository dateDocs;
+	private static AbstractDocumentRepository uuidDocs;
+	private static AbstractDocumentRepository dateDocs;
 
 	@BeforeClass
 	public static void beforeClass()

@@ -25,6 +25,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
+import com.orangerhymelabs.helenus.cassandra.view.View;
+import com.orangerhymelabs.helenus.cassandra.view.ViewService;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -39,24 +41,26 @@ public class DocumentService
 {
 	//TODO: this should be a distributed cache, perhaps?
 	//TODO: Must be invalidatable via events.
-	private Map<String, DocumentRepository> repoCache = new HashMap<String, DocumentRepository>();
+	private Map<String, AbstractDocumentRepository> repoCache = new HashMap<String, AbstractDocumentRepository>();
 	private TableService tables;
+	private ViewService views;
 	private DocumentRepositoryFactory factory;
 
-	public DocumentService(TableService tableService, DocumentRepositoryFactory repositoryFactory)
+	public DocumentService(TableService tableService, ViewService viewService, DocumentRepositoryFactory repositoryFactory)
 	{
 		super();
 		this.tables = tableService;
+		this.views = viewService;
 		this.factory = repositoryFactory;
 	}
 
 	public ListenableFuture<Document> create(String database, String table, Document document)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
 		{
 			@Override
-			public ListenableFuture<Document> apply(DocumentRepository input)
+			public ListenableFuture<Document> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				try
@@ -79,11 +83,11 @@ public class DocumentService
 
 	public ListenableFuture<Document> read(String database, String table, Identifier id)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
 		{
 			@Override
-			public ListenableFuture<Document> apply(DocumentRepository input)
+			public ListenableFuture<Document> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				return input.read(new Identifier(id));
@@ -98,11 +102,11 @@ public class DocumentService
 
 	public ListenableFuture<List<Document>> readIn(String database, String table, Identifier... ids)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, List<Document>>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, List<Document>>()
 		{
 			@Override
-			public ListenableFuture<List<Document>> apply(DocumentRepository input)
+			public ListenableFuture<List<Document>> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				return input.readIn(ids);
@@ -117,11 +121,11 @@ public class DocumentService
 
 	public ListenableFuture<Document> update(String database, String table, Document document)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
 		{
 			@Override
-			public ListenableFuture<Document> apply(DocumentRepository input)
+			public ListenableFuture<Document> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				try
@@ -144,11 +148,11 @@ public class DocumentService
 
 	public ListenableFuture<Document> upsert(String database, String table, Document document)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Document>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
 		{
 			@Override
-			public ListenableFuture<Document> apply(DocumentRepository input)
+			public ListenableFuture<Document> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				try
@@ -171,11 +175,11 @@ public class DocumentService
 
 	public ListenableFuture<Boolean> delete(String database, String table, Identifier id)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Boolean>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Boolean>()
 		{
 			@Override
-			public ListenableFuture<Boolean> apply(DocumentRepository input)
+			public ListenableFuture<Boolean> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				return input.delete(new Identifier(id));
@@ -190,11 +194,11 @@ public class DocumentService
 
 	public ListenableFuture<Boolean> exists(String database, String table, Identifier id)
 	{
-		ListenableFuture<DocumentRepository> docs = acquireRepositoryFor(database, table);
-		return Futures.transformAsync(docs, new AsyncFunction<DocumentRepository, Boolean>()
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Boolean>()
 		{
 			@Override
-			public ListenableFuture<Boolean> apply(DocumentRepository input)
+			public ListenableFuture<Boolean> apply(AbstractDocumentRepository input)
 			throws Exception
 			{
 				return input.exists(new Identifier(id));
@@ -207,10 +211,10 @@ public class DocumentService
 		Futures.addCallback(exists(database, table, id), callback);
 	}
 
-	private ListenableFuture<DocumentRepository> acquireRepositoryFor(String database, String table)
+	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(String database, String table)
     {
 		String cacheKey = String.format("%s_%s", database, table);
-		DocumentRepository repo = repoCache.get(cacheKey);
+		AbstractDocumentRepository repo = repoCache.get(cacheKey);
 
 		if (repo != null)
 		{
@@ -218,13 +222,37 @@ public class DocumentService
 		}
 
 		ListenableFuture<Table> futureTable = tables.read(database, table);
-		return Futures.transformAsync(futureTable, new AsyncFunction<Table, DocumentRepository>()
+		return Futures.transformAsync(futureTable, new AsyncFunction<Table, AbstractDocumentRepository>()
 		{
 			@Override
-			public ListenableFuture<DocumentRepository> apply(Table input)
+			public ListenableFuture<AbstractDocumentRepository> apply(Table input)
 			throws Exception
 			{
-				DocumentRepository repo = factory.newInstance(input);
+				AbstractDocumentRepository repo = factory.newInstance(input);
+				repoCache.put(cacheKey, repo);
+				return Futures.immediateFuture(repo);
+			}
+		});
+    }
+
+	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(String database, String table, String view)
+    {
+		String cacheKey = String.format("%s_%s_%s", database, table, view);
+		AbstractDocumentRepository repo = repoCache.get(cacheKey);
+
+		if (repo != null)
+		{
+			return Futures.immediateFuture(repo);
+		}
+
+		ListenableFuture<View> futureTable = views.read(database, table, view);
+		return Futures.transformAsync(futureTable, new AsyncFunction<View, AbstractDocumentRepository>()
+		{
+			@Override
+			public ListenableFuture<AbstractDocumentRepository> apply(View input)
+			throws Exception
+			{
+				AbstractDocumentRepository repo = factory.newInstance(input);
 				repoCache.put(cacheKey, repo);
 				return Futures.immediateFuture(repo);
 			}

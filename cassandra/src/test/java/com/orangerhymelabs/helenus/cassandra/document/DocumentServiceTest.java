@@ -46,6 +46,8 @@ import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableRepository;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
+import com.orangerhymelabs.helenus.cassandra.view.ViewRepository;
+import com.orangerhymelabs.helenus.cassandra.view.ViewService;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
@@ -75,6 +77,7 @@ public class DocumentServiceTest
 		DatabaseRepository dbr = new DatabaseRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace());
 		DatabaseService dbs = new DatabaseService(dbr);
 		TableService tables = new TableService(dbs, new TableRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace()));
+		ViewService views = new ViewService(new ViewRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace()), tables);
 
 		Database db = new Database();
 		db.name(DB_NAME);
@@ -94,7 +97,7 @@ public class DocumentServiceTest
 		dates.description("a test date-keyed table");
 		tables.create(dates).get();
 
-		allDocs = new DocumentService(tables, new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace()));
+		allDocs = new DocumentService(tables, views, new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace()));
 	}
 
 	@AfterClass

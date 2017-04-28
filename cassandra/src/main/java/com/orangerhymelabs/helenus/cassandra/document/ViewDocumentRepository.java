@@ -16,8 +16,8 @@
 package com.orangerhymelabs.helenus.cassandra.document;
 
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.view.View;
 
 /**
  * Document repositories are unique per document/table and therefore must be cached by table.
@@ -25,12 +25,12 @@ import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
  * @author tfredrich
  * @since Jun 8, 2015
  */
-public class DocumentRepository
+public class ViewDocumentRepository
 extends AbstractDocumentRepository
 {
-	public DocumentRepository(Session session, String keyspace, Table table)
+	public ViewDocumentRepository(Session session, String keyspace, View view)
 	throws KeyDefinitionException
 	{
-		super(session, keyspace, table.toDbTable(), table.keys());
+		super(session, keyspace, view.toDbTable(), view.keys());
 	}
 }
