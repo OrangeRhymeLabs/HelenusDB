@@ -154,20 +154,6 @@ public class KeyDefinition
 		return sb.toString();
 	}
 
-//	public Object asUpdateProperties()
-//	{
-//		StringBuilder sb = new StringBuilder();
-//		appendAsAssignments(partitionKey, sb, ",");
-//
-//		if (hasClusteringKey())
-//		{
-//			sb.append(",");
-//			appendAsAssignments(clusteringKey, sb, ",");
-//		}
-//
-//		return sb.toString();
-//	}
-
 	public String asQuestionMarks(int extras)
 	{
 		String[] qms = new String[size() + extras];

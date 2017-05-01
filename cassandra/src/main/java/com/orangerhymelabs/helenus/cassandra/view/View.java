@@ -16,8 +16,12 @@
 package com.orangerhymelabs.helenus.cassandra.view;
 
 import com.orangerhymelabs.helenus.cassandra.Constants;
+import com.orangerhymelabs.helenus.cassandra.document.Document;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableReference;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionParser;
 import com.orangerhymelabs.helenus.persistence.AbstractEntity;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.annotation.ChildValidation;
@@ -33,6 +37,8 @@ import com.strategicgains.syntaxe.annotation.Required;
 public class View
 extends AbstractEntity
 {
+	private static final KeyDefinitionParser KEY_PARSER = new KeyDefinitionParser();
+
 	@Required("Table")
 	@ChildValidation
 	private TableReference table;
@@ -156,5 +162,17 @@ extends AbstractEntity
 			sb.append(")");
 		}
 		return sb.toString();
+	}
+
+	public Identifier identifierFrom(Document document)
+	throws KeyDefinitionException
+	{
+		return keyDefinition().identifier(document.object());
+	}
+
+	private KeyDefinition keyDefinition()
+	throws KeyDefinitionException
+	{
+		return KEY_PARSER.parse(keys);
 	}
 }

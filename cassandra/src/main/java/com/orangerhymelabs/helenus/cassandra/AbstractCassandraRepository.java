@@ -186,16 +186,11 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	 * coordinator node. Sends an individual query for each partition key, so reaches the appropriate replica
 	 * directly and collates the results client-side.
 	 * 
-	 * Note that the callback is not called with a single List of results. Instead it is called once for each
-	 * Identifier provided in the call, whether successful or failed. 
-	 * 
-	 * @param callback a FutureCallback to notify for each ID in the ids array.
 	 * @param ids the partition keys (identifiers) to select.
 	 */
 	public ListenableFuture<List<T>> readIn(Identifier... ids)
 	{
 		List<ListenableFuture<ResultSet>> futures = submitReadIn(ids);
-
 		List<ListenableFuture<T>> results = new ArrayList<>(ids.length);
 
 		for (ListenableFuture<ResultSet> future : futures)

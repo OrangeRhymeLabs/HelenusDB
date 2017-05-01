@@ -15,9 +15,11 @@
  */
 package com.orangerhymelabs.helenus.cassandra.document;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
@@ -25,6 +27,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
+import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
 import com.orangerhymelabs.helenus.cassandra.view.View;
 import com.orangerhymelabs.helenus.cassandra.view.ViewService;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -41,7 +44,10 @@ public class DocumentService
 {
 	//TODO: this should be a distributed cache, perhaps?
 	//TODO: Must be invalidatable via events.
-	private Map<String, AbstractDocumentRepository> repoCache = new HashMap<String, AbstractDocumentRepository>();
+	//TODO: Use EhCache (or some other coherent cache implementation)
+	private Map<Identifier, AbstractDocumentRepository> repoCache = new HashMap<>();
+	private Map<Identifier, List<View>> viewsByTable = new HashMap<>();
+
 	private TableService tables;
 	private ViewService views;
 	private DocumentRepositoryFactory factory;
@@ -60,18 +66,81 @@ public class DocumentService
 		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
 		{
 			@Override
-			public ListenableFuture<Document> apply(AbstractDocumentRepository input)
+			public ListenableFuture<Document> apply(AbstractDocumentRepository docRepo)
 			throws Exception
 			{
 				try
 				{
 					ValidationEngine.validateAndThrow(document);
-					return input.create(document);
+					ListenableFuture<Document> newDoc = docRepo.create(document);
+					return Futures.transformAsync(newDoc, new AsyncFunction<Document, Document>()
+					{
+						@Override
+						public ListenableFuture<Document> apply(Document input)
+						throws Exception
+						{
+							//TODO return the collection of futures (one per view + original document)
+							updateViews(input);
+							return Futures.immediateFuture(input);
+						}
+					});
 				}
 				catch(ValidationException e)
 				{
 					return Futures.immediateFailedFuture(e);
 				}
+			}
+
+			private ListenableFuture<List<Document>> updateViews(Document document)
+			{
+				ListenableFuture<List<View>> tableViews = getTableViews(database, table);
+				return Futures.transformAsync(tableViews, new AsyncFunction<List<View>, List<Document>>()
+				{
+					@Override
+					public ListenableFuture<List<Document>> apply(List<View> input)
+					throws Exception
+					{
+						List<ListenableFuture<Document>> newDocs = new ArrayList<>(input.size());
+						input.parallelStream().forEach(new Consumer<View>()
+						{
+							@Override
+							public void accept(View v)
+							{
+								try
+								{
+									 Identifier id = v.identifierFrom(document);
+
+									if (id != null)
+									{
+										Document viewDoc = new Document(document.object());
+										viewDoc.identifier(id);
+										newDocs.add(createViewDocument(v, document));
+									}
+								}
+								catch (KeyDefinitionException e)
+								{
+									e.printStackTrace();
+								}
+							}
+						});
+
+						return null;
+					}
+				});
+			}
+		});
+	}
+
+	private ListenableFuture<Document> createViewDocument(View view, Document document)
+	{
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(view);
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(AbstractDocumentRepository docRepo)
+			throws Exception
+			{
+				return docRepo.create(document);
 			}
 		});
 	}
@@ -213,7 +282,7 @@ public class DocumentService
 
 	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(String database, String table)
     {
-		String cacheKey = String.format("%s_%s", database, table);
+		Identifier cacheKey = new Identifier(database, table);
 		AbstractDocumentRepository repo = repoCache.get(cacheKey);
 
 		if (repo != null)
@@ -235,9 +304,9 @@ public class DocumentService
 		});
     }
 
-	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(String database, String table, String view)
+	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(View view)
     {
-		String cacheKey = String.format("%s_%s_%s", database, table, view);
+		Identifier cacheKey = view.identifier();
 		AbstractDocumentRepository repo = repoCache.get(cacheKey);
 
 		if (repo != null)
@@ -245,17 +314,40 @@ public class DocumentService
 			return Futures.immediateFuture(repo);
 		}
 
-		ListenableFuture<View> futureTable = views.read(database, table, view);
-		return Futures.transformAsync(futureTable, new AsyncFunction<View, AbstractDocumentRepository>()
+		try
+		{
+			repo = factory.newInstance(view);
+			repoCache.put(cacheKey, repo);
+			return Futures.immediateFuture(repo);
+		}
+		catch (KeyDefinitionException e)
+		{
+			return Futures.immediateFailedFuture(e);
+		}
+    }
+
+	private ListenableFuture<List<View>> getTableViews(String database, String table)
+	{
+		Identifier tableId = new Identifier(database, table);
+		List<View> cachedViews = viewsByTable.get(tableId);
+
+		if (cachedViews != null)
+		{
+			return Futures.immediateFuture(cachedViews);
+		}
+
+		ListenableFuture<List<View>> allViews = views.readAll(database, table);
+		return Futures.transformAsync(allViews, new AsyncFunction<List<View>, List<View>>()
 		{
 			@Override
-			public ListenableFuture<AbstractDocumentRepository> apply(View input)
+			public ListenableFuture<List<View>> apply(List<View> input)
 			throws Exception
 			{
-				AbstractDocumentRepository repo = factory.newInstance(input);
-				repoCache.put(cacheKey, repo);
-				return Futures.immediateFuture(repo);
+				List<View> cachedViews = new ArrayList<>();
+				cachedViews.addAll(input);
+				viewsByTable.put(tableId, cachedViews);
+				return Futures.immediateFuture(input);
 			}
 		});
-    }
+	}
 }
