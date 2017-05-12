@@ -90,23 +90,6 @@ public class ViewService
 	public ListenableFuture<List<View>> readAll(String database, String table)
 	{
 		return views.readForTable(database, table);
-//		ListenableFuture<Boolean> tableFuture = tables.exists(database, table);
-//		return Futures.transformAsync(tableFuture, new AsyncFunction<Boolean, List<View>>()
-//		{
-//			@Override
-//			public ListenableFuture<List<View>> apply(Boolean exists)
-//			throws Exception
-//			{
-//				if (exists)
-//				{
-//					return views.readForTable(database, table);
-//				}
-//				else
-//				{
-//					return Futures.immediateFailedFuture(new ItemNotFoundException("Table not found: " + table));
-//				}
-//			}
-//		});
 	}
 
 	public void readAll(String database, String table, FutureCallback<List<View>> callback)

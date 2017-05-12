@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import com.google.common.util.concurrent.AsyncFunction;
@@ -72,18 +73,9 @@ public class DocumentService
 				try
 				{
 					ValidationEngine.validateAndThrow(document);
-					ListenableFuture<Document> newDoc = docRepo.create(document);
-					return Futures.transformAsync(newDoc, new AsyncFunction<Document, Document>()
-					{
-						@Override
-						public ListenableFuture<Document> apply(Document input)
-						throws Exception
-						{
-							//TODO return the collection of futures (one per view + original document)
-							updateViews(input);
-							return Futures.immediateFuture(input);
-						}
-					});
+					Document newDoc = docRepo.create(document).get();
+					updateViews(newDoc);
+					return Futures.immediateFuture(newDoc);
 				}
 				catch(ValidationException e)
 				{
@@ -91,58 +83,115 @@ public class DocumentService
 				}
 			}
 
-			private ListenableFuture<List<Document>> updateViews(Document document)
+			private void updateViews(Document document)
+			throws InterruptedException, ExecutionException
 			{
-				ListenableFuture<List<View>> tableViews = getTableViews(database, table);
-				return Futures.transformAsync(tableViews, new AsyncFunction<List<View>, List<Document>>()
+				List<View> tableViews = getTableViews(database, table).get();
+				tableViews.forEach(new Consumer<View>()
 				{
 					@Override
-					public ListenableFuture<List<Document>> apply(List<View> input)
-					throws Exception
+					public void accept(View v)
 					{
-						List<ListenableFuture<Document>> newDocs = new ArrayList<>(input.size());
-						input.parallelStream().forEach(new Consumer<View>()
+						try
 						{
-							@Override
-							public void accept(View v)
+							Identifier id = v.identifierFrom(document);
+
+							if (id != null)
 							{
-								try
-								{
-									 Identifier id = v.identifierFrom(document);
-
-									if (id != null)
-									{
-										Document viewDoc = new Document(document.object());
-										viewDoc.identifier(id);
-										newDocs.add(createViewDocument(v, document));
-									}
-								}
-								catch (KeyDefinitionException e)
-								{
-									e.printStackTrace();
-								}
+								Document viewDoc = new Document(document.object());
+								viewDoc.identifier(id);
+								Document newView = createViewDocument(v, viewDoc).get();
+								System.out.println(newView.createdAt());
 							}
-						});
-
-						return null;
+						}
+						catch (KeyDefinitionException e)
+						{
+							e.printStackTrace();
+						}
+						catch (InterruptedException e)
+						{
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						catch (ExecutionException e)
+						{
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				});
 			}
+
+//			private ListenableFuture<List<Document>> updateViews(Document document)
+//			{
+//				ListenableFuture<List<View>> tableViews = getTableViews(database, table);
+//				return Futures.transformAsync(tableViews, new AsyncFunction<List<View>, List<Document>>()
+//				{
+//					@Override
+//					public ListenableFuture<List<Document>> apply(List<View> input)
+//					throws Exception
+//					{
+//						List<ListenableFuture<Document>> newDocs = new ArrayList<>(input.size());
+//						input.parallelStream().forEach(new Consumer<View>()
+//						{
+//							@Override
+//							public void accept(View v)
+//							{
+//								try
+//								{
+//									 Identifier id = v.identifierFrom(document);
+//
+//									if (id != null)
+//									{
+//										Document viewDoc = new Document(document.object());
+//										viewDoc.identifier(id);
+//										newDocs.add(createViewDocument(v, document));
+//									}
+//								}
+//								catch (KeyDefinitionException e)
+//								{
+//									e.printStackTrace();
+//								}
+//							}
+//						});
+//
+//						return null;
+//					}
+//				});
+//			}
+
 		});
 	}
 
 	private ListenableFuture<Document> createViewDocument(View view, Document document)
 	{
-		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(view);
-		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
+		try
 		{
-			@Override
-			public ListenableFuture<Document> apply(AbstractDocumentRepository docRepo)
-			throws Exception
-			{
-				return docRepo.create(document);
-			}
-		});
+			AbstractDocumentRepository docs = acquireRepositoryFor(view).get();
+			return docs.create(document);
+		}
+		catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return Futures.immediateFailedFuture(e);
+		}
+		catch (ExecutionException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return Futures.immediateFailedFuture(e);
+		}
+//		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(view);
+//		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
+//		{
+//			@Override
+//			public ListenableFuture<Document> apply(AbstractDocumentRepository docRepo)
+//			throws Exception
+//			{
+//				return docRepo.create(document);
+//			}
+//		});
 	}
 
 	public void create(String database, String table, Document document, FutureCallback<Document> callback)
@@ -341,7 +390,6 @@ public class DocumentService
 		{
 			@Override
 			public ListenableFuture<List<View>> apply(List<View> input)
-			throws Exception
 			{
 				List<View> cachedViews = new ArrayList<>();
 				cachedViews.addAll(input);

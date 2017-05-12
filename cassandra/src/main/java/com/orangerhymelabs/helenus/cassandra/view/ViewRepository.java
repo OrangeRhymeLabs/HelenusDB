@@ -152,7 +152,7 @@ extends AbstractCassandraRepository<View, ViewStatements>
 		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DATABASE + " = ?")
 		PreparedStatement readAll();
 
-		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DATABASE + " = ?" + Columns.TABLE + " = ?")
+		@Query("select * from %s." + Tables.BY_ID + " where " + Columns.DATABASE + " = ? and " + Columns.TABLE + " = ?")
 		PreparedStatement readAllForTable();
 	}
 

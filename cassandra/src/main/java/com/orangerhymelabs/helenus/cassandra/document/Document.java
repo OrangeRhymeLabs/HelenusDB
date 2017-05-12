@@ -74,7 +74,7 @@ extends AbstractEntity
 	@Override
 	public String toString()
 	{
-		return "Document{" + "id=" + identifier.toString() + ", object=" + object() + '}';
+		return "Document{" + "id=" + identifier.toString() + ", object=" + object() + ", createdAt=" + createdAt() + ", updatedAt=" + updatedAt() + "}";
 	}
 
 }

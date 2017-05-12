@@ -407,27 +407,15 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		document.createdAt(now);
 		document.updatedAt(now);
 		Identifier id = document.identifier();
-		Object[] values = new Object[id.size() + 3];
+		Object[] values = new Object[id.size() + 3]; // Identifier + object + createdAt + updatedAt.
 
 		try
 		{
-			if (document.hasObject())
-			{
-				bind(values, 0, id.components().toArray());
-				bind(values, id.size(),
-						ByteBuffer.wrap(BSON.encode(document.object())),
-					    document.createdAt(),
-					    document.updatedAt());
-			}
-			else
-			{
-				bind(values, 0, id.components().toArray());
-				bind(values, id.size(),
-					null,
-					document.createdAt(),
-					document.updatedAt());
-			}
-
+			fill(values, 0, id.components().toArray());
+			fill(values, id.size(),
+					(document.hasObject() ? ByteBuffer.wrap(BSON.encode(document.object())) : null),
+				    document.createdAt(),
+				    document.updatedAt());
 			bs.bind(values);
 		}
 		catch (InvalidTypeException | CodecNotFoundException e)
@@ -447,14 +435,14 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		{
 			if (document.hasObject())
 			{
-				bind(values, 0, ByteBuffer.wrap(BSON.encode(document.object())),
+				fill(values, 0, ByteBuffer.wrap(BSON.encode(document.object())),
 					document.updatedAt());
-				bind(values, 2, id.components().toArray());
+				fill(values, 2, id.components().toArray());
 			}
 			else
 			{
-				bind(values, 0, null, document.updatedAt());
-				bind(values, 2, id.components().toArray());
+				fill(values, 0, null, document.updatedAt());
+				fill(values, 2, id.components().toArray());
 			}
 
 			bs.bind(values);
@@ -465,7 +453,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 		}
 	}
 
-	private void bind(Object[] array, int offset, Object... values)
+	private void fill(Object[] array, int offset, Object... values)
 	{
 		for (int i = offset; i < values.length + offset; i++)
 		{
