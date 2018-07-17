@@ -119,7 +119,7 @@ public class ViewStorageTest
 		assertEquals(doc, createResult);
 
 		// Read by UUID
-		Document result = uuidDocs.read(doc.identifier()).get();
+		Document result = uuidDocs.read(new Identifier(id)).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
 		assertNotNull(result.updatedAt());
