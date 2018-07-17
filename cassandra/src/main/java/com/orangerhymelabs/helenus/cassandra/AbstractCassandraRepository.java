@@ -33,6 +33,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.InvalidIdentifierException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
@@ -91,7 +92,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 				return Futures.immediateFailedFuture(new DuplicateItemException(entity.toString()));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Boolean> exists(Identifier id)
@@ -104,7 +105,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 			{
 				return result.one().getLong(0) > 0;
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<T> update(T entity)
@@ -122,7 +123,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 				return Futures.immediateFailedFuture(new ItemNotFoundException(entity.toString()));
 			}
-		});		
+		}, MoreExecutors.directExecutor());		
 	}
 
 	public ListenableFuture<Boolean> delete(Identifier id)
@@ -140,7 +141,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 				return Futures.immediateFuture(true);
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<T> read(Identifier id)
@@ -158,7 +159,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 				return Futures.immediateFuture(marshalRow(result.one()));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<List<T>> readAll(Object... parms)
@@ -176,7 +177,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 			{
 				return Futures.immediateFuture(marshalAll(input));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	/**
@@ -207,7 +208,7 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 
 					return Futures.immediateFuture(null);
 				}
-			}));
+			}, MoreExecutors.directExecutor()));
 		}
 
 		return Futures.allAsList(results);

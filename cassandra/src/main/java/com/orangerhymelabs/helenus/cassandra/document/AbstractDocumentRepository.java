@@ -38,6 +38,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.document.AbstractDocumentRepository.DocumentStatements;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
@@ -339,7 +340,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				return result.one().getLong(0) > 0;
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Document> upsert(Document entity)
@@ -359,7 +360,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 				//TODO: This doesn't provide any informational value... what should it be?
 				return Futures.immediateFailedFuture(new StorageException(String.format("Table %s failed to store document: %s", tableName, entity.toString())));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	@Override

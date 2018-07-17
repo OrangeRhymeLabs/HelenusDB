@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -45,7 +46,7 @@ public class ViewService
 
 	public void create(View view, FutureCallback<View> callback)
 	{
-		Futures.addCallback(create(view), callback);
+		Futures.addCallback(create(view), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<View> create(View view)
@@ -74,12 +75,12 @@ public class ViewService
 					return Futures.immediateFailedFuture(new ItemNotFoundException("Table not found: " + view.tableName()));
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void read(String database, String table, String view, FutureCallback<View> callback)
 	{
-		Futures.addCallback(read(database, table, view), callback);
+		Futures.addCallback(read(database, table, view), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<View> read(String database, String table, String view)
@@ -94,7 +95,7 @@ public class ViewService
 
 	public void readAll(String database, String table, FutureCallback<List<View>> callback)
 	{
-		Futures.addCallback(readAll(database, table), callback);
+		Futures.addCallback(readAll(database, table), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<View> update(View view)
@@ -123,12 +124,12 @@ public class ViewService
 					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + view.databaseName()));
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void update(View view, FutureCallback<View> callback)
 	{
-		Futures.addCallback(update(view), callback);
+		Futures.addCallback(update(view), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Boolean> delete(String database, String table, String view)
@@ -138,6 +139,6 @@ public class ViewService
 
 	public void delete(String database, String table, String view, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(delete(database, table, view), callback);
+		Futures.addCallback(delete(database, table, view), callback, MoreExecutors.directExecutor());
 	}
 }

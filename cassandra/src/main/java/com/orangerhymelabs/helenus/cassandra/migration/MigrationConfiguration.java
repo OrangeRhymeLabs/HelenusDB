@@ -10,7 +10,6 @@ public class MigrationConfiguration
 
 	private static final String SCRIPT_LOCATION = "migration.script_location";
 	private static final String METADATA_TABLE = "migration.metadata_table";
-	private static final String METADATA_KEYSPACE = "migration.metadata_keyspace";
 
 	private String scriptLocation = DEFAULT_SCRIPT_LOCATION;
 	private String metadataTable = DEFAULT_METADATA_TABLE;

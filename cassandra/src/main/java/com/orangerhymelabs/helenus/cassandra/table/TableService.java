@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.database.DatabaseService;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
@@ -45,7 +46,7 @@ public class TableService
 
 	public void exists(String database, String table, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(exists(database, table), callback);
+		Futures.addCallback(exists(database, table), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Boolean> exists(String database, String table)
@@ -55,7 +56,7 @@ public class TableService
 
 	public void create(Table table, FutureCallback<Table> callback)
 	{
-		Futures.addCallback(create(table), callback);
+		Futures.addCallback(create(table), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Table> create(Table table)
@@ -84,12 +85,12 @@ public class TableService
 					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + table.databaseName()));
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void read(String database, String table, FutureCallback<Table> callback)
 	{
-		Futures.addCallback(read(database, table), callback);
+		Futures.addCallback(read(database, table), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Table> read(String database, String table)
@@ -115,12 +116,12 @@ public class TableService
 					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + database));
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void readAll(String database, FutureCallback<List<Table>> callback)
 	{
-		Futures.addCallback(readAll(database), callback);
+		Futures.addCallback(readAll(database), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Table> update(Table table)
@@ -149,12 +150,12 @@ public class TableService
 					return Futures.immediateFailedFuture(new ItemNotFoundException("Database not found: " + table.databaseName()));
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void update(Table table, FutureCallback<Table> callback)
 	{
-		Futures.addCallback(update(table), callback);
+		Futures.addCallback(update(table), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Boolean> delete(String database, String table)
@@ -164,6 +165,6 @@ public class TableService
 
 	public void delete(String database, String table, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(delete(database, table), callback);
+		Futures.addCallback(delete(database, table), callback, MoreExecutors.directExecutor());
 	}
 }

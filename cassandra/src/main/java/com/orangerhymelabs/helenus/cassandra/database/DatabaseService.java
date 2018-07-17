@@ -20,6 +20,7 @@ import java.util.List;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
@@ -40,7 +41,7 @@ public class DatabaseService
 
 	public void exists(String name, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(exists(name), callback);
+		Futures.addCallback(exists(name), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Boolean> exists(String name)
@@ -50,7 +51,7 @@ public class DatabaseService
 
 	public void create(Database database, FutureCallback<Database> callback)
 	{
-		Futures.addCallback(create(database), callback);
+		Futures.addCallback(create(database), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Database> create(Database database)
@@ -68,7 +69,7 @@ public class DatabaseService
 
 	public void read(String name, FutureCallback<Database> callback)
 	{
-		Futures.addCallback(read(name), callback);
+		Futures.addCallback(read(name), callback, MoreExecutors.directExecutor());
 	}
 
 	private ListenableFuture<Database> read(String name)
@@ -78,7 +79,7 @@ public class DatabaseService
 
 	public void readAll(FutureCallback<List<Database>> callback, Object... parms)
 	{
-		Futures.addCallback(readAll(parms), callback);
+		Futures.addCallback(readAll(parms), callback, MoreExecutors.directExecutor());
 	}
 
 	private ListenableFuture<List<Database>> readAll(Object[] parms)
@@ -88,7 +89,7 @@ public class DatabaseService
 
 	public void update(Database database, FutureCallback<Database> callback)
     {
-		Futures.addCallback(update(database), callback);
+		Futures.addCallback(update(database), callback, MoreExecutors.directExecutor());
     }
 
 	private ListenableFuture<Database> update(Database database)
@@ -106,7 +107,7 @@ public class DatabaseService
 
 	public void delete(String name, FutureCallback<Boolean> callback)
     {
-		Futures.addCallback(delete(name), callback);
+		Futures.addCallback(delete(name), callback, MoreExecutors.directExecutor());
     }
 
 	private ListenableFuture<Boolean> delete(String name)

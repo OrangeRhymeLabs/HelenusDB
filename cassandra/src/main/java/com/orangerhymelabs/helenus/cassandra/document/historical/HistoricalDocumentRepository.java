@@ -38,6 +38,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.AbstractCassandraRepository;
 import com.orangerhymelabs.helenus.cassandra.document.IdPropertyConverter;
 import com.orangerhymelabs.helenus.cassandra.document.historical.HistoricalDocumentRepository.HistoricalDocumentStatements;
@@ -307,7 +308,7 @@ extends AbstractCassandraRepository<HistoricalDocument, HistoricalDocumentStatem
 			{
 				return result.one().getLong(0) > 0;
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<HistoricalDocument> upsert(HistoricalDocument entity)
@@ -327,7 +328,7 @@ extends AbstractCassandraRepository<HistoricalDocument, HistoricalDocumentStatem
 				//TODO: This doesn't provide any informational value... what should it be?
 				return Futures.immediateFailedFuture(new StorageException(String.format("Table %s failed to store document: %s", table.toDbTable(), entity.toString())));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	@Override

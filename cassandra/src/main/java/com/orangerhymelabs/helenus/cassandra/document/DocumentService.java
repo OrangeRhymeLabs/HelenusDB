@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
@@ -160,7 +161,7 @@ public class DocumentService
 //				});
 //			}
 
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	private ListenableFuture<Document> createViewDocument(View view, Document document)
@@ -196,7 +197,7 @@ public class DocumentService
 
 	public void create(String database, String table, Document document, FutureCallback<Document> callback)
 	{
-		Futures.addCallback(create(database, table, document), callback);
+		Futures.addCallback(create(database, table, document), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Document> read(String database, String table, Identifier id)
@@ -210,12 +211,12 @@ public class DocumentService
 			{
 				return input.read(new Identifier(id));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void read(String database, String table, Identifier id, FutureCallback<Document> callback)
 	{
-		Futures.addCallback(read(database, table, id), callback);
+		Futures.addCallback(read(database, table, id), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<List<Document>> readIn(String database, String table, Identifier... ids)
@@ -229,12 +230,12 @@ public class DocumentService
 			{
 				return input.readIn(ids);
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void readIn(FutureCallback<List<Document>> callback, String database, String table, Identifier... ids)
 	{
-		Futures.addCallback(readIn(database, table, ids), callback);
+		Futures.addCallback(readIn(database, table, ids), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Document> update(String database, String table, Document document)
@@ -256,12 +257,12 @@ public class DocumentService
 					return Futures.immediateFailedFuture(e);
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void update(String database, String table, Document document, FutureCallback<Document> callback)
     {
-		Futures.addCallback(update(database, table, document), callback);
+		Futures.addCallback(update(database, table, document), callback, MoreExecutors.directExecutor());
     }
 
 	public ListenableFuture<Document> upsert(String database, String table, Document document)
@@ -283,12 +284,12 @@ public class DocumentService
 					return Futures.immediateFailedFuture(e);
 				}
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void upsert(String database, String table, Document document, FutureCallback<Document> callback)
     {
-		Futures.addCallback(upsert(database, table, document), callback);
+		Futures.addCallback(upsert(database, table, document), callback, MoreExecutors.directExecutor());
     }
 
 	public ListenableFuture<Boolean> delete(String database, String table, Identifier id)
@@ -302,12 +303,12 @@ public class DocumentService
 			{
 				return input.delete(new Identifier(id));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void delete(String database, String table, Identifier id, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(delete(database, table, id), callback);
+		Futures.addCallback(delete(database, table, id), callback, MoreExecutors.directExecutor());
 	}
 
 	public ListenableFuture<Boolean> exists(String database, String table, Identifier id)
@@ -321,12 +322,12 @@ public class DocumentService
 			{
 				return input.exists(new Identifier(id));
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 
 	public void exists(String database, String table, Identifier id, FutureCallback<Boolean> callback)
 	{
-		Futures.addCallback(exists(database, table, id), callback);
+		Futures.addCallback(exists(database, table, id), callback, MoreExecutors.directExecutor());
 	}
 
 	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(String database, String table)
@@ -350,7 +351,7 @@ public class DocumentService
 				repoCache.put(cacheKey, repo);
 				return Futures.immediateFuture(repo);
 			}
-		});
+		}, MoreExecutors.directExecutor());
     }
 
 	private ListenableFuture<AbstractDocumentRepository> acquireRepositoryFor(View view)
@@ -396,6 +397,6 @@ public class DocumentService
 				viewsByTable.put(tableId, cachedViews);
 				return Futures.immediateFuture(input);
 			}
-		});
+		}, MoreExecutors.directExecutor());
 	}
 }

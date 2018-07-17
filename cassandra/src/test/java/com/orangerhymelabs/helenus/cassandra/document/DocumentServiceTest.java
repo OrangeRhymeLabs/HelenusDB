@@ -329,7 +329,8 @@ public class DocumentServiceTest
 		{
 			allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 		}
-		catch (ExecutionException e)
+//		catch (ExecutionException e)
+		catch (Exception e)
 		{
 			throw e.getCause();
 		}
