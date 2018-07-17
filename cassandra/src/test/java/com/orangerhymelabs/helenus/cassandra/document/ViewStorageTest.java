@@ -31,7 +31,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.mongodb.util.JSON;
+import com.mongodb.BasicDBObject;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.SchemaRegistry;
 import com.orangerhymelabs.helenus.cassandra.database.Database;
@@ -52,7 +52,7 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
  */
 public class ViewStorageTest
 {
-	private static final BSONObject BSON = (BSONObject) JSON.parse("{'a':'some', 'b':1, 'c':'excitement'}");
+	private static final BSONObject BSON = (BSONObject) BasicDBObject.parse("{'a':'some', 'b':1, 'c':'excitement'}");
 
 	private static AbstractDocumentRepository uuidDocs;
 	private static AbstractDocumentRepository dateDocs;
@@ -93,7 +93,7 @@ public class ViewStorageTest
 
 		uuidDocs = factory.newInstance(uuidTable);
 		dateDocs = factory.newInstance(dateView);
-		allDocs = new DocumentService(tables, views, new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace()));
+		allDocs = new DocumentService(tables, views, factory);
 	}
 
 	@AfterClass
@@ -118,7 +118,7 @@ public class ViewStorageTest
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
 
-		// Read
+		// Read by UUID
 		Document result = uuidDocs.read(doc.identifier()).get();
 		assertEquals(createResult, result);
 		assertNotNull(result.createdAt());
@@ -130,5 +130,12 @@ public class ViewStorageTest
 		assertNotEquals(result2.createdAt(), doc.updatedAt());
 		assertNotNull(result2.createdAt());
 		assertNotNull(result2.updatedAt());
+
+		// Read by View
+		Document result3 = allDocs.read("db1", "uuids", "dates", new Identifier(createdAt)).get();
+		assertEquals(doc.object(), result3.object());
+		assertNotEquals(result3.createdAt(), doc.updatedAt());
+		assertNotNull(result3.createdAt());
+		assertNotNull(result3.updatedAt());
 	}
 }

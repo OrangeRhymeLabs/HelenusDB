@@ -10,18 +10,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.mongodb.util.JSON;
+import com.mongodb.BasicDBObject;
 import com.orangerhymelabs.helenus.cassandra.DataTypes;
-import com.orangerhymelabs.helenus.cassandra.table.key.ClusteringKeyComponent;
-import com.orangerhymelabs.helenus.cassandra.table.key.KeyComponent;
-import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinition;
-import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
 import com.orangerhymelabs.helenus.cassandra.table.key.ClusteringKeyComponent.Ordering;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 
 public class KeyDefinitionTest
 {
-	private static final BSONObject BSON = (BSONObject) JSON.parse("{'alpha':'some', 'beta':1, 'chi':'excitement', 'delta':3.14159}");
+	private static final BSONObject BSON = (BSONObject) BasicDBObject.parse("{'alpha':'some', 'beta':1, 'chi':'excitement', 'delta':3.14159}");
 
 	@Test
 	public void shouldHandleSimple()

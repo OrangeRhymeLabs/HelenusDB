@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -133,7 +134,7 @@ public class TableRepositoryTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		Futures.addCallback(tables.create(table), callback);
+		Futures.addCallback(tables.create(table), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -143,7 +144,7 @@ public class TableRepositoryTest
 
 		// Read
 		callback.clear();
-		Futures.addCallback(tables.read(table.identifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertEquals(table, callback.entity());
@@ -151,14 +152,14 @@ public class TableRepositoryTest
 		// Update
 		callback.clear();
 		table.description("an updated test table");
-		Futures.addCallback(tables.update(table), callback);
+		Futures.addCallback(tables.update(table), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(tables.read(table.identifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		Table result2 = callback.entity();
@@ -170,7 +171,7 @@ public class TableRepositoryTest
 		// Delete
 		waitFor(callback);
 		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
-		Futures.addCallback(tables.delete(table.identifier()), deleteCallback);
+		Futures.addCallback(tables.delete(table.identifier()), deleteCallback, MoreExecutors.directExecutor());
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
@@ -180,7 +181,7 @@ public class TableRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(tables.read(table.identifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -218,14 +219,14 @@ public class TableRepositoryTest
 		TestCallback<Table> callback = new TestCallback<Table>();
 
 		// Create
-		Futures.addCallback(tables.create(table), callback);
+		Futures.addCallback(tables.create(table), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.entity());
 		assertNull(callback.throwable());
 
 		// Create Duplicate
-		Futures.addCallback(tables.create(table), callback);
+		Futures.addCallback(tables.create(table), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -266,7 +267,7 @@ public class TableRepositoryTest
 		assertEquals(table.ttl(), sync.ttl());
 
 		TestCallback<Table> callback = new TestCallback<Table>();
-		Futures.addCallback(tables.read(table.identifier()), callback);
+		Futures.addCallback(tables.read(table.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -299,7 +300,7 @@ public class TableRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Table> callback = new TestCallback<Table>();
-		Futures.addCallback(tables.read(new Identifier("db6", "doesn't exist")), callback);
+		Futures.addCallback(tables.read(new Identifier("db6", "doesn't exist")), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -332,7 +333,7 @@ public class TableRepositoryTest
 		Table table = new Table();
 		table.database("db8");
 		table.name("doesn't exist");
-		Futures.addCallback(tables.update(table), callback);
+		Futures.addCallback(tables.update(table), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

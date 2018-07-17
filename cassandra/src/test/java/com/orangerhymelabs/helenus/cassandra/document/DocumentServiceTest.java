@@ -36,7 +36,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.Futures;
-import com.mongodb.util.JSON;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.mongodb.BasicDBObject;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.SchemaRegistry;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -63,7 +64,7 @@ public class DocumentServiceTest
 	private static final String UUIDS_TABLE = "uuids";
 	private static final String DB_NAME = "db3";
 	private static final int CALLBACK_TIMEOUT = 2000;
-	private static final BSONObject BSON = (BSONObject) JSON.parse("{'a':'some', 'b':1, 'c':'excitement'}");
+	private static final BSONObject BSON = (BSONObject) BasicDBObject.parse("{'a':'some', 'b':1, 'c':'excitement'}");
 
 	private static DocumentService allDocs;
 
@@ -217,7 +218,7 @@ public class DocumentServiceTest
 
 		// Read
 		callback.clear();
-		Futures.addCallback(allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier()), callback);
+		Futures.addCallback(allDocs.read(DB_NAME, UUIDS_TABLE, doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());

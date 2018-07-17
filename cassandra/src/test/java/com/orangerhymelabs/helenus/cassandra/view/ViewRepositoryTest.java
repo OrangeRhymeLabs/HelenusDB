@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -146,7 +147,7 @@ public class ViewRepositoryTest
 		TestCallback<View> callback = new TestCallback<View>();
 
 		// Create
-		Futures.addCallback(views.create(view), callback);
+		Futures.addCallback(views.create(view), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -157,7 +158,7 @@ public class ViewRepositoryTest
 
 		// Read
 		callback.clear();
-		Futures.addCallback(views.read(view.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertEquals(view, callback.entity());
@@ -165,14 +166,14 @@ public class ViewRepositoryTest
 		// Update
 		callback.clear();
 		table.description("an updated test view");
-		Futures.addCallback(views.update(view), callback);
+		Futures.addCallback(views.update(view), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(views.read(view.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		View result2 = callback.entity();
@@ -184,7 +185,7 @@ public class ViewRepositoryTest
 		// Delete
 		waitFor(callback);
 		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
-		Futures.addCallback(views.delete(view.identifier()), deleteCallback);
+		Futures.addCallback(views.delete(view.identifier()), deleteCallback, MoreExecutors.directExecutor());
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
@@ -194,7 +195,7 @@ public class ViewRepositoryTest
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(views.read(view.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -242,14 +243,14 @@ public class ViewRepositoryTest
 		TestCallback<View> callback = new TestCallback<View>();
 
 		// Create
-		Futures.addCallback(views.create(view), callback);
+		Futures.addCallback(views.create(view), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.entity());
 		assertNull(callback.throwable());
 
 		// Create Duplicate
-		Futures.addCallback(views.create(view), callback);
+		Futures.addCallback(views.create(view), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -299,7 +300,7 @@ public class ViewRepositoryTest
 		assertEquals(view.ttl(), sync.ttl());
 
 		TestCallback<View> callback = new TestCallback<View>();
-		Futures.addCallback(views.read(view.identifier()), callback);
+		Futures.addCallback(views.read(view.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
@@ -333,7 +334,7 @@ public class ViewRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<View> callback = new TestCallback<View>();
-		Futures.addCallback(views.read(new Identifier("db6", "table6", "doesn't exist")), callback);
+		Futures.addCallback(views.read(new Identifier("db6", "table6", "doesn't exist")), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -375,7 +376,7 @@ public class ViewRepositoryTest
 		view.keys("id:uuid");
 
 		TestCallback<View> callback = new TestCallback<View>();
-		Futures.addCallback(views.update(view), callback);
+		Futures.addCallback(views.update(view), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

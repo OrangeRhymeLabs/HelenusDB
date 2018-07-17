@@ -219,6 +219,25 @@ public class DocumentService
 		Futures.addCallback(read(database, table, id), callback, MoreExecutors.directExecutor());
 	}
 
+	public ListenableFuture<Document> read(String database, String table, String view, Identifier id)
+	{
+		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(getTableView(database, table, view));
+		return Futures.transformAsync(docs, new AsyncFunction<AbstractDocumentRepository, Document>()
+		{
+			@Override
+			public ListenableFuture<Document> apply(AbstractDocumentRepository input)
+			throws Exception
+			{
+				return input.read(new Identifier(id));
+			}
+		}, MoreExecutors.directExecutor());
+	}
+
+	public void read(String database, String table, String view, Identifier id, FutureCallback<Document> callback)
+	{
+		Futures.addCallback(read(database, table, view, id), callback, MoreExecutors.directExecutor());
+	}
+
 	public ListenableFuture<List<Document>> readIn(String database, String table, Identifier... ids)
 	{
 		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(database, table);
@@ -398,5 +417,26 @@ public class DocumentService
 				return Futures.immediateFuture(input);
 			}
 		}, MoreExecutors.directExecutor());
+	}
+
+	private View getTableView(String database, String table, String view)
+	{
+		try {
+			for (View v : getTableViews(database, table).get())
+			{
+				if (v.name().equals(view))
+				{
+					return v;
+				}
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 }
