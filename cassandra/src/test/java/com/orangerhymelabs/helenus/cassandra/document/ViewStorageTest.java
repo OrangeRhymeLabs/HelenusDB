@@ -56,7 +56,7 @@ public class ViewStorageTest
 
 	private static AbstractDocumentRepository uuidDocs;
 	private static AbstractDocumentRepository dateDocs;
-	private static DocumentService allDocs;
+	private static DocumentService docService;
 
 	@BeforeClass
 	public static void beforeClass()
@@ -71,6 +71,7 @@ public class ViewStorageTest
 		ViewService views = new ViewService(new ViewRepository(CassandraManager.cluster().connect(CassandraManager.keyspace()), CassandraManager.keyspace()), tables);
 
 		DocumentRepositoryFactory factory = new DocumentRepositoryFactoryImpl(CassandraManager.session(), CassandraManager.keyspace());
+		docService = new DocumentService(tables, views, factory);
 
 		Database db = new Database();
 		db.name("db1");
@@ -83,6 +84,7 @@ public class ViewStorageTest
 		uuids.description("a test UUID-keyed table");
 		uuids.keys("id:uuid");
 		Table uuidTable = tables.create(uuids).get();
+		uuidDocs = factory.newInstance(uuidTable);
 
 		View dates = new View();
 		dates.name("dates");
@@ -90,10 +92,7 @@ public class ViewStorageTest
 		dates.keys("createdAt:timestamp");
 		dates.description("a test date-keyed table");
 		View dateView = views.create(dates).get();
-
-		uuidDocs = factory.newInstance(uuidTable);
 		dateDocs = factory.newInstance(dateView);
-		allDocs = new DocumentService(tables, views, factory);
 	}
 
 	@AfterClass
@@ -113,7 +112,7 @@ public class ViewStorageTest
 		doc.identifier(new Identifier(id));
 		BSON.put("createdAt", createdAt);
 		doc.object(BSON);
-		Document createResult = allDocs.create("db1", "uuids", doc).get();
+		Document createResult = docService.create("db1", "uuids", doc).get();
 
 		assertNotNull(createResult);
 		assertEquals(doc, createResult);
@@ -132,7 +131,7 @@ public class ViewStorageTest
 		assertNotNull(result2.updatedAt());
 
 		// Read by View
-		Document result3 = allDocs.read("db1", "uuids", "dates", new Identifier(createdAt)).get();
+		Document result3 = docService.read("db1", "uuids", "dates", new Identifier(createdAt)).get();
 		assertEquals(doc.object(), result3.object());
 		assertNotEquals(result3.createdAt(), doc.updatedAt());
 		assertNotNull(result3.createdAt());
