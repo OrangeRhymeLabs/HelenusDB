@@ -59,11 +59,11 @@
             <artifactId>slf4j-jcl</artifactId>
             <version>1.7.12</version>
         </dependency>
-        <dependency>
+        <!-- dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.3.2</version>
-        </dependency>
+        </dependency -->
         <dependency>
             <groupId>com.jayway.restassured</groupId>
             <artifactId>rest-assured</artifactId>
