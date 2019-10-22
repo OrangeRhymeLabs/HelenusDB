@@ -278,8 +278,8 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				try
 				{
-					//TODO: change from 'select * ...' to 'select x, y, z, ...' using id/keys + object + updated_at + created_at
-					ps = session.prepareAsync(String.format("select * from %s.%s where %s limit 1",
+					ps = session.prepareAsync(String.format("select %s from %s.%s where %s limit 1",
+						keys.asSelectProperties(),
 						keyspace,
 						tableName,
 						keys.asIdentityClause())).get();
@@ -303,8 +303,8 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				try
 				{
-					//TODO: change from 'select * ...' to 'select x, y, z, ...' using id/keys + object + updated_at + created_at
-					ps = session.prepareAsync(String.format("select * from %s.%s where %s",
+					ps = session.prepareAsync(String.format("select %s from %s.%s where %s",
+						keys.asSelectProperties(),
 						keyspace,
 						tableName,
 						keys.asPartitionIdentityClause())).get();

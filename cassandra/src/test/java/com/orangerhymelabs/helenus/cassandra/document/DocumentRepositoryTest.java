@@ -36,7 +36,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.Futures;
-import com.mongodb.util.JSON;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.mongodb.BasicDBObject;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -55,7 +56,7 @@ import com.orangerhymelabs.helenus.persistence.Identifier;
 public class DocumentRepositoryTest
 {
 	private static final int CALLBACK_TIMEOUT = 2000;
-	private static final BSONObject BSON = (BSONObject) JSON.parse("{'a':'some', 'b':1, 'c':'excitement'}");
+	private static final BSONObject BSON = (BSONObject) BasicDBObject.parse("{'a':'some', 'b':1, 'c':'excitement'}");
 
 	private static KeyspaceSchema keyspace;
 	private static AbstractDocumentRepository uuidDocs;
@@ -200,14 +201,14 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		Futures.addCallback(uuidDocs.create(doc), callback);
+		Futures.addCallback(uuidDocs.create(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		Futures.addCallback(uuidDocs.read(doc.identifier()), callback);
+		Futures.addCallback(uuidDocs.read(doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -215,14 +216,14 @@ public class DocumentRepositoryTest
 		// Update
 		callback.clear();
 		doc.object(BSON);
-		Futures.addCallback(uuidDocs.update(doc), callback);
+		Futures.addCallback(uuidDocs.update(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(uuidDocs.read(doc.identifier()), callback);
+		Futures.addCallback(uuidDocs.read(doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -233,14 +234,14 @@ public class DocumentRepositoryTest
 
 		// Delete
 		TestCallback<Boolean> deleteCallback = new TestCallback<>();
-		Futures.addCallback(uuidDocs.delete(doc.identifier()), deleteCallback);
+		Futures.addCallback(uuidDocs.delete(doc.identifier()), deleteCallback, MoreExecutors.directExecutor());
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(uuidDocs.read(doc.identifier()), callback);
+		Futures.addCallback(uuidDocs.read(doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -257,14 +258,14 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		Futures.addCallback(dateDocs.create(doc), callback);
+		Futures.addCallback(dateDocs.create(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		Futures.addCallback(dateDocs.read(doc.identifier()), callback);
+		Futures.addCallback(dateDocs.read(doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertEquals(doc, callback.entity());
@@ -272,14 +273,14 @@ public class DocumentRepositoryTest
 		// Update
 		callback.clear();
 		doc.object(BSON);
-		Futures.addCallback(dateDocs.update(doc), callback);
+		Futures.addCallback(dateDocs.update(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(dateDocs.read(doc.identifier()), callback);
+		Futures.addCallback(dateDocs.read(doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		Document result2 = callback.entity();
@@ -290,14 +291,14 @@ public class DocumentRepositoryTest
 
 		// Delete
 		TestCallback<Boolean> deleteCallback = new TestCallback<>();
-		Futures.addCallback(dateDocs.delete(doc.identifier()), deleteCallback);
+		Futures.addCallback(dateDocs.delete(doc.identifier()), deleteCallback, MoreExecutors.directExecutor());
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(dateDocs.read(doc.identifier()), callback);
+		Futures.addCallback(dateDocs.read(doc.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -335,19 +336,19 @@ public class DocumentRepositoryTest
 		doc.identifier(new Identifier(id));
 
 		TestCallback<Document> callback = new TestCallback<Document>();
-		Futures.addCallback(uuidDocs.create(doc), callback);
+		Futures.addCallback(uuidDocs.create(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 		assertNotNull(callback.entity());
 
 		TestCallback<Boolean> existsCallback = new TestCallback<>();
-		Futures.addCallback(uuidDocs.exists(new Identifier(id)), existsCallback);
+		Futures.addCallback(uuidDocs.exists(new Identifier(id)), existsCallback, MoreExecutors.directExecutor());
 		waitFor(existsCallback);
 		assertTrue(existsCallback.entity());
 
 		existsCallback.clear();
-		Futures.addCallback(uuidDocs.exists(new Identifier(UUID.randomUUID())), existsCallback);
+		Futures.addCallback(uuidDocs.exists(new Identifier(UUID.randomUUID())), existsCallback, MoreExecutors.directExecutor());
 		waitFor(existsCallback);
 		assertFalse(existsCallback.entity());
 	}
@@ -362,21 +363,21 @@ public class DocumentRepositoryTest
 		doc.identifier(new Identifier(id));
 
 		TestCallback<Document> callback = new TestCallback<Document>();
-		Futures.addCallback(uuidDocs.upsert(doc), callback);
+		Futures.addCallback(uuidDocs.upsert(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 		assertNotNull(callback.entity());
 
 		callback.clear();
-		Futures.addCallback(uuidDocs.upsert(doc), callback);
+		Futures.addCallback(uuidDocs.upsert(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 		assertNotNull(callback.entity());
 
 		TestCallback<Boolean> existsCallback = new TestCallback<>();
-		Futures.addCallback(uuidDocs.exists(new Identifier(id)), existsCallback);
+		Futures.addCallback(uuidDocs.exists(new Identifier(id)), existsCallback, MoreExecutors.directExecutor());
 		waitFor(existsCallback);
 		assertTrue(existsCallback.entity());
 	}
@@ -391,14 +392,14 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		Futures.addCallback(uuidDocs.create(doc), callback);
+		Futures.addCallback(uuidDocs.create(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.entity());
 		assertNull(callback.throwable());
 
 		// Create Duplicate
-		Futures.addCallback(uuidDocs.create(doc), callback);
+		Futures.addCallback(uuidDocs.create(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -423,7 +424,7 @@ public class DocumentRepositoryTest
 		doc.identifier(new Identifier(id));
 		TestCallback<Document> callback = new TestCallback<Document>();
 
-		Futures.addCallback(dateDocs.create(doc), callback);
+		Futures.addCallback(dateDocs.create(doc), callback, MoreExecutors.directExecutor());
 	}
 
 	@Test(expected=InvalidIdentifierException.class)
@@ -445,7 +446,7 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 
 		// Create
-		Futures.addCallback(dateDocs.update(doc), callback);
+		Futures.addCallback(dateDocs.update(doc), callback, MoreExecutors.directExecutor());
 	}
 
 	@Test(expected=ItemNotFoundException.class)
@@ -481,7 +482,7 @@ public class DocumentRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		Futures.addCallback(uuidDocs.read(new Identifier(UUID.randomUUID())), callback);
+		Futures.addCallback(uuidDocs.read(new Identifier(UUID.randomUUID())), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -493,7 +494,7 @@ public class DocumentRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Document> callback = new TestCallback<Document>();
-		Futures.addCallback(dateDocs.read(new Identifier(new Date())), callback);
+		Futures.addCallback(dateDocs.read(new Identifier(new Date())), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -523,7 +524,7 @@ public class DocumentRepositoryTest
 		TestCallback<Document> callback = new TestCallback<Document>();
 		Document doc = new Document();
 		doc.identifier(new Identifier(UUID.randomUUID()));
-		Futures.addCallback(uuidDocs.update(doc), callback);
+		Futures.addCallback(uuidDocs.update(doc), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -124,27 +125,27 @@ public class DatabaseRepositoryTest
 
 		// Shouldn't Exist
 		TestCallback<Boolean> existCallback = new TestCallback<Boolean>();
-		Futures.addCallback(databases.exists(db.identifier()), existCallback);
+		Futures.addCallback(databases.exists(db.identifier()), existCallback, MoreExecutors.directExecutor());
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertFalse(existCallback.entity());
 
 		// Create
-		Futures.addCallback(databases.create(db), callback);
+		Futures.addCallback(databases.create(db), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Read
 		callback.clear();
-		Futures.addCallback(databases.read(db.identifier()), callback);
+		Futures.addCallback(databases.read(db.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertEquals(db, callback.entity());
 
 		// Should Also Exist
 		existCallback.clear();
-		Futures.addCallback(databases.exists(db.identifier()), existCallback);
+		Futures.addCallback(databases.exists(db.identifier()), existCallback, MoreExecutors.directExecutor());
 		waitFor(existCallback);
 		assertNull(existCallback.throwable());
 		assertTrue(existCallback.entity());
@@ -152,14 +153,14 @@ public class DatabaseRepositoryTest
 		// Update
 		callback.clear();
 		db.description("an updated test database");
-		Futures.addCallback(databases.update(db), callback);
+		Futures.addCallback(databases.update(db), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNull(callback.throwable());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(databases.read(db.identifier()), callback);
+		Futures.addCallback(databases.read(db.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		Database result2 = callback.entity();
@@ -170,14 +171,14 @@ public class DatabaseRepositoryTest
 
 		// Delete
 		TestCallback<Boolean> deleteCallback = new TestCallback<Boolean>();
-		Futures.addCallback(databases.delete(db.identifier()), deleteCallback);
+		Futures.addCallback(databases.delete(db.identifier()), deleteCallback, MoreExecutors.directExecutor());
 		waitFor(deleteCallback);
 
 		assertTrue(deleteCallback.entity());
 
 		// Re-Read
 		callback.clear();
-		Futures.addCallback(databases.read(db.identifier()), callback);
+		Futures.addCallback(databases.read(db.identifier()), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -213,14 +214,14 @@ public class DatabaseRepositoryTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 
 		// Create
-		Futures.addCallback(databases.create(entity), callback);
+		Futures.addCallback(databases.create(entity), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.entity());
 		assertNull(callback.throwable());
 
 		// Create Duplicate
-		Futures.addCallback(databases.create(entity), callback);
+		Futures.addCallback(databases.create(entity), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -246,7 +247,7 @@ public class DatabaseRepositoryTest
 	throws InterruptedException
 	{
 		TestCallback<Database> callback = new TestCallback<Database>();
-		Futures.addCallback(databases.read(new Identifier("doesn't exist")), callback);
+		Futures.addCallback(databases.read(new Identifier("doesn't exist")), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
@@ -277,7 +278,7 @@ public class DatabaseRepositoryTest
 		TestCallback<Database> callback = new TestCallback<Database>();
 		Database entity = new Database();
 		entity.name("doesn't exist");
-		Futures.addCallback(databases.update(entity), callback);
+		Futures.addCallback(databases.update(entity), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());

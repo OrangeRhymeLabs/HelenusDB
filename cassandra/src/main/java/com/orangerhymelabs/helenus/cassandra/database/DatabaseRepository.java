@@ -121,11 +121,11 @@ extends AbstractCassandraRepository<Database, DatabaseStatements>
 		PreparedStatement exists();
 
 		@Override
-		@Query("select * from %s." + Tables.BY_ID + IDENTITY_CQL)
+		@Query("select " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + " from %s." + Tables.BY_ID + IDENTITY_CQL)
 		PreparedStatement read();
 
 		@Override
-		@Query("select * from %s." + Tables.BY_ID)
+		@Query("select " + Columns.NAME + ", " + Columns.DESCRIPTION + ", " + Columns.CREATED_AT + ", " + Columns.UPDATED_AT + " from %s." + Tables.BY_ID)
 		PreparedStatement readAll();
 	}
 

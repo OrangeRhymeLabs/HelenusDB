@@ -141,7 +141,7 @@ public class CassandraConfig
 
 		if (getDataCenter() != null)
 		{
-			// TODO: fixe round robin policy
+			// TODO: fix round robin policy
 //			cb.withLoadBalancingPolicy(new DCAwareRoundRobinPolicy(getDataCenter(), getPort(), false, false));
 		}
 

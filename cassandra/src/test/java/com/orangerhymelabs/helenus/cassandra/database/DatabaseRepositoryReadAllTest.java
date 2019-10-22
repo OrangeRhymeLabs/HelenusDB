@@ -31,6 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
@@ -86,7 +87,7 @@ public class DatabaseRepositoryReadAllTest
 	throws InterruptedException
     {
 		TestCallback<List<Database>> callback = new TestCallback<List<Database>>();
-		Futures.addCallback(databases.readAll(), callback);
+		Futures.addCallback(databases.readAll(), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		assertFalse(callback.isEmpty());
@@ -118,7 +119,7 @@ public class DatabaseRepositoryReadAllTest
 	throws InterruptedException
     {
 		TestCallback<List<Database>> callback = new TestCallback<List<Database>>();
-		Futures.addCallback(databases.readAll(), callback);
+		Futures.addCallback(databases.readAll(), callback, MoreExecutors.directExecutor());
 		waitFor(callback);
 
 		List<Database> dbs = callback.entity();
