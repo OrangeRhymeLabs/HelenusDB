@@ -78,7 +78,7 @@ public class DocumentService
 					updateViews(newDoc);
 					return Futures.immediateFuture(newDoc);
 				}
-				catch(ValidationException e)
+				catch(Exception e)
 				{
 					return Futures.immediateFailedFuture(e);
 				}
@@ -173,14 +173,10 @@ public class DocumentService
 		}
 		catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			return Futures.immediateFailedFuture(e);
 		}
 		catch (ExecutionException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			return Futures.immediateFailedFuture(e);
 		}
 //		ListenableFuture<AbstractDocumentRepository> docs = acquireRepositoryFor(view);

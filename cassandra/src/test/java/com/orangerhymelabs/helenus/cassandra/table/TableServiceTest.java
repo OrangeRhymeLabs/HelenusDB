@@ -220,7 +220,6 @@ public class TableServiceTest
 
 		assertNotNull(callback.throwable());
 		assertTrue(callback.throwable() instanceof ItemNotFoundException);
-//		assertTrue(callback.throwable() instanceof ValidationException);
 	}
 
 	@Test

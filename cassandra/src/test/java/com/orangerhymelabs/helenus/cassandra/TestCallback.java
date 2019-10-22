@@ -16,6 +16,7 @@
 package com.orangerhymelabs.helenus.cassandra;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.orangerhymelabs.helenus.exception.ExceptionUtils;
 
 /**
  * @author tfredrich
@@ -66,5 +67,10 @@ implements FutureCallback<T>
 	public Throwable throwable()
 	{
 		return throwable;
+	}
+
+	public Throwable rootCause()
+	{
+		return ExceptionUtils.getRootCause(throwable);
 	}
 }

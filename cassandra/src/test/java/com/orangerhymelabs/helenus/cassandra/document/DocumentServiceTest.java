@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.thrift.transport.TTransportException;
 import org.bson.BSONObject;
 import org.junit.AfterClass;
@@ -330,10 +331,10 @@ public class DocumentServiceTest
 		{
 			allDocs.create(DB_NAME, UUIDS_TABLE, doc).get();
 		}
-//		catch (ExecutionException e)
 		catch (Exception e)
 		{
-			throw e.getCause();
+//			throw e.getCause();
+			throw ExceptionUtils.getRootCause(e);
 		}
 	}
 
@@ -358,7 +359,8 @@ public class DocumentServiceTest
 		waitFor(callback);
 
 		assertNotNull(callback.throwable());
-		assertTrue(callback.throwable() instanceof DuplicateItemException);
+//		assertTrue(callback.throwable() instanceof DuplicateItemException);
+		assertTrue(callback.rootCause() instanceof DuplicateItemException);
 	}
 
 	@Test

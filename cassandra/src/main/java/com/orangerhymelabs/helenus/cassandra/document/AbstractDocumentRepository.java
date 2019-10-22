@@ -107,7 +107,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			}
 			catch (InterruptedException | ExecutionException e)
 			{
-				LOG.error("ViewDocument schema create failed", e);
+				LOG.error("Document schema create failed", e);
 			}
 			
 			return false;
@@ -278,6 +278,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				try
 				{
+					//TODO: change from 'select * ...' to 'select x, y, z, ...' using id/keys + object + updated_at + created_at
 					ps = session.prepareAsync(String.format("select * from %s.%s where %s limit 1",
 						keyspace,
 						tableName,
@@ -302,6 +303,7 @@ extends AbstractCassandraRepository<Document, DocumentStatements>
 			{
 				try
 				{
+					//TODO: change from 'select * ...' to 'select x, y, z, ...' using id/keys + object + updated_at + created_at
 					ps = session.prepareAsync(String.format("select * from %s.%s where %s",
 						keyspace,
 						tableName,
