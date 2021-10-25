@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Session;
-import com.orangerhymelabs.helenus.cassandra.meta.CassandraMetadataStrategy;
 import com.orangerhymelabs.helenus.cassandra.meta.AppliedMigration;
+import com.orangerhymelabs.helenus.cassandra.meta.CassandraMetadataStrategy;
 import com.orangerhymelabs.helenus.cassandra.meta.MetadataStrategy;
 
 /**

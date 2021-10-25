@@ -33,7 +33,7 @@ implements Comparable<Identifier>
 	private static final String DB_NAME_SEPARATOR = "_";
 	private static final String TO_STRING_SEPARATOR = ", ";
 
-	private List<Object> components = new ArrayList<Object>();
+	private List<Object> components = new ArrayList<>();
 
 	/**
 	 * Create an empty identifier.
@@ -137,6 +137,10 @@ implements Comparable<Identifier>
 	@Override
 	public boolean equals(Object that)
 	{
+		if (that == null) return false;
+
+		if (this.getClass() != that.getClass()) return false;
+
 		return (compareTo((Identifier) that) == 0);
 	}
 
@@ -255,14 +259,9 @@ implements Comparable<Identifier>
 
     private boolean areComparable(Object o1, Object o2)
     {
-		if ((isComparable(o1) && isComparable(o2)) &&
-			(o1.getClass().isAssignableFrom(o2.getClass()) ||
-			o2.getClass().isAssignableFrom(o1.getClass())))
-		{
-			return true;
-		}
-	
-	return false;
+    	return ((isComparable(o1) && isComparable(o2)) &&
+    		(o1.getClass().isAssignableFrom(o2.getClass()) ||
+			o2.getClass().isAssignableFrom(o1.getClass())));
 	}
 
     /**
@@ -276,5 +275,4 @@ implements Comparable<Identifier>
     {
 	    return (object instanceof Comparable);
     }
-
 }

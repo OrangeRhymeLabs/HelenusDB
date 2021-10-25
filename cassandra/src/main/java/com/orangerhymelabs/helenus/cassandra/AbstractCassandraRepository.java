@@ -52,19 +52,19 @@ public abstract class AbstractCassandraRepository<T, F extends StatementFactory>
 	private String keyspace;
 	private F statementFactory;
 
-	public AbstractCassandraRepository(Session session, String keyspace, Class<F> factoryClass)
+	protected AbstractCassandraRepository(Session session, String keyspace, Class<F> factoryClass)
 	{
 		this(session, keyspace, null, factoryClass);
 	}
 
-	public AbstractCassandraRepository(Session session, String keyspace, String table, Class<F> factoryClass)
+	protected AbstractCassandraRepository(Session session, String keyspace, String table, Class<F> factoryClass)
 	{
 		this.session = session;
 		this.keyspace = keyspace;
 		this.statementFactory = newStatementFactory(factoryClass, session, keyspace, table);
 	}
 
-	public AbstractCassandraRepository(Session session, String keyspace, F factory)
+	protected AbstractCassandraRepository(Session session, String keyspace, F factory)
 	{
 		this.session = session;
 		this.keyspace = keyspace;
