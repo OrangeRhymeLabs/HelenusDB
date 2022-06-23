@@ -17,7 +17,7 @@ package com.orangerhymelabs.helenus.cassandra.document;
 
 import com.datastax.driver.core.Session;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
-import com.orangerhymelabs.helenus.cassandra.view.View;
+import com.strategicgains.noschema.document.View;
 
 /**
  * Document repositories are unique per document/table and therefore must be cached by table.

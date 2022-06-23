@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.strategicgains.noschema.document.View;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
 

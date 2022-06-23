@@ -40,6 +40,7 @@ import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
 import com.orangerhymelabs.helenus.persistence.Query;
 import com.orangerhymelabs.helenus.persistence.StatementFactory;
+import com.strategicgains.noschema.document.View;
 
 /**
  * @author tfredrich

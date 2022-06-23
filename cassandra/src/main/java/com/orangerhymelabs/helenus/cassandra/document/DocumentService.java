@@ -30,9 +30,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
 import com.orangerhymelabs.helenus.cassandra.table.TableService;
 import com.orangerhymelabs.helenus.cassandra.table.key.KeyDefinitionException;
-import com.orangerhymelabs.helenus.cassandra.view.View;
 import com.orangerhymelabs.helenus.cassandra.view.ViewService;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.strategicgains.noschema.document.View;
 import com.strategicgains.syntaxe.ValidationEngine;
 import com.strategicgains.syntaxe.ValidationException;
 

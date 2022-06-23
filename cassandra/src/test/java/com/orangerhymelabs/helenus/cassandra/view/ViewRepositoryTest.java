@@ -43,6 +43,7 @@ import com.orangerhymelabs.helenus.exception.DuplicateItemException;
 import com.orangerhymelabs.helenus.exception.ItemNotFoundException;
 import com.orangerhymelabs.helenus.exception.StorageException;
 import com.orangerhymelabs.helenus.persistence.Identifier;
+import com.strategicgains.noschema.document.View;
 
 /**
  * @author tfredrich

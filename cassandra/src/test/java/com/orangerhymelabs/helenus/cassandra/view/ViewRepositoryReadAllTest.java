@@ -36,8 +36,8 @@ import com.orangerhymelabs.helenus.cassandra.CassandraManager;
 import com.orangerhymelabs.helenus.cassandra.KeyspaceSchema;
 import com.orangerhymelabs.helenus.cassandra.TestCallback;
 import com.orangerhymelabs.helenus.cassandra.table.Table;
-import com.orangerhymelabs.helenus.cassandra.view.View;
 import com.orangerhymelabs.helenus.cassandra.view.ViewRepository;
+import com.strategicgains.noschema.document.View;
 
 /**
  * @author tfredrich
